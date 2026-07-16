@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException, Depends
 from . import crud
-from .schemas import UserCreate, Token, Itinerary, Destination
+from .schemas import UserCreate, Token, Itinerary, Destination, ItineraryCreate
 from .auth import create_access_token, get_current_user
 
 app = FastAPI(title="GlobeTrotter Phase1")
@@ -35,7 +35,7 @@ def recommendations(user: str = Depends(get_current_user)):
 
 
 @app.post("/itineraries", response_model=Itinerary)
-def create_itinerary(itin: Itinerary, user: str = Depends(get_current_user)):
+def create_itinerary(itin: ItineraryCreate, user: str = Depends(get_current_user)):
     data = itin.dict()
     data["user"] = user
     return crud.create_itinerary(data)

@@ -20,3 +20,7 @@ class Itinerary(BaseModel):
     user: str
     title: str
     destinations: List[str]
+
+class ItineraryCreate(BaseModel):
+    title: str
+    destinations: List[str]
