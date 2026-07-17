@@ -7,6 +7,6 @@ void main() {
     SharedPreferences.setMockInitialValues(<String, Object>{});
     await tester.pumpWidget(const TripIoApp());
     await tester.pumpAndSettle();
-    expect(find.text('Welcome Back'), findsOneWidget);
+    expect(find.text('GlobeTrotter'), findsOneWidget);
   });
 }

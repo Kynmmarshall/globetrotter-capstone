@@ -1,54 +1,48 @@
-import 'package:flutter/foundation.dart';
+import 'package:flutter/foundation.dart' show ChangeNotifier;
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'api_client.dart';
-import 'models.dart';
+import 'package:trip_io/services/api_client.dart';
+import 'package:trip_io/models/models.dart';
 
 class SessionController extends ChangeNotifier {
   static const _tokenKey = 'gt_token';
   static const _usernameKey = 'gt_username';
-  static const _baseUrlKey = 'gt_base_url';
 
   bool _ready = false;
   bool _loading = false;
   String? _error;
   String? _token;
   String? _username;
-  late String _baseUrl;
 
   bool get ready => _ready;
   bool get isLoading => _loading;
   bool get isAuthenticated => (_token ?? '').isNotEmpty;
   String? get error => _error;
   String? get username => _username;
-  String get baseUrl => _baseUrl;
+
+  void clearError() {
+    _error = null;
+    notifyListeners();
+  }
 
   Future<void> initialize() async {
     final prefs = await SharedPreferences.getInstance();
     _token = prefs.getString(_tokenKey);
     _username = prefs.getString(_usernameKey);
-    _baseUrl = prefs.getString(_baseUrlKey) ?? _defaultBaseUrl();
     _ready = true;
     notifyListeners();
   }
 
-  Future<void> updateBaseUrl(String value) async {
-    _baseUrl = value.trim();
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_baseUrlKey, _baseUrl);
-    notifyListeners();
-  }
-
-  Future<void> register(String username, String password) async {
+  Future<void> register(String username, String password, {String? email}) async {
     await _runGuarded(() async {
-      final token = await ApiClient(_baseUrl).register(username, password);
+      final token = await ApiClient().register(username, password, email: email);
       await _saveAuth(token, username);
     });
   }
 
   Future<void> login(String username, String password) async {
     await _runGuarded(() async {
-      final token = await ApiClient(_baseUrl).login(username, password);
+      final token = await ApiClient().login(username, password);
       await _saveAuth(token, username);
     });
   }
@@ -64,7 +58,7 @@ class SessionController extends ChangeNotifier {
   }
 
   Future<List<Destination>> destinations({String? query}) {
-    return ApiClient(_baseUrl).getDestinations(query: query);
+    return ApiClient().getDestinations(query: query);
   }
 
   Future<List<Destination>> recommendations() async {
@@ -72,7 +66,7 @@ class SessionController extends ChangeNotifier {
     if (token == null || token.isEmpty) {
       throw Exception('Not authenticated.');
     }
-    return ApiClient(_baseUrl).getRecommendations(token);
+    return ApiClient().getRecommendations(token);
   }
 
   Future<Itinerary> createItinerary(String title, List<String> destinations) async {
@@ -80,7 +74,7 @@ class SessionController extends ChangeNotifier {
     if (token == null || token.isEmpty) {
       throw Exception('Not authenticated.');
     }
-    return ApiClient(_baseUrl).createItinerary(token, title, destinations);
+    return ApiClient().createItinerary(token, title, destinations);
   }
 
   Future<List<Itinerary>> itineraries() async {
@@ -88,7 +82,7 @@ class SessionController extends ChangeNotifier {
     if (token == null || token.isEmpty) {
       throw Exception('Not authenticated.');
     }
-    return ApiClient(_baseUrl).getItineraries(token);
+    return ApiClient().getItineraries(token);
   }
 
   Future<void> _saveAuth(String token, String username) async {
@@ -112,19 +106,5 @@ class SessionController extends ChangeNotifier {
       _loading = false;
       notifyListeners();
     }
-  }
-
-  String _defaultBaseUrl() {
-    const fromDefine = String.fromEnvironment('API_BASE_URL', defaultValue: '');
-    if (fromDefine.isNotEmpty) {
-      return fromDefine;
-    }
-    if (kIsWeb) {
-      return 'http://localhost:8000';
-    }
-    if (defaultTargetPlatform == TargetPlatform.android) {
-      return 'http://10.0.2.2:8000';
-    }
-    return 'http://localhost:8000';
   }
 }

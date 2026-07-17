@@ -2,11 +2,13 @@ from .data import read_data, write_data
 from .auth import hash_password, verify_password
 import uuid
 
-def register_user(username: str, password: str):
+def register_user(username: str, password: str, email: str | None = None):
     data = read_data()
     if any(u["username"] == username for u in data.get("users", [])):
         return None
     user = {"id": str(uuid.uuid4()), "username": username, "password": hash_password(password)}
+    if email:
+        user["email"] = email
     data.setdefault("users", []).append(user)
     write_data(data)
     return user

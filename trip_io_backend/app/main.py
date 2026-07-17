@@ -8,7 +8,7 @@ app = FastAPI(title="GlobeTrotter Phase1")
 
 @app.post("/register", response_model=Token)
 def register(u: UserCreate):
-    user = crud.register_user(u.username, u.password)
+    user = crud.register_user(u.username, u.password, u.email)
     if not user:
         raise HTTPException(status_code=400, detail="User already exists")
     token = create_access_token(user["username"])

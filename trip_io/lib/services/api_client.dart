@@ -1,25 +1,45 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart' show kIsWeb, defaultTargetPlatform, TargetPlatform;
 import 'package:http/http.dart' as http;
-
-import 'models.dart';
+import 'package:trip_io/models/models.dart';
 
 class ApiClient {
-  ApiClient(this.baseUrl, {http.Client? client}) : _client = client ?? http.Client();
+  ApiClient({String? baseUrl, http.Client? client})
+      : _baseUrl = (baseUrl ?? _defaultBaseUrl()).trim(),
+        _client = client ?? http.Client();
 
-  final String baseUrl;
+  final String _baseUrl;
   final http.Client _client;
 
+  static String _defaultBaseUrl() {
+    const fromDefine = String.fromEnvironment('API_BASE_URL', defaultValue: '');
+    if (fromDefine.isNotEmpty) {
+      return fromDefine;
+    }
+    if (kIsWeb) {
+      return 'http://localhost:8000';
+    }
+    if (defaultTargetPlatform == TargetPlatform.android) {
+      return 'http://10.0.2.2:8000';
+    }
+    return 'http://localhost:8000';
+  }
+
   Uri _uri(String path, [Map<String, String>? queryParameters]) {
-    final normalizedBase = baseUrl.endsWith('/') ? baseUrl.substring(0, baseUrl.length - 1) : baseUrl;
+    final normalizedBase = _baseUrl.endsWith('/') ? _baseUrl.substring(0, _baseUrl.length - 1) : _baseUrl;
     return Uri.parse('$normalizedBase$path').replace(queryParameters: queryParameters);
   }
 
-  Future<String> register(String username, String password) async {
+  Future<String> register(String username, String password, {String? email}) async {
     final response = await _client.post(
       _uri('/register'),
       headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'username': username, 'password': password}),
+      body: jsonEncode({
+        'username': username,
+        'password': password,
+        if (email != null && email.trim().isNotEmpty) 'email': email.trim(),
+      }),
     );
     return _extractToken(response);
   }
