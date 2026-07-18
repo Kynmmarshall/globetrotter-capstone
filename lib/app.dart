@@ -33,7 +33,7 @@ class _TripIoAppState extends State<TripIoApp> {
       animation: _session,
       builder: (context, _) {
         return MaterialApp(
-          title: 'GlobeTrotter',
+          title: 'trip_io',
           debugShowCheckedModeBanner: false,
           theme: AppTheme.theme,
           home: _buildHome(),

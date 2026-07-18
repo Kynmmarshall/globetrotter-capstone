@@ -466,6 +466,19 @@ class _AuthScreenState extends State<AuthScreen> {
                   ),
                 ),
               ),
+              // Soft, edge-free shade behind the tagline copy (desktop
+              // only) so it stays legible over busy parts of the photo
+              // without reading as a hard card/box.
+              if (isDesktop)
+                const DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: RadialGradient(
+                      center: Alignment(-0.35, 0.05),
+                      radius: 0.85,
+                      colors: [Color(0x66000000), Colors.transparent],
+                    ),
+                  ),
+                ),
               if (isCompact)
                 _buildMobileLayout(context, constraints)
               else if (isDesktop)
