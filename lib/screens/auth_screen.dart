@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:trip_io/services/session_controller.dart';
 import 'package:trip_io/widgets/feature_pill.dart';
@@ -20,6 +22,13 @@ class _AuthScreenState extends State<AuthScreen> {
   bool _loginMode = true;
   bool _showPassword = false;
   bool _showConfirmPassword = false;
+
+  // Breakpoints: a phone gets the tall portrait background + a bottom
+  // sheet-style card; tablets and desktop/web get the wide landscape
+  // background. Desktop/web additionally get a two-column layout with
+  // room for a tagline next to the card.
+  static const double _tabletBreakpoint = 700;
+  static const double _desktopBreakpoint = 1080;
 
   @override
   void dispose() {
@@ -60,7 +69,9 @@ class _AuthScreenState extends State<AuthScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'GlobeTrotter',
+          _loginMode
+              ? 'Log In'
+              : 'Register',
           style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w800),
         ),
         const SizedBox(height: 8),
@@ -95,112 +106,6 @@ class _AuthScreenState extends State<AuthScreen> {
         ),
       ),
       validator: validator,
-    );
-  }
-
-  Widget _buildAuthForm(BuildContext context, BoxConstraints constraints) {
-    final isCompact = constraints.maxWidth < 700;
-
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(20),
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1080),
-          child: Card(
-            clipBehavior: Clip.antiAlias,
-            elevation: 2,
-            child: Padding(
-              padding: const EdgeInsets.all(0),
-              child: isCompact
-                  ? _buildCompactContent(context)
-                  : Row(
-                      children: [
-                        Expanded(child: _buildSidePanel(context)),
-                        Expanded(child: _buildFormPanel(context)),
-                      ],
-                    ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSidePanel(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-    return Container(
-      padding: const EdgeInsets.all(28),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [colors.primary, colors.tertiary],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Icon(Icons.travel_explore, size: 52, color: colors.onPrimary),
-              const SizedBox(height: 18),
-              Text(
-                'Plan faster. Travel smarter.',
-                style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                      color: colors.onPrimary,
-                      fontWeight: FontWeight.w800,
-                    ),
-              ),
-              const SizedBox(height: 14),
-              Text(
-                'Search destinations, create itineraries, and keep your account synced across mobile, web, and Windows.',
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: colors.onPrimary.withValues(alpha: 0.92)),
-              ),
-            ],
-          ),
-          Wrap(
-            spacing: 10,
-            runSpacing: 10,
-            children: const [
-              FeaturePill(icon: Icons.phone_android, label: 'Mobile ready'),
-              FeaturePill(icon: Icons.web, label: 'Web ready'),
-              FeaturePill(icon: Icons.desktop_windows, label: 'Desktop ready'),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCompactContent(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          _buildHeadline(context),
-          const SizedBox(height: 20),
-          _buildFormFields(context),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFormPanel(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          _buildHeadline(context),
-          const SizedBox(height: 24),
-          _buildFormFields(context),
-        ],
-      ),
     );
   }
 
@@ -277,7 +182,7 @@ class _AuthScreenState extends State<AuthScreen> {
             Padding(
               padding: const EdgeInsets.only(top: 10),
               child: Text(
-                'Tip: use the same backend URL on web, Windows, and mobile to keep sessions consistent.',
+                'Tip: use the correct username and password you used in your account creation.',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
@@ -319,15 +224,270 @@ class _AuthScreenState extends State<AuthScreen> {
     );
   }
 
+  Widget _buildCardContent(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _buildHeadline(context),
+        const SizedBox(height: 20),
+        _buildFormFields(context),
+      ],
+    );
+  }
+
+  /// Frosted glass card so the branded background photo stays visible
+  /// around its edges instead of being hidden behind a solid panel.
+  Widget _glassCard(BuildContext context, {required Widget child, required BorderRadius borderRadius}) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return ClipRRect(
+      borderRadius: borderRadius,
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+        child: Container(
+          decoration: BoxDecoration(
+            color: colorScheme.surface.withValues(alpha: 0.52),
+            borderRadius: borderRadius,
+            border: Border.all(color: Colors.white.withValues(alpha: 0.35)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.25),
+                blurRadius: 30,
+                offset: const Offset(0, 12),
+              ),
+            ],
+          ),
+          padding: const EdgeInsets.all(24),
+          child: child,
+        ),
+      ),
+    );
+  }
+
+  /// Phone layout: the logo sits in a fixed (non-scrolling) header so it
+  /// can never be covered, and the form docks to the bottom of the space
+  /// below it as a sheet-style card that scrolls when content grows.
+  Widget _buildMobileLayout(BuildContext context, BoxConstraints constraints) {
+    return SafeArea(
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(top: 16),
+            child: _buildLogoLockup(iconSize: 40),
+          ),
+          Expanded(
+            child: LayoutBuilder(
+              builder: (context, inner) {
+                return SingleChildScrollView(
+                  reverse: true,
+                  padding: const EdgeInsets.all(16),
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(minHeight: inner.maxHeight - 16),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        _glassCard(
+                          context,
+                          borderRadius: BorderRadius.circular(24),
+                          child: _buildCardContent(context),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Tablet layout: landscape background, single centered card - there
+  /// isn't quite enough width here for a second column of copy.
+  Widget _buildTabletLayout(BuildContext context, BoxConstraints constraints) {
+    return SafeArea(
+      child: Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 480),
+            child: _glassCard(
+              context,
+              borderRadius: BorderRadius.circular(28),
+              child: _buildCardContent(context),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Desktop/web layout: wide landscape background with room for a
+  /// tagline + feature pills beside the card, like a marketing split view.
+  Widget _buildDesktopLayout(BuildContext context, BoxConstraints constraints) {
+    return SafeArea(
+      child: Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(40),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 1160),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Expanded(
+                  flex: 6,
+                  child: _buildTaglineColumn(context),
+                ),
+                const SizedBox(width: 48),
+                Expanded(
+                  flex: 5,
+                  child: _glassCard(
+                    context,
+                    borderRadius: BorderRadius.circular(28),
+                    child: _buildCardContent(context),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// The background photos are logo-free, so the trip_io mark is
+  /// composited on top here instead.
+  Widget _buildLogoLockup({double iconSize = 40}) {
+    const navy = Color(0xFF0D2A4A);
+    const brandBlue = Color(0xFF1E88E5);
+    const shadows = [Shadow(blurRadius: 10, color: Colors.white70, offset: Offset(0, 1))];
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(999),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.55),
+            borderRadius: BorderRadius.circular(999),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.4)),
+          ),
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: iconSize * 0.3, vertical: iconSize * 0.18),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Image.asset('assets/logo.png', height: iconSize),
+                const SizedBox(width: 10),
+                Text.rich(
+                  TextSpan(
+                    style: TextStyle(
+                      fontSize: iconSize * 0.6,
+                      fontWeight: FontWeight.w800,
+                      shadows: shadows,
+                    ),
+                    children: const [
+                      TextSpan(text: 'trip', style: TextStyle(color: navy)),
+                      TextSpan(text: '_io', style: TextStyle(color: brandBlue)),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTaglineColumn(BuildContext context) {
+    const shadows = [Shadow(blurRadius: 16, color: Colors.black54, offset: Offset(0, 2))];
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 460),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            'Plan faster. Travel smarter.',
+            style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w800,
+                  shadows: shadows,
+                ),
+          ),
+          const SizedBox(height: 14),
+          Text(
+            'Search destinations, create itineraries, and keep your account synced across mobile, web, and Windows.',
+            style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.white, shadows: shadows),
+          ),
+          const SizedBox(height: 22),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: const [
+              FeaturePill(icon: Icons.phone_android, label: 'Mobile ready'),
+              FeaturePill(icon: Icons.web, label: 'Web ready'),
+              FeaturePill(icon: Icons.desktop_windows, label: 'Desktop ready'),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            return _buildAuthForm(context, constraints);
-          },
-        ),
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final isCompact = constraints.maxWidth < _tabletBreakpoint;
+          final isDesktop = constraints.maxWidth >= _desktopBreakpoint;
+
+          return Stack(
+            fit: StackFit.expand,
+            children: [
+              Image.asset(
+                isCompact ? 'assets/backgrounds/mobile.png' : 'assets/backgrounds/pc.png',
+                fit: BoxFit.cover,
+                alignment: Alignment.topCenter,
+              ),
+              DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.black.withValues(alpha: 0.18),
+                      Colors.black.withValues(alpha: 0.12),
+                      Colors.black.withValues(alpha: 0.55),
+                    ],
+                    stops: const [0.2, 0.7, 1.0],
+                  ),
+                ),
+              ),
+              if (isCompact)
+                _buildMobileLayout(context, constraints)
+              else if (isDesktop)
+                _buildDesktopLayout(context, constraints)
+              else
+                _buildTabletLayout(context, constraints),
+              // On phones the logo lives inside _buildMobileLayout's fixed
+              // header instead, so it scrolls in-flow and can never end up
+              // underneath the card.
+              if (!isCompact)
+                SafeArea(
+                  child: Padding(
+                    padding: const EdgeInsets.all(32),
+                    child: Align(
+                      alignment: Alignment.topLeft,
+                      child: _buildLogoLockup(iconSize: 46),
+                    ),
+                  ),
+                ),
+            ],
+          );
+        },
       ),
     );
   }
