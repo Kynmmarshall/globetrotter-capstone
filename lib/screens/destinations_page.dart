@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:trip_io/l10n/gen/app_localizations.dart';
 import 'package:trip_io/models/models.dart';
+import 'package:trip_io/screens/destination_detail_page.dart';
 import 'package:trip_io/services/api_client.dart';
 import 'package:trip_io/services/session_controller.dart';
 import 'package:trip_io/widgets/session_expired_card.dart';
@@ -34,7 +35,9 @@ class _DestinationsPageState extends State<DestinationsPage> {
 
   Future<void> _search() async {
     setState(() {
-      _future = widget.session.destinations(query: _searchController.text.trim());
+      _future = widget.session.destinations(
+        query: _searchController.text.trim(),
+      );
     });
   }
 
@@ -45,15 +48,17 @@ class _DestinationsPageState extends State<DestinationsPage> {
         Text(
           title,
           style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                color: Colors.white,
-                fontWeight: FontWeight.w800,
-              ),
+            color: Colors.white,
+            fontWeight: FontWeight.w800,
+          ),
         ),
         if (subtitle != null) ...[
           const SizedBox(height: 4),
           Text(
             subtitle,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white70),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: Colors.white70),
           ),
         ],
       ],
@@ -71,13 +76,21 @@ class _DestinationsPageState extends State<DestinationsPage> {
         padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
         child: Text(
           label,
-          style: const TextStyle(color: Colors.white, fontSize: 10.5, fontWeight: FontWeight.w600),
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 10.5,
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ),
     );
   }
 
-  Widget _glassPanel({required Widget child, EdgeInsets? padding, BorderRadius? borderRadius}) {
+  Widget _glassPanel({
+    required Widget child,
+    EdgeInsets? padding,
+    BorderRadius? borderRadius,
+  }) {
     final radius = borderRadius ?? BorderRadius.circular(18);
     return ClipRRect(
       borderRadius: radius,
@@ -104,13 +117,24 @@ class _DestinationsPageState extends State<DestinationsPage> {
         if (progress == null) return child;
         return const ColoredBox(
           color: Colors.white10,
-          child: Center(child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white70)),
+          child: Center(
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              color: Colors.white70,
+            ),
+          ),
         );
       },
       errorBuilder: (context, error, stackTrace) {
         return const ColoredBox(
           color: Colors.white10,
-          child: Center(child: Icon(Icons.image_not_supported, color: Colors.white38, size: 32)),
+          child: Center(
+            child: Icon(
+              Icons.image_not_supported,
+              color: Colors.white38,
+              size: 32,
+            ),
+          ),
         );
       },
     );
@@ -118,68 +142,103 @@ class _DestinationsPageState extends State<DestinationsPage> {
 
   Widget _buildResultCard(BuildContext context, Destination d) {
     final imageUrl = ApiClient.resolveAssetUrl(d.imageUrl);
-    return _glassPanel(
-      borderRadius: BorderRadius.circular(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          AspectRatio(
-            aspectRatio: 4 / 3,
-            child: imageUrl != null
-                ? _buildDestinationImage(imageUrl)
-                : const ColoredBox(
-                    color: Colors.white10,
-                    child: Center(child: Icon(Icons.place, color: Colors.white38, size: 32)),
-                  ),
+    final heroTag = 'destination-${d.id}';
+    return GestureDetector(
+      onTap: () {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) =>
+                DestinationDetailPage(destination: d, heroTag: heroTag),
           ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  d.name,
-                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 16),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 6),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Icon(Icons.location_on, size: 15, color: Colors.white70),
-                    const SizedBox(width: 4),
-                    Expanded(
-                      child: Text(
-                        d.location ?? d.country,
-                        style: const TextStyle(color: Colors.white70, fontSize: 12.5),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+        );
+      },
+      child: _glassPanel(
+        borderRadius: BorderRadius.circular(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            AspectRatio(
+              aspectRatio: 4 / 3,
+              child: Hero(
+                tag: heroTag,
+                child: imageUrl != null
+                    ? _buildDestinationImage(imageUrl)
+                    : const ColoredBox(
+                        color: Colors.white10,
+                        child: Center(
+                          child: Icon(
+                            Icons.place,
+                            color: Colors.white38,
+                            size: 32,
+                          ),
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-                if ((d.description ?? '').isNotEmpty) ...[
-                  const SizedBox(height: 8),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
                   Text(
-                    d.description!,
-                    style: TextStyle(color: Colors.white.withValues(alpha: 0.88), fontSize: 13, height: 1.35),
-                    maxLines: 3,
+                    d.name,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 16,
+                    ),
+                    maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
-                ],
-                if (d.tags.isNotEmpty) ...[
-                  const SizedBox(height: 10),
-                  Wrap(
-                    spacing: 6,
-                    runSpacing: 6,
-                    children: d.tags.map((t) => _buildTagChip(t)).toList(),
+                  const SizedBox(height: 6),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Icon(
+                        Icons.location_on,
+                        size: 15,
+                        color: Colors.white70,
+                      ),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: Text(
+                          d.location ?? d.country,
+                          style: const TextStyle(
+                            color: Colors.white70,
+                            fontSize: 12.5,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
                   ),
+                  if ((d.description ?? '').isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      d.description!,
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.88),
+                        fontSize: 13,
+                        height: 1.35,
+                      ),
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                  if (d.tags.isNotEmpty) ...[
+                    const SizedBox(height: 10),
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
+                      children: d.tags.map((t) => _buildTagChip(t)).toList(),
+                    ),
+                  ],
                 ],
-              ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -238,19 +297,28 @@ class _DestinationsPageState extends State<DestinationsPage> {
                     );
                   }
                   if (snapshot.hasError) {
-                    return ErrorStateCard(message: l10n.destinationsLoadError(snapshot.error.toString()));
+                    return ErrorStateCard(
+                      message: l10n.destinationsLoadError(
+                        snapshot.error.toString(),
+                      ),
+                    );
                   }
                   final items = snapshot.data ?? <Destination>[];
                   if (items.isEmpty) {
                     return Padding(
                       padding: const EdgeInsets.symmetric(vertical: 40),
                       child: Center(
-                        child: Text(l10n.destinationsEmpty, style: const TextStyle(color: Colors.white70)),
+                        child: Text(
+                          l10n.destinationsEmpty,
+                          style: const TextStyle(color: Colors.white70),
+                        ),
                       ),
                     );
                   }
                   final width = constraints.maxWidth;
-                  final crossAxisCount = width >= 1100 ? 4 : (width >= 820 ? 3 : (width >= 520 ? 2 : 1));
+                  final crossAxisCount = width >= 1100
+                      ? 4
+                      : (width >= 820 ? 3 : (width >= 520 ? 2 : 1));
                   return GridView.builder(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
@@ -261,7 +329,8 @@ class _DestinationsPageState extends State<DestinationsPage> {
                       mainAxisSpacing: 14,
                     ),
                     itemCount: items.length,
-                    itemBuilder: (context, index) => _buildResultCard(context, items[index]),
+                    itemBuilder: (context, index) =>
+                        _buildResultCard(context, items[index]),
                   );
                 },
               ),

@@ -134,7 +134,7 @@ class _ItinerariesPageState extends State<ItinerariesPage> {
           label: Text(
             d.name,
             style: TextStyle(
-              color: selected ? Colors.white : Colors.white.withValues(alpha: 0.92),
+              color: selected ? Colors.white : const Color.fromARGB(255, 96, 193, 177).withValues(alpha: 0.92),
               fontSize: 12.5,
               fontWeight: FontWeight.w600,
             ),
