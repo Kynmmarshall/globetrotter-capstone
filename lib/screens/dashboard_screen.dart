@@ -1,6 +1,7 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:trip_io/l10n/gen/app_localizations.dart';
 import 'package:trip_io/services/session_controller.dart';
 import 'package:trip_io/screens/destinations_page.dart';
 import 'package:trip_io/screens/itineraries_page.dart';
@@ -19,9 +20,13 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen> {
   int _index = 0;
 
-  static const _labels = <String>['Destinations', 'Recommendations', 'Itineraries', 'Profile'];
   static const _icons = <IconData>[Icons.public, Icons.star, Icons.map, Icons.person];
   static const double _backgroundBreakpoint = 700;
+
+  List<String> _labels(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return [l10n.navDestinations, l10n.navRecommendations, l10n.navItineraries, l10n.navProfile];
+  }
 
   Widget _frostedSurface({required Widget child, double blur = 18, double alpha = 0.16}) {
     return ClipRect(
@@ -49,12 +54,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
         final wide = constraints.maxWidth >= 900;
         final medium = constraints.maxWidth >= 700;
         final isCompactBackground = constraints.maxWidth < _backgroundBreakpoint;
+        final labels = _labels(context);
 
         final appBar = PreferredSize(
           preferredSize: const Size.fromHeight(kToolbarHeight),
           child: _frostedSurface(
             child: AppBar(
-              title: Text(_labels[_index]),
+              title: Text(labels[_index]),
               backgroundColor: Colors.transparent,
               foregroundColor: Colors.white,
               elevation: 0,
@@ -74,10 +80,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
               unselectedIconTheme: const IconThemeData(color: Colors.white70),
               selectedIconTheme: const IconThemeData(color: Colors.white),
               onDestinationSelected: (idx) => setState(() => _index = idx),
-              destinations: List.generate(_labels.length, (i) {
+              destinations: List.generate(labels.length, (i) {
                 return NavigationRailDestination(
                   icon: Icon(_icons[i]),
-                  label: Text(_labels[i]),
+                  label: Text(labels[i]),
                 );
               }),
             ),
@@ -90,11 +96,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
               backgroundColor: Colors.transparent,
               selectedIndex: _index,
               onDestinationSelected: (idx) => setState(() => _index = idx),
-              destinations: List.generate(_labels.length, (i) {
+              destinations: List.generate(labels.length, (i) {
                 return NavigationDestination(
                   icon: Icon(_icons[i], color: Colors.white70),
                   selectedIcon: Icon(_icons[i], color: Colors.white),
-                  label: _labels[i],
+                  label: labels[i],
                 );
               }),
             ),

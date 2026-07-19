@@ -1,6 +1,7 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:trip_io/l10n/gen/app_localizations.dart';
 import 'package:trip_io/services/session_controller.dart';
 import 'package:trip_io/widgets/feature_pill.dart';
 
@@ -65,20 +66,17 @@ class _AuthScreenState extends State<AuthScreen> {
   }
 
   Widget _buildHeadline(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          _loginMode
-              ? 'Log In'
-              : 'Register',
+          _loginMode ? l10n.authLoginTitle : l10n.authRegisterTitle,
           style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w800),
         ),
         const SizedBox(height: 8),
         Text(
-          _loginMode
-              ? 'Sign in to continue planning and managing your trips.'
-              : 'Create your account to save itineraries and get recommendations.',
+          _loginMode ? l10n.authLoginSubtitle : l10n.authRegisterSubtitle,
           style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
@@ -88,12 +86,14 @@ class _AuthScreenState extends State<AuthScreen> {
   }
 
   Widget _buildPasswordField({
+    required BuildContext context,
     required TextEditingController controller,
     required String label,
     required bool visible,
     required ValueChanged<bool> onToggle,
     required String? Function(String?) validator,
   }) {
+    final l10n = AppLocalizations.of(context)!;
     return TextFormField(
       controller: controller,
       obscureText: !visible,
@@ -102,7 +102,7 @@ class _AuthScreenState extends State<AuthScreen> {
         suffixIcon: IconButton(
           onPressed: () => onToggle(!visible),
           icon: Icon(visible ? Icons.visibility_off : Icons.visibility),
-          tooltip: visible ? 'Hide password' : 'Show password',
+          tooltip: visible ? l10n.authHidePassword : l10n.authShowPassword,
         ),
       ),
       validator: validator,
@@ -111,6 +111,7 @@ class _AuthScreenState extends State<AuthScreen> {
 
   Widget _buildFormFields(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context)!;
 
     return Form(
       key: _formKey,
@@ -120,18 +121,18 @@ class _AuthScreenState extends State<AuthScreen> {
           if (!_loginMode) ...[
             TextFormField(
               controller: _emailController,
-              decoration: const InputDecoration(
-                labelText: 'Email',
-                helperText: 'We use this for account contact and profile info',
+              decoration: InputDecoration(
+                labelText: l10n.authEmailLabel,
+                helperText: l10n.authEmailHelper,
               ),
               keyboardType: TextInputType.emailAddress,
               validator: (value) {
                 final email = value?.trim() ?? '';
                 if (email.isEmpty) {
-                  return 'Email is required';
+                  return l10n.authEmailRequired;
                 }
                 if (!email.contains('@')) {
-                  return 'Enter a valid email address';
+                  return l10n.authEmailInvalid;
                 }
                 return null;
               },
@@ -140,19 +141,20 @@ class _AuthScreenState extends State<AuthScreen> {
           ],
           TextFormField(
             controller: _usernameController,
-            decoration: const InputDecoration(
-              labelText: 'Username',
-              helperText: 'This is your account login name',
+            decoration: InputDecoration(
+              labelText: l10n.authUsernameLabel,
+              helperText: l10n.authUsernameHelper,
             ),
-            validator: (value) => (value == null || value.trim().isEmpty) ? 'Username is required' : null,
+            validator: (value) => (value == null || value.trim().isEmpty) ? l10n.authUsernameRequired : null,
           ),
           const SizedBox(height: 14),
           _buildPasswordField(
+            context: context,
             controller: _passwordController,
-            label: 'Password',
+            label: l10n.authPasswordLabel,
             visible: _showPassword,
             onToggle: (value) => setState(() => _showPassword = value),
-            validator: (value) => (value == null || value.isEmpty) ? 'Password is required' : null,
+            validator: (value) => (value == null || value.isEmpty) ? l10n.authPasswordRequired : null,
           ),
           if (!_loginMode) ...[
             const SizedBox(height: 14),
@@ -160,19 +162,19 @@ class _AuthScreenState extends State<AuthScreen> {
               controller: _confirmPasswordController,
               obscureText: !_showConfirmPassword,
               decoration: InputDecoration(
-                labelText: 'Confirm password',
+                labelText: l10n.authConfirmPasswordLabel,
                 suffixIcon: IconButton(
                   onPressed: () => setState(() => _showConfirmPassword = !_showConfirmPassword),
                   icon: Icon(_showConfirmPassword ? Icons.visibility_off : Icons.visibility),
-                  tooltip: _showConfirmPassword ? 'Hide password' : 'Show password',
+                  tooltip: _showConfirmPassword ? l10n.authHidePassword : l10n.authShowPassword,
                 ),
               ),
               validator: (value) {
                 if (value == null || value.isEmpty) {
-                  return 'Please confirm your password';
+                  return l10n.authConfirmPasswordRequired;
                 }
                 if (value != _passwordController.text) {
-                  return 'Passwords do not match';
+                  return l10n.authPasswordsMismatch;
                 }
                 return null;
               },
@@ -182,7 +184,7 @@ class _AuthScreenState extends State<AuthScreen> {
             Padding(
               padding: const EdgeInsets.only(top: 10),
               child: Text(
-                'Tip: use the correct username and password you used in your account creation.',
+                l10n.authLoginTip,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
@@ -212,12 +214,12 @@ class _AuthScreenState extends State<AuthScreen> {
                     height: 18,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
-                : Text(_loginMode ? 'Login' : 'Create account'),
+                : Text(_loginMode ? l10n.authLoginButton : l10n.authCreateAccountButton),
           ),
           const SizedBox(height: 10),
           TextButton(
             onPressed: widget.session.isLoading ? null : _toggleMode,
-            child: Text(_loginMode ? 'No account? Register' : 'Already have an account? Login'),
+            child: Text(_loginMode ? l10n.authToggleToRegister : l10n.authToggleToLogin),
           ),
         ],
       ),
@@ -401,6 +403,7 @@ class _AuthScreenState extends State<AuthScreen> {
   }
 
   Widget _buildTaglineColumn(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     const shadows = [Shadow(blurRadius: 16, color: Colors.black54, offset: Offset(0, 2))];
     return ConstrainedBox(
       constraints: const BoxConstraints(maxWidth: 460),
@@ -409,7 +412,7 @@ class _AuthScreenState extends State<AuthScreen> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
-            'Plan faster. Travel smarter.',
+            l10n.authTaglineTitle,
             style: Theme.of(context).textTheme.displaySmall?.copyWith(
                   color: Colors.white,
                   fontWeight: FontWeight.w800,
@@ -418,17 +421,17 @@ class _AuthScreenState extends State<AuthScreen> {
           ),
           const SizedBox(height: 14),
           Text(
-            'Search destinations, create itineraries, and keep your account synced across mobile, web, and Windows.',
+            l10n.authTaglineSubtitle,
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.white, shadows: shadows),
           ),
           const SizedBox(height: 22),
           Wrap(
             spacing: 10,
             runSpacing: 10,
-            children: const [
-              FeaturePill(icon: Icons.phone_android, label: 'Mobile ready'),
-              FeaturePill(icon: Icons.web, label: 'Web ready'),
-              FeaturePill(icon: Icons.desktop_windows, label: 'Desktop ready'),
+            children: [
+              FeaturePill(icon: Icons.phone_android, label: l10n.authFeatureMobile),
+              FeaturePill(icon: Icons.web, label: l10n.authFeatureWeb),
+              FeaturePill(icon: Icons.desktop_windows, label: l10n.authFeatureDesktop),
             ],
           ),
         ],

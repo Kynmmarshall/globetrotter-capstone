@@ -1,0 +1,107 @@
+{
+  "@@locale": "en",
+
+  "appTitle": "trip_io",
+  "@appTitle": {},
+
+  "authLoginTitle": "Log In",
+  "authRegisterTitle": "Register",
+  "authLoginSubtitle": "Sign in to continue planning and managing your trips.",
+  "authRegisterSubtitle": "Create your account to save itineraries and get recommendations.",
+  "authHidePassword": "Hide password",
+  "authShowPassword": "Show password",
+  "authEmailLabel": "Email",
+  "authEmailHelper": "We use this for account contact and profile info",
+  "authEmailRequired": "Email is required",
+  "authEmailInvalid": "Enter a valid email address",
+  "authUsernameLabel": "Username",
+  "authUsernameHelper": "This is your account login name",
+  "authUsernameRequired": "Username is required",
+  "authPasswordLabel": "Password",
+  "authPasswordRequired": "Password is required",
+  "authConfirmPasswordLabel": "Confirm password",
+  "authConfirmPasswordRequired": "Please confirm your password",
+  "authPasswordsMismatch": "Passwords do not match",
+  "authLoginTip": "Tip: use the correct username and password you used in your account creation.",
+  "authLoginButton": "Login",
+  "authCreateAccountButton": "Create account",
+  "authToggleToRegister": "No account? Register",
+  "authToggleToLogin": "Already have an account? Login",
+  "authTaglineTitle": "Plan faster. Travel smarter.",
+  "authTaglineSubtitle": "Search destinations, create itineraries, and keep your account synced across mobile, web, and Windows.",
+  "authFeatureMobile": "Mobile ready",
+  "authFeatureWeb": "Web ready",
+  "authFeatureDesktop": "Desktop ready",
+
+  "navDestinations": "Destinations",
+  "navRecommendations": "Recommendations",
+  "navItineraries": "Itineraries",
+  "navProfile": "Profile",
+
+  "destinationsTitle": "Yaoundé Destinations",
+  "destinationsSubtitle": "Search Cameroon's capital for landmarks, culture and nature spots.",
+  "destinationsSearchHint": "Search destinations by name or tag",
+  "searchButton": "Search",
+  "destinationsEmpty": "No destinations found.",
+
+  "recommendationsTitle": "Picked for you",
+  "recommendationsSubtitle": "A quick shortlist of Yaoundé spots worth adding to your itinerary.",
+  "recommendationsErrorMessage": "Could not load recommendations.\n{error}",
+  "@recommendationsErrorMessage": {
+    "placeholders": { "error": { "type": "String" } }
+  },
+  "recommendationsEmptyTitle": "No recommendations yet",
+  "recommendationsEmptySubtitle": "Browse destinations and we'll start suggesting spots for you.",
+
+  "itinerariesFormMissing": "Add a title and pick at least one destination.",
+  "itineraryCreatedSnackbar": "Itinerary created.",
+  "itinerariesPlanTitle": "Plan a new itinerary",
+  "itineraryTitleLabel": "Itinerary title",
+  "itineraryTitleHint": "My Yaoundé weekend",
+  "destinationsLabel": "Destinations",
+  "noDestinationsAvailable": "No destinations available yet.",
+  "createItineraryButton": "Create Itinerary",
+  "itinerariesErrorMessage": "Could not load itineraries.\n{error}",
+  "@itinerariesErrorMessage": {
+    "placeholders": { "error": { "type": "String" } }
+  },
+  "itinerariesEmptyTitle": "No itineraries yet",
+  "itinerariesEmptySubtitle": "Pick a few destinations above and create your first plan.",
+  "yourItinerariesTitle": "Your itineraries",
+  "destinationsLoadError": "Could not load destinations.\n{error}",
+  "@destinationsLoadError": {
+    "placeholders": { "error": { "type": "String" } }
+  },
+
+  "memberSinceDevice": "Member since this device",
+  "memberSince": "Member since {date}",
+  "@memberSince": {
+    "placeholders": { "date": { "type": "String" } }
+  },
+  "basedInYaounde": "Based in Yaoundé, Cameroon",
+  "itinerariesStatLabel": "Itineraries",
+  "regionStatLabel": "Region",
+  "featuredSpotsStatLabel": "Featured spots",
+  "aboutMeTitle": "About me",
+  "bioHint": "Tell fellow travellers a bit about yourself...",
+  "saveButton": "Save",
+  "bioUpdatedSnackbar": "Bio updated.",
+  "signedInAs": "Signed in as {username}",
+  "@signedInAs": {
+    "placeholders": { "username": { "type": "String" } }
+  },
+  "unknownUser": "unknown",
+  "logoutButton": "Logout",
+  "travellerFallback": "Traveller",
+  "couldNotPickImage": "Could not pick image: {error}",
+  "@couldNotPickImage": {
+    "placeholders": { "error": { "type": "String" } }
+  },
+  "languageLabel": "Language",
+  "languageEnglish": "English",
+  "languageFrench": "French",
+
+  "sessionExpiredTitle": "Your session has expired",
+  "sessionExpiredSubtitle": "Please sign in again to continue.",
+  "signInAgainButton": "Sign in again"
+}

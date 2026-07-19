@@ -4,6 +4,8 @@ import 'dart:ui';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:intl/intl.dart';
+import 'package:trip_io/l10n/gen/app_localizations.dart';
 import 'package:trip_io/models/models.dart';
 import 'package:trip_io/services/session_controller.dart';
 
@@ -17,10 +19,6 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
-  static const _months = [
-    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
-  ];
-
   late final TextEditingController _bioController;
   late Future<List<Itinerary>> _itinerariesFuture;
   bool _savingBio = false;
@@ -51,12 +49,13 @@ class _ProfilePageState extends State<ProfilePage> {
     return (parts[0][0] + parts[1][0]).toUpperCase();
   }
 
-  String _formatMemberSince() {
+  String _formatMemberSince(BuildContext context, AppLocalizations l10n) {
     final date = widget.session.memberSince;
     if (date == null) {
-      return 'Member since this device';
+      return l10n.memberSinceDevice;
     }
-    return 'Member since ${_months[date.month - 1]} ${date.year}';
+    final localeName = Localizations.localeOf(context).languageCode;
+    return l10n.memberSince(DateFormat.yMMM(localeName).format(date));
   }
 
   Future<void> _pickAvatar() async {
@@ -68,7 +67,9 @@ class _ProfilePageState extends State<ProfilePage> {
       }
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Could not pick image: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppLocalizations.of(context)!.couldNotPickImage(e.toString()))),
+      );
     } finally {
       if (mounted) setState(() => _pickingAvatar = false);
     }
@@ -79,7 +80,9 @@ class _ProfilePageState extends State<ProfilePage> {
     try {
       await widget.session.updateBio(_bioController.text.trim());
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Bio updated.')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppLocalizations.of(context)!.bioUpdatedSnackbar)),
+      );
     } finally {
       if (mounted) setState(() => _savingBio = false);
     }
@@ -172,8 +175,48 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
+  Widget _buildLanguageSwitcher(BuildContext context, AppLocalizations l10n) {
+    final effective = (widget.session.locale?.languageCode ?? Localizations.localeOf(context).languageCode) == 'fr'
+        ? 'fr'
+        : 'en';
+    final colors = Theme.of(context).colorScheme;
+    return _glassPanel(
+      borderRadius: BorderRadius.circular(22),
+      child: Row(
+        children: [
+          const Icon(Icons.language, color: Colors.white70, size: 20),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              l10n.languageLabel,
+              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 15),
+            ),
+          ),
+          SegmentedButton<String>(
+            segments: [
+              ButtonSegment(value: 'en', label: Text(l10n.languageEnglish)),
+              ButtonSegment(value: 'fr', label: Text(l10n.languageFrench)),
+            ],
+            selected: {effective},
+            onSelectionChanged: (selection) {
+              widget.session.setLocale(Locale(selection.first));
+            },
+            style: SegmentedButton.styleFrom(
+              backgroundColor: Colors.white.withValues(alpha: 0.08),
+              foregroundColor: Colors.white70,
+              selectedForegroundColor: Colors.white,
+              selectedBackgroundColor: colors.primary.withValues(alpha: 0.85),
+              side: BorderSide(color: Colors.white.withValues(alpha: 0.2)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: ConstrainedBox(
@@ -188,7 +231,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   _buildAvatar(context),
                   const SizedBox(height: 14),
                   Text(
-                    widget.session.username ?? 'Traveller',
+                    widget.session.username ?? l10n.travellerFallback,
                     style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 20),
                   ),
                   if ((widget.session.email ?? '').isNotEmpty) ...[
@@ -201,8 +244,8 @@ class _ProfilePageState extends State<ProfilePage> {
                     runSpacing: 8,
                     alignment: WrapAlignment.center,
                     children: [
-                      _buildInfoPill(Icons.calendar_today, _formatMemberSince()),
-                      _buildInfoPill(Icons.location_on, 'Based in Yaoundé, Cameroon'),
+                      _buildInfoPill(Icons.calendar_today, _formatMemberSince(context, l10n)),
+                      _buildInfoPill(Icons.location_on, l10n.basedInYaounde),
                     ],
                   ),
                   const SizedBox(height: 18),
@@ -216,13 +259,13 @@ class _ProfilePageState extends State<ProfilePage> {
                           final count = snapshot.data?.length;
                           return _buildStatTile(
                             icon: Icons.map,
-                            label: 'Itineraries',
+                            label: l10n.itinerariesStatLabel,
                             value: count?.toString() ?? '—',
                           );
                         },
                       ),
-                      _buildStatTile(icon: Icons.explore, label: 'Region', value: 'Yaoundé'),
-                      _buildStatTile(icon: Icons.favorite, label: 'Featured spots', value: '4'),
+                      _buildStatTile(icon: Icons.explore, label: l10n.regionStatLabel, value: 'Yaoundé'),
+                      _buildStatTile(icon: Icons.favorite, label: l10n.featuredSpotsStatLabel, value: '4'),
                     ],
                   ),
                 ],
@@ -234,9 +277,9 @@ class _ProfilePageState extends State<ProfilePage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'About me',
-                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 15),
+                  Text(
+                    l10n.aboutMeTitle,
+                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 15),
                   ),
                   const SizedBox(height: 10),
                   TextField(
@@ -245,7 +288,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     style: const TextStyle(color: Colors.white),
                     cursorColor: Colors.white,
                     decoration: InputDecoration(
-                      hintText: 'Tell fellow travellers a bit about yourself...',
+                      hintText: l10n.bioHint,
                       hintStyle: const TextStyle(color: Colors.white54),
                       filled: true,
                       fillColor: Colors.white.withValues(alpha: 0.08),
@@ -275,12 +318,14 @@ class _ProfilePageState extends State<ProfilePage> {
                               child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                             )
                           : const Icon(Icons.check, size: 18),
-                      label: const Text('Save'),
+                      label: Text(l10n.saveButton),
                     ),
                   ),
                 ],
               ),
             ),
+            const SizedBox(height: 16),
+            _buildLanguageSwitcher(context, l10n),
             const SizedBox(height: 16),
             _glassPanel(
               borderRadius: BorderRadius.circular(22),
@@ -288,7 +333,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 children: [
                   Expanded(
                     child: Text(
-                      'Signed in as ${widget.session.username ?? 'unknown'}',
+                      l10n.signedInAs(widget.session.username ?? l10n.unknownUser),
                       style: const TextStyle(color: Colors.white70),
                     ),
                   ),
@@ -299,7 +344,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       side: BorderSide(color: Colors.white.withValues(alpha: 0.4)),
                     ),
                     icon: const Icon(Icons.logout, size: 18),
-                    label: const Text('Logout'),
+                    label: Text(l10n.logoutButton),
                   ),
                 ],
               ),

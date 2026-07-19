@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'package:trip_io/l10n/gen/app_localizations.dart';
 import 'package:trip_io/services/session_controller.dart';
 import 'package:trip_io/screens/auth_screen.dart';
 import 'package:trip_io/screens/dashboard_screen.dart';
@@ -36,6 +37,9 @@ class _TripIoAppState extends State<TripIoApp> {
           title: 'trip_io',
           debugShowCheckedModeBanner: false,
           theme: AppTheme.theme,
+          locale: _session.locale,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           home: _buildHome(),
         );
       },

@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart' show ChangeNotifier;
+import 'package:flutter/widgets.dart' show Locale;
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:trip_io/services/api_client.dart';
@@ -11,6 +12,7 @@ class SessionController extends ChangeNotifier {
   static const _avatarPathKey = 'gt_avatar_path';
   static const _bioKey = 'gt_bio';
   static const _memberSinceKey = 'gt_member_since';
+  static const _localeKey = 'gt_locale';
 
   bool _ready = false;
   bool _loading = false;
@@ -21,6 +23,7 @@ class SessionController extends ChangeNotifier {
   String? _avatarPath;
   String? _bio;
   DateTime? _memberSince;
+  Locale? _locale;
 
   bool get ready => _ready;
   bool get isLoading => _loading;
@@ -31,6 +34,8 @@ class SessionController extends ChangeNotifier {
   String? get avatarPath => _avatarPath;
   String? get bio => _bio;
   DateTime? get memberSince => _memberSince;
+  // Null means "follow the device's system language".
+  Locale? get locale => _locale;
 
   void clearError() {
     _error = null;
@@ -46,7 +51,20 @@ class SessionController extends ChangeNotifier {
     _bio = prefs.getString(_bioKey);
     final memberSinceRaw = prefs.getString(_memberSinceKey);
     _memberSince = memberSinceRaw != null ? DateTime.tryParse(memberSinceRaw) : null;
+    final localeCode = prefs.getString(_localeKey);
+    _locale = localeCode != null ? Locale(localeCode) : null;
     _ready = true;
+    notifyListeners();
+  }
+
+  Future<void> setLocale(Locale? locale) async {
+    final prefs = await SharedPreferences.getInstance();
+    if (locale == null) {
+      await prefs.remove(_localeKey);
+    } else {
+      await prefs.setString(_localeKey, locale.languageCode);
+    }
+    _locale = locale;
     notifyListeners();
   }
 
