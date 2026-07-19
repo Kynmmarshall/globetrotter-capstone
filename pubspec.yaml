@@ -10,6 +10,7 @@ dependencies:
   flutter:
     sdk: flutter
   http: ^1.2.2
+  image_picker: ^1.2.3
   shared_preferences: ^2.3.2
 
 dev_dependencies:
@@ -38,5 +39,4 @@ flutter:
   uses-material-design: true
   assets:
     - assets/backgrounds/
-    - assets/destinations/
     - assets/logo.png

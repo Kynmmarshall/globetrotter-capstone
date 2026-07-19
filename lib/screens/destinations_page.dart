@@ -2,7 +2,7 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:trip_io/models/models.dart';
-import 'package:trip_io/models/yaounde_spot.dart';
+import 'package:trip_io/services/api_client.dart';
 import 'package:trip_io/services/session_controller.dart';
 import 'package:trip_io/widgets/feature_pill.dart';
 
@@ -17,11 +17,13 @@ class DestinationsPage extends StatefulWidget {
 
 class _DestinationsPageState extends State<DestinationsPage> {
   final TextEditingController _searchController = TextEditingController();
+  late Future<List<Destination>> _featuredFuture;
   late Future<List<Destination>> _future;
 
   @override
   void initState() {
     super.initState();
+    _featuredFuture = widget.session.destinations();
     _future = widget.session.destinations();
   }
 
@@ -59,6 +61,23 @@ class _DestinationsPageState extends State<DestinationsPage> {
     );
   }
 
+  Widget _buildTagChip(String label) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.14),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.24)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+        child: Text(
+          label,
+          style: const TextStyle(color: Colors.white, fontSize: 10.5, fontWeight: FontWeight.w600),
+        ),
+      ),
+    );
+  }
+
   Widget _glassPanel({required Widget child, EdgeInsets? padding, BorderRadius? borderRadius}) {
     final radius = borderRadius ?? BorderRadius.circular(18);
     return ClipRRect(
@@ -78,7 +97,28 @@ class _DestinationsPageState extends State<DestinationsPage> {
     );
   }
 
-  Widget _buildFeaturedCard(BuildContext context, YaoundeSpot spot) {
+  Widget _buildFeaturedImage(String url) {
+    return Image.network(
+      url,
+      fit: BoxFit.cover,
+      loadingBuilder: (context, child, progress) {
+        if (progress == null) return child;
+        return const ColoredBox(
+          color: Colors.white10,
+          child: Center(child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white70)),
+        );
+      },
+      errorBuilder: (context, error, stackTrace) {
+        return const ColoredBox(
+          color: Colors.white10,
+          child: Center(child: Icon(Icons.image_not_supported, color: Colors.white38, size: 32)),
+        );
+      },
+    );
+  }
+
+  Widget _buildFeaturedCard(BuildContext context, Destination spot) {
+    final imageUrl = ApiClient.resolveAssetUrl(spot.imageUrl);
     return _glassPanel(
       borderRadius: BorderRadius.circular(20),
       child: Column(
@@ -86,7 +126,12 @@ class _DestinationsPageState extends State<DestinationsPage> {
         children: [
           AspectRatio(
             aspectRatio: 4 / 3,
-            child: Image.asset(spot.imageAsset, fit: BoxFit.cover),
+            child: imageUrl != null
+                ? _buildFeaturedImage(imageUrl)
+                : const ColoredBox(
+                    color: Colors.white10,
+                    child: Center(child: Icon(Icons.place, color: Colors.white38, size: 32)),
+                  ),
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
@@ -107,7 +152,7 @@ class _DestinationsPageState extends State<DestinationsPage> {
                     const SizedBox(width: 4),
                     Expanded(
                       child: Text(
-                        spot.location,
+                        spot.location ?? spot.country,
                         style: const TextStyle(color: Colors.white70, fontSize: 12.5),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -115,13 +160,23 @@ class _DestinationsPageState extends State<DestinationsPage> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  spot.description,
-                  style: TextStyle(color: Colors.white.withValues(alpha: 0.88), fontSize: 13, height: 1.35),
-                  maxLines: 3,
-                  overflow: TextOverflow.ellipsis,
-                ),
+                if ((spot.description ?? '').isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    spot.description!,
+                    style: TextStyle(color: Colors.white.withValues(alpha: 0.88), fontSize: 13, height: 1.35),
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+                if (spot.tags.isNotEmpty) ...[
+                  const SizedBox(height: 10),
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
+                    children: spot.tags.map((t) => _buildTagChip(t)).toList(),
+                  ),
+                ],
               ],
             ),
           ),
@@ -141,17 +196,38 @@ class _DestinationsPageState extends State<DestinationsPage> {
           subtitle: 'Must-see landmarks in Cameroon\'s capital, hand-picked for your itinerary.',
         ),
         const SizedBox(height: 14),
-        GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: crossAxisCount,
-            childAspectRatio: 0.72,
-            crossAxisSpacing: 14,
-            mainAxisSpacing: 14,
-          ),
-          itemCount: yaoundeSpots.length,
-          itemBuilder: (context, index) => _buildFeaturedCard(context, yaoundeSpots[index]),
+        FutureBuilder<List<Destination>>(
+          future: _featuredFuture,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Padding(
+                padding: EdgeInsets.symmetric(vertical: 24),
+                child: Center(child: CircularProgressIndicator()),
+              );
+            }
+            if (snapshot.hasError) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 24),
+                child: Text('Error: ${snapshot.error}', style: const TextStyle(color: Colors.white70)),
+              );
+            }
+            final featured = (snapshot.data ?? <Destination>[]).where((d) => d.isFeatured).toList();
+            if (featured.isEmpty) {
+              return const Text('No featured spots yet.', style: TextStyle(color: Colors.white70));
+            }
+            return GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: crossAxisCount,
+                childAspectRatio: 0.63,
+                crossAxisSpacing: 14,
+                mainAxisSpacing: 14,
+              ),
+              itemCount: featured.length,
+              itemBuilder: (context, index) => _buildFeaturedCard(context, featured[index]),
+            );
+          },
         ),
       ],
     );
@@ -184,6 +260,7 @@ class _DestinationsPageState extends State<DestinationsPage> {
   }
 
   Widget _buildResultCard(BuildContext context, Destination d) {
+    final imageUrl = ApiClient.resolveAssetUrl(d.imageUrl);
     return _glassPanel(
       padding: const EdgeInsets.all(14),
       child: Column(
@@ -191,9 +268,17 @@ class _DestinationsPageState extends State<DestinationsPage> {
         children: [
           Row(
             children: [
-              const CircleAvatar(
-                backgroundColor: Colors.white24,
-                child: Icon(Icons.place, color: Colors.white),
+              ClipOval(
+                child: SizedBox(
+                  width: 40,
+                  height: 40,
+                  child: imageUrl != null
+                      ? _buildFeaturedImage(imageUrl)
+                      : const ColoredBox(
+                          color: Colors.white24,
+                          child: Icon(Icons.place, color: Colors.white, size: 20),
+                        ),
+                ),
               ),
               const SizedBox(width: 10),
               Expanded(

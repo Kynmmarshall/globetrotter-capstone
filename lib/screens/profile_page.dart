@@ -1,30 +1,331 @@
+import 'dart:io' show File;
+import 'dart:ui';
+
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:trip_io/models/models.dart';
 import 'package:trip_io/services/session_controller.dart';
 
-class ProfilePage extends StatelessWidget {
+class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key, required this.session});
 
   final SessionController session;
 
   @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Card(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Signed in as: ${session.username ?? 'unknown'}', style: Theme.of(context).textTheme.titleMedium),
-              const SizedBox(height: 16),
-              FilledButton.icon(
-                onPressed: () => session.logout(),
-                icon: const Icon(Icons.logout),
-                label: const Text('Logout'),
-              ),
-            ],
+  State<ProfilePage> createState() => _ProfilePageState();
+}
+
+class _ProfilePageState extends State<ProfilePage> {
+  static const _months = [
+    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+  ];
+
+  late final TextEditingController _bioController;
+  late Future<List<Itinerary>> _itinerariesFuture;
+  bool _savingBio = false;
+  bool _pickingAvatar = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _bioController = TextEditingController(text: widget.session.bio ?? '');
+    _itinerariesFuture = widget.session.itineraries();
+  }
+
+  @override
+  void dispose() {
+    _bioController.dispose();
+    super.dispose();
+  }
+
+  String _initials() {
+    final username = widget.session.username?.trim() ?? '';
+    if (username.isEmpty) {
+      return '?';
+    }
+    final parts = username.split(RegExp(r'[\s._-]+')).where((e) => e.isNotEmpty).toList();
+    if (parts.length == 1) {
+      return parts.first.substring(0, parts.first.length >= 2 ? 2 : 1).toUpperCase();
+    }
+    return (parts[0][0] + parts[1][0]).toUpperCase();
+  }
+
+  String _formatMemberSince() {
+    final date = widget.session.memberSince;
+    if (date == null) {
+      return 'Member since this device';
+    }
+    return 'Member since ${_months[date.month - 1]} ${date.year}';
+  }
+
+  Future<void> _pickAvatar() async {
+    setState(() => _pickingAvatar = true);
+    try {
+      final picked = await ImagePicker().pickImage(source: ImageSource.gallery, maxWidth: 900, imageQuality: 85);
+      if (picked != null) {
+        await widget.session.updateAvatarPath(picked.path);
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Could not pick image: $e')));
+    } finally {
+      if (mounted) setState(() => _pickingAvatar = false);
+    }
+  }
+
+  Future<void> _saveBio() async {
+    setState(() => _savingBio = true);
+    try {
+      await widget.session.updateBio(_bioController.text.trim());
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Bio updated.')));
+    } finally {
+      if (mounted) setState(() => _savingBio = false);
+    }
+  }
+
+  Widget _glassPanel({required Widget child, EdgeInsets? padding, BorderRadius? borderRadius}) {
+    final radius = borderRadius ?? BorderRadius.circular(18);
+    return ClipRRect(
+      borderRadius: radius,
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
+        child: Container(
+          padding: padding ?? const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.12),
+            borderRadius: radius,
+            border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
           ),
+          child: child,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAvatarImage() {
+    final path = widget.session.avatarPath;
+    if (path == null || path.isEmpty) {
+      return Center(
+        child: Text(
+          _initials(),
+          style: const TextStyle(fontSize: 30, color: Colors.white, fontWeight: FontWeight.w800),
+        ),
+      );
+    }
+    if (kIsWeb) {
+      return Image.network(path, fit: BoxFit.cover);
+    }
+    return Image.file(File(path), fit: BoxFit.cover);
+  }
+
+  Widget _buildAvatar(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return GestureDetector(
+      onTap: _pickingAvatar ? null : _pickAvatar,
+      child: Stack(
+        children: [
+          Container(
+            width: 96,
+            height: 96,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: LinearGradient(colors: [colors.primary, colors.tertiary]),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.6), width: 3),
+            ),
+            child: ClipOval(
+              child: _pickingAvatar
+                  ? const Center(child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                  : _buildAvatarImage(),
+            ),
+          ),
+          Positioned(
+            bottom: 0,
+            right: 0,
+            child: Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white,
+                border: Border.all(color: colors.primary, width: 2),
+              ),
+              child: Icon(Icons.camera_alt, size: 15, color: colors.primary),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatTile({required IconData icon, required String label, required String value}) {
+    return Expanded(
+      child: Column(
+        children: [
+          Icon(icon, color: Colors.white70, size: 20),
+          const SizedBox(height: 6),
+          Text(value, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 16)),
+          const SizedBox(height: 2),
+          Text(label, style: const TextStyle(color: Colors.white60, fontSize: 11.5), textAlign: TextAlign.center),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 640),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _glassPanel(
+              borderRadius: BorderRadius.circular(22),
+              child: Column(
+                children: [
+                  _buildAvatar(context),
+                  const SizedBox(height: 14),
+                  Text(
+                    widget.session.username ?? 'Traveller',
+                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 20),
+                  ),
+                  if ((widget.session.email ?? '').isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Text(widget.session.email!, style: const TextStyle(color: Colors.white70, fontSize: 13)),
+                  ],
+                  const SizedBox(height: 10),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    alignment: WrapAlignment.center,
+                    children: [
+                      _buildInfoPill(Icons.calendar_today, _formatMemberSince()),
+                      _buildInfoPill(Icons.location_on, 'Based in Yaoundé, Cameroon'),
+                    ],
+                  ),
+                  const SizedBox(height: 18),
+                  const Divider(color: Colors.white24, height: 1),
+                  const SizedBox(height: 14),
+                  Row(
+                    children: [
+                      FutureBuilder<List<Itinerary>>(
+                        future: _itinerariesFuture,
+                        builder: (context, snapshot) {
+                          final count = snapshot.data?.length;
+                          return _buildStatTile(
+                            icon: Icons.map,
+                            label: 'Itineraries',
+                            value: count?.toString() ?? '—',
+                          );
+                        },
+                      ),
+                      _buildStatTile(icon: Icons.explore, label: 'Region', value: 'Yaoundé'),
+                      _buildStatTile(icon: Icons.favorite, label: 'Featured spots', value: '4'),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            _glassPanel(
+              borderRadius: BorderRadius.circular(22),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'About me',
+                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 15),
+                  ),
+                  const SizedBox(height: 10),
+                  TextField(
+                    controller: _bioController,
+                    maxLines: 3,
+                    style: const TextStyle(color: Colors.white),
+                    cursorColor: Colors.white,
+                    decoration: InputDecoration(
+                      hintText: 'Tell fellow travellers a bit about yourself...',
+                      hintStyle: const TextStyle(color: Colors.white54),
+                      filled: true,
+                      fillColor: Colors.white.withValues(alpha: 0.08),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.2)),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.2)),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: Colors.white),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: FilledButton.icon(
+                      onPressed: _savingBio ? null : _saveBio,
+                      icon: _savingBio
+                          ? const SizedBox(
+                              width: 14,
+                              height: 14,
+                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                            )
+                          : const Icon(Icons.check, size: 18),
+                      label: const Text('Save'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            _glassPanel(
+              borderRadius: BorderRadius.circular(22),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'Signed in as ${widget.session.username ?? 'unknown'}',
+                      style: const TextStyle(color: Colors.white70),
+                    ),
+                  ),
+                  OutlinedButton.icon(
+                    onPressed: () => widget.session.logout(),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.white,
+                      side: BorderSide(color: Colors.white.withValues(alpha: 0.4)),
+                    ),
+                    icon: const Icon(Icons.logout, size: 18),
+                    label: const Text('Logout'),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInfoPill(IconData icon, String label) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 14, color: Colors.white70),
+            const SizedBox(width: 6),
+            Text(label, style: const TextStyle(color: Colors.white, fontSize: 12)),
+          ],
         ),
       ),
     );

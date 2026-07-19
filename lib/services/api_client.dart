@@ -31,6 +31,23 @@ class ApiClient {
     return Uri.parse('$normalizedBase$path').replace(queryParameters: queryParameters);
   }
 
+  /// Resolves a backend-relative path (e.g. an `image_url` like
+  /// `/static/destinations/x.png`) into an absolute URL against the same
+  /// API host the app is configured to talk to. Already-absolute URLs are
+  /// returned unchanged.
+  static String? resolveAssetUrl(String? path) {
+    if (path == null || path.isEmpty) {
+      return null;
+    }
+    if (path.startsWith('http://') || path.startsWith('https://')) {
+      return path;
+    }
+    final base = _defaultBaseUrl();
+    final normalizedBase = base.endsWith('/') ? base.substring(0, base.length - 1) : base;
+    final normalizedPath = path.startsWith('/') ? path : '/$path';
+    return '$normalizedBase$normalizedPath';
+  }
+
   Future<String> register(String username, String password, {String? email}) async {
     final response = await _client.post(
       _uri('/register'),
