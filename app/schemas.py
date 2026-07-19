@@ -15,6 +15,9 @@ class Destination(BaseModel):
     name: str
     country: Optional[str]
     tags: Optional[List[str]] = []
+    image_url: Optional[str] = None
+    description: Optional[str] = None
+    location: Optional[str] = None
 
 class Itinerary(BaseModel):
     id: Optional[str]

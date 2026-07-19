@@ -1,9 +1,25 @@
+from pathlib import Path
+
 from fastapi import FastAPI, HTTPException, Depends
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+
 from . import crud
 from .schemas import UserCreate, Token, Itinerary, Destination, ItineraryCreate
 from .auth import create_access_token, get_current_user
 
 app = FastAPI(title="GlobeTrotter Phase1")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+_static_dir = Path(__file__).resolve().parents[1] / "static"
+_static_dir.mkdir(parents=True, exist_ok=True)
+app.mount("/static", StaticFiles(directory=_static_dir), name="static")
 
 
 @app.post("/register", response_model=Token)
