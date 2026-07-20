@@ -1,13 +1,14 @@
 import 'dart:convert';
 
-import 'package:flutter/foundation.dart' show kIsWeb, defaultTargetPlatform, TargetPlatform;
+import 'package:flutter/foundation.dart'
+    show kIsWeb, defaultTargetPlatform, TargetPlatform;
 import 'package:http/http.dart' as http;
 import 'package:trip_io/models/models.dart';
 
 class ApiClient {
   ApiClient({String? baseUrl, http.Client? client})
-      : _baseUrl = (baseUrl ?? _defaultBaseUrl()).trim(),
-        _client = client ?? http.Client();
+    : _baseUrl = (baseUrl ?? _defaultBaseUrl()).trim(),
+      _client = client ?? http.Client();
 
   final String _baseUrl;
   final http.Client _client;
@@ -27,8 +28,12 @@ class ApiClient {
   }
 
   Uri _uri(String path, [Map<String, String>? queryParameters]) {
-    final normalizedBase = _baseUrl.endsWith('/') ? _baseUrl.substring(0, _baseUrl.length - 1) : _baseUrl;
-    return Uri.parse('$normalizedBase$path').replace(queryParameters: queryParameters);
+    final normalizedBase = _baseUrl.endsWith('/')
+        ? _baseUrl.substring(0, _baseUrl.length - 1)
+        : _baseUrl;
+    return Uri.parse(
+      '$normalizedBase$path',
+    ).replace(queryParameters: queryParameters);
   }
 
   /// Resolves a backend-relative path (e.g. an `image_url` like
@@ -43,12 +48,18 @@ class ApiClient {
       return path;
     }
     final base = _defaultBaseUrl();
-    final normalizedBase = base.endsWith('/') ? base.substring(0, base.length - 1) : base;
+    final normalizedBase = base.endsWith('/')
+        ? base.substring(0, base.length - 1)
+        : base;
     final normalizedPath = path.startsWith('/') ? path : '/$path';
     return '$normalizedBase$normalizedPath';
   }
 
-  Future<String> register(String username, String password, {String? email}) async {
+  Future<String> register(
+    String username,
+    String password, {
+    String? email,
+  }) async {
     final response = await _client.post(
       _uri('/register'),
       headers: {'Content-Type': 'application/json'},
@@ -71,10 +82,17 @@ class ApiClient {
   }
 
   Future<List<Destination>> getDestinations({String? query}) async {
-    final response = await _client.get(_uri('/destinations', query != null && query.isNotEmpty ? {'q': query} : null));
+    final response = await _client.get(
+      _uri(
+        '/destinations',
+        query != null && query.isNotEmpty ? {'q': query} : null,
+      ),
+    );
     _throwIfNotOk(response);
     final decoded = jsonDecode(response.body) as List<dynamic>;
-    return decoded.map((e) => Destination.fromJson(e as Map<String, dynamic>)).toList();
+    return decoded
+        .map((e) => Destination.fromJson(e as Map<String, dynamic>))
+        .toList();
   }
 
   Future<List<Destination>> getRecommendations(String token) async {
@@ -84,20 +102,34 @@ class ApiClient {
     );
     _throwIfNotOk(response);
     final decoded = jsonDecode(response.body) as List<dynamic>;
-    return decoded.map((e) => Destination.fromJson(e as Map<String, dynamic>)).toList();
+    return decoded
+        .map((e) => Destination.fromJson(e as Map<String, dynamic>))
+        .toList();
   }
 
-  Future<Itinerary> createItinerary(String token, String title, List<String> destinations) async {
+  Future<Itinerary> createItinerary(
+    String token,
+    String title,
+    List<String> destinations, {
+    List<ScheduleEntry>? schedule,
+  }) async {
     final response = await _client.post(
       _uri('/itineraries'),
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',
       },
-      body: jsonEncode({'title': title, 'destinations': destinations}),
+      body: jsonEncode({
+        'title': title,
+        'destinations': destinations,
+        if (schedule != null)
+          'schedule': schedule.map((e) => e.toJson()).toList(),
+      }),
     );
     _throwIfNotOk(response);
-    return Itinerary.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
+    return Itinerary.fromJson(
+      jsonDecode(response.body) as Map<String, dynamic>,
+    );
   }
 
   Future<List<Itinerary>> getItineraries(String token) async {
@@ -107,7 +139,9 @@ class ApiClient {
     );
     _throwIfNotOk(response);
     final decoded = jsonDecode(response.body) as List<dynamic>;
-    return decoded.map((e) => Itinerary.fromJson(e as Map<String, dynamic>)).toList();
+    return decoded
+        .map((e) => Itinerary.fromJson(e as Map<String, dynamic>))
+        .toList();
   }
 
   String _extractToken(http.Response response) {

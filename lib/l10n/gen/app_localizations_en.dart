@@ -193,6 +193,35 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String itineraryStartTime(String time) {
+    return 'Start time: $time';
+  }
+
+  @override
+  String itineraryAvailableTime(String duration) {
+    return 'Available time: $duration';
+  }
+
+  @override
+  String itineraryOverrunWarning(String extra, String minStop) {
+    return 'This plan needs about $extra more than you have available, so stops get $minStop min each at minimum.';
+  }
+
+  @override
+  String get itineraryPlanSectionTitle => 'Your plan';
+
+  @override
+  String itineraryStopsSummary(String count, String duration) {
+    return '$count stops · $duration total';
+  }
+
+  @override
+  String get itineraryNoSchedule => 'No timed plan for this itinerary yet.';
+
+  @override
+  String get itineraryTravelTime => 'Travel time';
+
+  @override
   String get memberSinceDevice => 'Member since this device';
 
   @override

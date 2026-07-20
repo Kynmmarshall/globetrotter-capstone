@@ -44,26 +44,65 @@ class Destination {
   }
 }
 
+/// A single timed stop in an auto-generated itinerary plan: visit
+/// [destinationId] from [start] to [end].
+class ScheduleEntry {
+  ScheduleEntry({
+    required this.destinationId,
+    required this.start,
+    required this.end,
+  });
+
+  final String destinationId;
+  final DateTime start;
+  final DateTime end;
+
+  Duration get duration => end.difference(start);
+
+  Map<String, dynamic> toJson() => {
+    'destination_id': destinationId,
+    'start': start.toIso8601String(),
+    'end': end.toIso8601String(),
+  };
+
+  static ScheduleEntry? fromJson(Map<String, dynamic> json) {
+    final start = DateTime.tryParse((json['start'] ?? '').toString());
+    final end = DateTime.tryParse((json['end'] ?? '').toString());
+    final destinationId = (json['destination_id'] ?? '').toString();
+    if (start == null || end == null || destinationId.isEmpty) {
+      return null;
+    }
+    return ScheduleEntry(destinationId: destinationId, start: start, end: end);
+  }
+}
+
 class Itinerary {
   Itinerary({
     required this.id,
     required this.user,
     required this.title,
     required this.destinations,
+    this.schedule = const [],
   });
 
   final String id;
   final String user;
   final String title;
   final List<String> destinations;
+  final List<ScheduleEntry> schedule;
 
   factory Itinerary.fromJson(Map<String, dynamic> json) {
+    final rawSchedule = json['schedule'] as List<dynamic>?;
     return Itinerary(
       id: (json['id'] ?? '').toString(),
       user: (json['user'] ?? '').toString(),
       title: (json['title'] ?? '').toString(),
       destinations: (json['destinations'] as List<dynamic>? ?? <dynamic>[])
           .map((e) => e.toString())
+          .toList(),
+      schedule: (rawSchedule ?? <dynamic>[])
+          .map((e) => ScheduleEntry.fromJson(e as Map<String, dynamic>))
+          .whereType<ScheduleEntry>()
           .toList(),
     );
   }

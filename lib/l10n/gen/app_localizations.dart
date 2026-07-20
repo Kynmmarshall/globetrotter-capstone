@@ -434,6 +434,48 @@ abstract class AppLocalizations {
   /// **'Could not load destinations.\n{error}'**
   String destinationsLoadError(String error);
 
+  /// No description provided for @itineraryStartTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Start time: {time}'**
+  String itineraryStartTime(String time);
+
+  /// No description provided for @itineraryAvailableTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Available time: {duration}'**
+  String itineraryAvailableTime(String duration);
+
+  /// No description provided for @itineraryOverrunWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'This plan needs about {extra} more than you have available, so stops get {minStop} min each at minimum.'**
+  String itineraryOverrunWarning(String extra, String minStop);
+
+  /// No description provided for @itineraryPlanSectionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your plan'**
+  String get itineraryPlanSectionTitle;
+
+  /// No description provided for @itineraryStopsSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} stops · {duration} total'**
+  String itineraryStopsSummary(String count, String duration);
+
+  /// No description provided for @itineraryNoSchedule.
+  ///
+  /// In en, this message translates to:
+  /// **'No timed plan for this itinerary yet.'**
+  String get itineraryNoSchedule;
+
+  /// No description provided for @itineraryTravelTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Travel time'**
+  String get itineraryTravelTime;
+
   /// No description provided for @memberSinceDevice.
   ///
   /// In en, this message translates to:

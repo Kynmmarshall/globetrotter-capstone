@@ -50,7 +50,9 @@ class SessionController extends ChangeNotifier {
     _avatarPath = prefs.getString(_avatarPathKey);
     _bio = prefs.getString(_bioKey);
     final memberSinceRaw = prefs.getString(_memberSinceKey);
-    _memberSince = memberSinceRaw != null ? DateTime.tryParse(memberSinceRaw) : null;
+    _memberSince = memberSinceRaw != null
+        ? DateTime.tryParse(memberSinceRaw)
+        : null;
     final localeCode = prefs.getString(_localeKey);
     _locale = localeCode != null ? Locale(localeCode) : null;
     _ready = true;
@@ -68,9 +70,17 @@ class SessionController extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> register(String username, String password, {String? email}) async {
+  Future<void> register(
+    String username,
+    String password, {
+    String? email,
+  }) async {
     await _runGuarded(() async {
-      final token = await ApiClient().register(username, password, email: email);
+      final token = await ApiClient().register(
+        username,
+        password,
+        email: email,
+      );
       await _saveAuth(token, username, email: email, isNewAccount: true);
     });
   }
@@ -118,12 +128,21 @@ class SessionController extends ChangeNotifier {
     return ApiClient().getRecommendations(token);
   }
 
-  Future<Itinerary> createItinerary(String title, List<String> destinations) async {
+  Future<Itinerary> createItinerary(
+    String title,
+    List<String> destinations, {
+    List<ScheduleEntry>? schedule,
+  }) async {
     final token = _token;
     if (token == null || token.isEmpty) {
       throw Exception('Not authenticated.');
     }
-    return ApiClient().createItinerary(token, title, destinations);
+    return ApiClient().createItinerary(
+      token,
+      title,
+      destinations,
+      schedule: schedule,
+    );
   }
 
   Future<List<Itinerary>> itineraries() async {
@@ -134,7 +153,12 @@ class SessionController extends ChangeNotifier {
     return ApiClient().getItineraries(token);
   }
 
-  Future<void> _saveAuth(String token, String username, {String? email, bool isNewAccount = false}) async {
+  Future<void> _saveAuth(
+    String token,
+    String username, {
+    String? email,
+    bool isNewAccount = false,
+  }) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_tokenKey, token);
     await prefs.setString(_usernameKey, username);

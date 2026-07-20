@@ -199,6 +199,36 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
+  String itineraryStartTime(String time) {
+    return 'Heure de départ : $time';
+  }
+
+  @override
+  String itineraryAvailableTime(String duration) {
+    return 'Temps disponible : $duration';
+  }
+
+  @override
+  String itineraryOverrunWarning(String extra, String minStop) {
+    return 'Ce plan nécessite environ $extra de plus que le temps disponible ; chaque arrêt dure donc au moins $minStop min.';
+  }
+
+  @override
+  String get itineraryPlanSectionTitle => 'Votre plan';
+
+  @override
+  String itineraryStopsSummary(String count, String duration) {
+    return '$count arrêts · $duration au total';
+  }
+
+  @override
+  String get itineraryNoSchedule =>
+      'Aucun plan chronométré pour cet itinéraire pour l\'instant.';
+
+  @override
+  String get itineraryTravelTime => 'Temps de trajet';
+
+  @override
   String get memberSinceDevice => 'Membre depuis cet appareil';
 
   @override

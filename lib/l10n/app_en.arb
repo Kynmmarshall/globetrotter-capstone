@@ -72,6 +72,25 @@
   "@destinationsLoadError": {
     "placeholders": { "error": { "type": "String" } }
   },
+  "itineraryStartTime": "Start time: {time}",
+  "@itineraryStartTime": {
+    "placeholders": { "time": { "type": "String" } }
+  },
+  "itineraryAvailableTime": "Available time: {duration}",
+  "@itineraryAvailableTime": {
+    "placeholders": { "duration": { "type": "String" } }
+  },
+  "itineraryOverrunWarning": "This plan needs about {extra} more than you have available, so stops get {minStop} min each at minimum.",
+  "@itineraryOverrunWarning": {
+    "placeholders": { "extra": { "type": "String" }, "minStop": { "type": "String" } }
+  },
+  "itineraryPlanSectionTitle": "Your plan",
+  "itineraryStopsSummary": "{count} stops · {duration} total",
+  "@itineraryStopsSummary": {
+    "placeholders": { "count": { "type": "String" }, "duration": { "type": "String" } }
+  },
+  "itineraryNoSchedule": "No timed plan for this itinerary yet.",
+  "itineraryTravelTime": "Travel time",
 
   "memberSinceDevice": "Member since this device",
   "memberSince": "Member since {date}",

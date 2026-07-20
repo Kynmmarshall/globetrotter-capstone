@@ -62,6 +62,13 @@
   "itinerariesEmptySubtitle": "Choisissez quelques destinations ci-dessus pour créer votre premier plan.",
   "yourItinerariesTitle": "Vos itinéraires",
   "destinationsLoadError": "Impossible de charger les destinations.\n{error}",
+  "itineraryStartTime": "Heure de départ : {time}",
+  "itineraryAvailableTime": "Temps disponible : {duration}",
+  "itineraryOverrunWarning": "Ce plan nécessite environ {extra} de plus que le temps disponible ; chaque arrêt dure donc au moins {minStop} min.",
+  "itineraryPlanSectionTitle": "Votre plan",
+  "itineraryStopsSummary": "{count} arrêts · {duration} au total",
+  "itineraryNoSchedule": "Aucun plan chronométré pour cet itinéraire pour l'instant.",
+  "itineraryTravelTime": "Temps de trajet",
 
   "memberSinceDevice": "Membre depuis cet appareil",
   "memberSince": "Membre depuis {date}",
