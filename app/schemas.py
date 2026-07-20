@@ -19,12 +19,19 @@ class Destination(BaseModel):
     description: Optional[str] = None
     location: Optional[str] = None
 
+class ScheduleItem(BaseModel):
+    destination_id: str
+    start: str
+    end: str
+
 class Itinerary(BaseModel):
     id: Optional[str]
     user: str
     title: str
     destinations: List[str]
+    schedule: Optional[List[ScheduleItem]] = None
 
 class ItineraryCreate(BaseModel):
     title: str
     destinations: List[str]
+    schedule: Optional[List[ScheduleItem]] = None
