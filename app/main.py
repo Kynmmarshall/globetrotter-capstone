@@ -60,3 +60,17 @@ def create_itinerary(itin: ItineraryCreate, user: str = Depends(get_current_user
 @app.get("/itineraries", response_model=list[Itinerary])
 def list_itineraries(user: str = Depends(get_current_user)):
     return crud.get_itineraries_for(user)
+
+
+# Mounted last (and most-specific-first) so none of these can shadow the
+# API routes above: Starlette matches routes in registration order, and a
+# mount at "/" would otherwise catch everything.
+_website_dir = Path(__file__).resolve().parents[1] / "website"
+_downloads_dir = _website_dir / "downloads"
+_webapp_dir = _website_dir / "webapp"
+_downloads_dir.mkdir(parents=True, exist_ok=True)
+_webapp_dir.mkdir(parents=True, exist_ok=True)
+
+app.mount("/downloads", StaticFiles(directory=_downloads_dir), name="downloads")
+app.mount("/app", StaticFiles(directory=_webapp_dir, html=True), name="webapp")
+app.mount("/", StaticFiles(directory=_website_dir, html=True), name="website")
