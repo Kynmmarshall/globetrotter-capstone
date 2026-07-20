@@ -1,3 +1,4 @@
+import os
 import time
 from typing import Optional
 import jwt
@@ -6,7 +7,7 @@ from fastapi import HTTPException, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
 pwd_context = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto")
-_secret = "dev-secret-change-me"
+_secret = os.getenv("JWT_SECRET", "dev-secret-change-me")
 _algo = "HS256"
 
 def _truncate_password(password: str, max_bytes: int = 72) -> str:
