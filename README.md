@@ -9,10 +9,24 @@ GlobeTrotter is a full-stack travel assistant that lets users search destination
 
 > **Course context:** This is the Phase 1 (Monolith) deliverable of a semester-long capstone (CS 4122) that progresses through Monolith → Microservices → Cloud Deployment → Resilience. The current architecture intentionally favors simplicity (a single API service, JSON-file storage) over scalability; later phases replace these with distributed, production-grade infrastructure.
 
+## Live Deployment
+
+The Phase 1 monolith is deployed on a VPS and reachable at **[https://trip-io.duckdns.org](https://trip-io.duckdns.org)**. Client builds default to this URL, so `flutter run`/release builds work against the real API out of the box with no configuration required.
+
+| Surface | URL | Notes |
+|---|---|---|
+| Marketing site + downloads | https://trip-io.duckdns.org | Landing page with Windows/Android download links |
+| Web app | https://trip-io.duckdns.org/app/ | The Flutter app running directly in the browser |
+| API | https://trip-io.duckdns.org | Same host, serves `/register`, `/login`, `/destinations`, etc. |
+| API docs (Swagger UI) | https://trip-io.duckdns.org/docs | Interactive request/response reference |
+| Windows download | https://trip-io.duckdns.org/downloads/trip_io_windows.exe | Packaged desktop build |
+| Android download | https://trip-io.duckdns.org/downloads/trip_io.apk | Installable APK |
+
 ---
 
 ## Table of Contents
 
+- [Live Deployment](#live-deployment)
 - [Architecture](#architecture)
 - [Repository Structure](#repository-structure)
 - [Prerequisites](#prerequisites)
@@ -96,7 +110,7 @@ globetrotter-capstone/
 
 ## Getting Started
 
-Clone the repository, then set up each project as described below. The backend must be running before the frontend can authenticate or fetch data.
+Clone the repository, then set up each project as described below. This is only needed for local development/testing — the [live deployment](#live-deployment) is already running and is what client builds talk to by default.
 
 ### Backend Setup
 
@@ -129,7 +143,13 @@ cd frontend
 flutter pub get
 ```
 
-Run on your platform of choice, pointing the client at the backend's base URL:
+With no arguments, the app defaults to the live deployment at `https://trip-io.duckdns.org`:
+
+```powershell
+flutter run -d chrome
+```
+
+To point the client at a local backend instead, override `API_BASE_URL`:
 
 ```powershell
 # Web (Chrome)
@@ -146,7 +166,7 @@ The backend URL can also be changed at runtime from the app's login screen, so `
 
 ## API Reference
 
-Base URL: `http://localhost:8000`
+Base URL: `https://trip-io.duckdns.org` (production) or `http://localhost:8000` (local dev)
 
 | Method | Path | Auth | Description |
 |---|---|---|---|
@@ -200,7 +220,7 @@ uvicorn app.main:app --port 8000
 
 | Define | Default | Purpose |
 |---|---|---|
-| `API_BASE_URL` | `http://localhost:8000` (web/desktop) or `http://10.0.2.2:8000` (Android) | Backend base URL, passed via `--dart-define` |
+| `API_BASE_URL` | `https://trip-io.duckdns.org` | Backend base URL, passed via `--dart-define`; override to `http://localhost:8000` (or `http://10.0.2.2:8000` on the Android emulator) for local dev |
 
 ## Testing
 

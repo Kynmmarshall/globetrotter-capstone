@@ -13,6 +13,13 @@ Planned for **Phase 2: Microservices** — see [README → Roadmap](README.md#ro
 - Replace direct in-process calls with REST (sync) and message-queue (async) inter-service communication.
 - Give each service its own datastore instead of a shared JSON file.
 
+## [0.2.0] - 2026-07-21 — Deployed to production VPS
+
+- Deployed the FastAPI backend to a VPS, reachable at [https://trip-io.duckdns.org](https://trip-io.duckdns.org), serving the API, the marketing/downloads site, and the hosted Flutter web build (`/app/`) from the same host.
+- Published Windows (`trip_io_windows.exe`) and Android (`trip_io.apk`) release builds via the site's downloads section.
+- Updated `ApiClient._defaultBaseUrl()` (`frontend/lib/services/api_client.dart`) so the Flutter client defaults to the deployed API instead of `localhost`, falling back to `--dart-define=API_BASE_URL=...` for local development.
+- Documented the live deployment URLs in the top-level [README.md](README.md).
+
 ## [0.1.0] - 2026-07-21 — Phase 1: Monolith
 
 Initial working deliverable: a single-server REST API with a JSON file datastore, plus a cross-platform Flutter client. Satisfies the Phase 1 requirement of a working monolithic API with at least 5 endpoints.
