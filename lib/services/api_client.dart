@@ -1,7 +1,5 @@
 import 'dart:convert';
 
-import 'package:flutter/foundation.dart'
-    show kIsWeb, defaultTargetPlatform, TargetPlatform;
 import 'package:http/http.dart' as http;
 import 'package:trip_io/models/models.dart';
 
@@ -13,18 +11,16 @@ class ApiClient {
   final String _baseUrl;
   final http.Client _client;
 
+  // Defaults to the deployed backend so `flutter run`/builds work against
+  // the real API out of the box. Override for local backend testing with
+  // --dart-define=API_BASE_URL=http://localhost:8000 (or 10.0.2.2 on the
+  // Android emulator).
   static String _defaultBaseUrl() {
     const fromDefine = String.fromEnvironment('API_BASE_URL', defaultValue: '');
     if (fromDefine.isNotEmpty) {
       return fromDefine;
     }
-    if (kIsWeb) {
-      return 'http://localhost:8000';
-    }
-    if (defaultTargetPlatform == TargetPlatform.android) {
-      return 'http://10.0.2.2:8000';
-    }
-    return 'http://localhost:8000';
+    return 'https://trip-io.duckdns.org';
   }
 
   Uri _uri(String path, [Map<String, String>? queryParameters]) {
