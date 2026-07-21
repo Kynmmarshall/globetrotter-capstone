@@ -4,11 +4,15 @@
 *.pyc
 *.swp
 .DS_Store
+
+# Inno Setup compiler output (trip_io_setup.iss)
+/Output/
 .atom/
 .build/
 .buildlog/
 .history
 .svn/
+.Output/
 .swiftpm/
 migrate_working_dir/
 
