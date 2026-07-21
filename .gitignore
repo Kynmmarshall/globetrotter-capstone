@@ -1,0 +1,12 @@
+\.venv/
+__pycache__/
+*.pyc
+data/
+.claude/
+
+# Release artifacts are uploaded straight to the VPS, not committed —
+# keep the folders in git via .gitkeep but not their (large) contents.
+website/downloads/*
+!website/downloads/.gitkeep
+website/webapp/*
+!website/webapp/.gitkeep
