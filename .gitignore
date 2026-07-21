@@ -1,0 +1,34 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+ENV/
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+.pytest_cache/
+.mypy_cache/
+*.pyo
+
+# Environment variables
+.env
+.env.*
+
+# Docker
+.dockerignore
+
+# Data files (populated at runtime; keep only .gitkeep)
+data/*.json
+
+# IDE / editor
+.vscode/
+.idea/
+*.swp
+*.swo
