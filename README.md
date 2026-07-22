@@ -264,4 +264,4 @@ See [CHANGELOG.md](CHANGELOG.md) for what's been implemented in each phase so fa
 
 ## License
 
-No license file is currently included in this repository; all rights reserved by the author unless a license is added.
+No license file is currently included in this repository; all rights reserved by the author unless a license is added..
