@@ -1,0 +1,47 @@
+# Local dev / testing loop for both services together.
+# Assumes trip_io and trip_io_backend are sibling directories (as on disk
+# here). This does NOT replace the systemd + Nginx setup already running
+# on the VPS - it's a separate, containerized way to run the same two
+# services for development or a future container-based deployment.
+#
+# Usage:
+#   docker compose up --build
+#   Backend:  http://localhost:8000  (website, API, /docs)
+#   Frontend: http://localhost:8080  (Flutter web build via Nginx)
+
+services:
+  backend:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      # Override in a .env file or the shell for anything but local dev:
+      #   JWT_SECRET=$(openssl rand -hex 32) docker compose up
+      JWT_SECRET: ${JWT_SECRET:-dev-secret-change-me}
+    volumes:
+      - ./data:/app/data
+      - ./website/downloads:/app/website/downloads
+      - ./website/webapp:/app/website/webapp
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ../trip_io
+      args:
+        # The browser must be able to reach this URL directly - point it at
+        # wherever the backend is actually published from, not a Docker
+        # service name. Override for other environments:
+        #   docker compose build --build-arg API_BASE_URL=https://trip-io.duckdns.org frontend
+        API_BASE_URL: http://localhost:8000
+    ports:
+      - "8080:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped

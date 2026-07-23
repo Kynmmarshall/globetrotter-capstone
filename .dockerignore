@@ -1,0 +1,13 @@
+.venv/
+__pycache__/
+**/__pycache__/
+*.pyc
+.pytest_cache/
+.claude/
+.git/
+data/
+website/downloads/*
+website/webapp/*
+!website/downloads/.gitkeep
+!website/webapp/.gitkeep
+Output/
