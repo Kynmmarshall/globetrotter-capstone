@@ -40,6 +40,11 @@ def login(u: UserCreate):
     return {"access_token": token}
 
 
+@app.get("/health")
+def health():
+    return {"status": "ok"}
+
+
 @app.get("/destinations", response_model=list[Destination])
 def destinations(q: str = None):
     return crud.search_destinations(q)
