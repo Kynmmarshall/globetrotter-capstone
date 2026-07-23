@@ -1,0 +1,14 @@
+build/
+.dart_tool/
+.git/
+.idea/
+.vscode/
+Output/
+*.iss
+
+# Not needed to build the web target - keeps the build context small.
+android/
+ios/
+linux/
+macos/
+windows/
