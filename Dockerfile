@@ -4,7 +4,9 @@
 # image covers the web target only.
 
 # ---- Build stage ----
-FROM ghcr.io/cirruslabs/flutter:stable AS build
+# Pinned rather than `:stable` - the floating tag drifts and isn't
+# guaranteed to match the Dart SDK version pubspec.yaml resolves against.
+FROM ghcr.io/cirruslabs/flutter:3.44.0 AS build
 WORKDIR /app
 
 # This must be a URL the end user's BROWSER can reach - not a Docker-internal
