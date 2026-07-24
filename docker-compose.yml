@@ -7,7 +7,7 @@
 # Usage:
 #   docker compose up --build
 #   Backend:  http://localhost:8000  (website, API, /docs)
-#   Frontend: http://localhost:8080  (Flutter web build via Nginx)
+#   Frontend: http://localhost:8081  (Flutter web build via Nginx)
 
 services:
   backend:
@@ -40,7 +40,7 @@ services:
         #   docker compose build --build-arg API_BASE_URL=https://trip-io.duckdns.org frontend
         API_BASE_URL: http://localhost:8000
     ports:
-      - "8080:80"
+      - "8081:80"
     depends_on:
       backend:
         condition: service_healthy
