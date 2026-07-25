@@ -39,7 +39,7 @@
 // Add Credentials > kind "Username with password", username = your GitHub
 // username, password = a GitHub Personal Access Token (Settings > Developer
 // settings > Personal access tokens > generate one with the "repo" scope).
-// Give it a memorable ID (e.g. github-trip-io) and use that same ID in both
+// Give it a memorable ID (e.g. b473f67d-d2a3-42ec-baa3-b38c9b8d6bc6) and use that same ID in both
 // places above.
 
 pipeline {
@@ -59,7 +59,7 @@ pipeline {
         // VERIFY: must match the credential ID you create in Jenkins (see
         // note above) - a GitHub username + Personal Access Token, since
         // this repo is private.
-        GIT_CREDENTIALS_ID = 'github-trip-io'
+        GIT_CREDENTIALS_ID = 'b473f67d-d2a3-42ec-baa3-b38c9b8d6bc6'
         API_BASE_URL = 'https://trip-io.duckdns.org'
         VPS_HOST = '38.242.246.126'
         // VERIFY: the SSH user + absolute path you actually deployed
