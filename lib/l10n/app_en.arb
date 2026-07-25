@@ -120,6 +120,13 @@
   "languageEnglish": "English",
   "languageFrench": "French",
 
+  "interestsLabel": "Areas of interest",
+  "interestsHelper": "Pick a few things you enjoy - we'll use these to recommend Yaoundé spots for you.",
+  "interestsUpdatedSnackbar": "Interests updated.",
+
+  "nearbyTitle": "Eat & stay nearby",
+  "nearbySubtitle": "Real restaurants and hotels close to this spot.",
+
   "sessionExpiredTitle": "Your session has expired",
   "sessionExpiredSubtitle": "Please sign in again to continue.",
   "signInAgainButton": "Sign in again"

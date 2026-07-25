@@ -584,6 +584,36 @@ abstract class AppLocalizations {
   /// **'French'**
   String get languageFrench;
 
+  /// No description provided for @interestsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Areas of interest'**
+  String get interestsLabel;
+
+  /// No description provided for @interestsHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a few things you enjoy - we\'ll use these to recommend Yaoundé spots for you.'**
+  String get interestsHelper;
+
+  /// No description provided for @interestsUpdatedSnackbar.
+  ///
+  /// In en, this message translates to:
+  /// **'Interests updated.'**
+  String get interestsUpdatedSnackbar;
+
+  /// No description provided for @nearbyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Eat & stay nearby'**
+  String get nearbyTitle;
+
+  /// No description provided for @nearbySubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Real restaurants and hotels close to this spot.'**
+  String get nearbySubtitle;
+
   /// No description provided for @sessionExpiredTitle.
   ///
   /// In en, this message translates to:

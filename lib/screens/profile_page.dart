@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:trip_io/l10n/gen/app_localizations.dart';
+import 'package:trip_io/models/interest_tags.dart';
 import 'package:trip_io/models/models.dart';
 import 'package:trip_io/services/session_controller.dart';
 
@@ -21,14 +22,17 @@ class ProfilePage extends StatefulWidget {
 class _ProfilePageState extends State<ProfilePage> {
   late final TextEditingController _bioController;
   late Future<List<Itinerary>> _itinerariesFuture;
+  late Set<String> _selectedInterests;
   bool _savingBio = false;
   bool _pickingAvatar = false;
+  bool _savingInterests = false;
 
   @override
   void initState() {
     super.initState();
     _bioController = TextEditingController(text: widget.session.bio ?? '');
     _itinerariesFuture = widget.session.itineraries();
+    _selectedInterests = widget.session.interests.toSet();
   }
 
   @override
@@ -87,6 +91,24 @@ class _ProfilePageState extends State<ProfilePage> {
       if (mounted) setState(() => _savingBio = false);
     }
   }
+
+  Future<void> _saveInterests() async {
+    setState(() => _savingInterests = true);
+    try {
+      await widget.session.updateInterests(_selectedInterests.toList());
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppLocalizations.of(context)!.interestsUpdatedSnackbar)),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))));
+    } finally {
+      if (mounted) setState(() => _savingInterests = false);
+    }
+  }
+
+  String _capitalize(String value) => value.isEmpty ? value : '${value[0].toUpperCase()}${value.substring(1)}';
 
   Widget _glassPanel({required Widget child, EdgeInsets? padding, BorderRadius? borderRadius}) {
     final radius = borderRadius ?? BorderRadius.circular(18);
@@ -170,6 +192,75 @@ class _ProfilePageState extends State<ProfilePage> {
           Text(value, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 16)),
           const SizedBox(height: 2),
           Text(label, style: const TextStyle(color: Colors.white60, fontSize: 11.5), textAlign: TextAlign.center),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInterestsPanel(BuildContext context, AppLocalizations l10n) {
+    final colors = Theme.of(context).colorScheme;
+    return _glassPanel(
+      borderRadius: BorderRadius.circular(22),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            l10n.interestsLabel,
+            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 15),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            l10n.interestsHelper,
+            style: const TextStyle(color: Colors.white70, fontSize: 12.5),
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: interestTags.map((tag) {
+              final selected = _selectedInterests.contains(tag);
+              return FilterChip(
+                label: Text(
+                  _capitalize(tag),
+                  style: TextStyle(
+                    color: selected ? Colors.white : Colors.white.withValues(alpha: 0.92),
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                selected: selected,
+                showCheckmark: false,
+                avatar: selected ? const Icon(Icons.check, size: 16, color: Colors.white) : null,
+                backgroundColor: Colors.white.withValues(alpha: 0.14),
+                selectedColor: colors.primary.withValues(alpha: 0.85),
+                side: BorderSide(color: Colors.white.withValues(alpha: 0.28)),
+                onSelected: (value) {
+                  setState(() {
+                    if (value) {
+                      _selectedInterests.add(tag);
+                    } else {
+                      _selectedInterests.remove(tag);
+                    }
+                  });
+                },
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 12),
+          Align(
+            alignment: Alignment.centerRight,
+            child: FilledButton.icon(
+              onPressed: _savingInterests ? null : _saveInterests,
+              icon: _savingInterests
+                  ? const SizedBox(
+                      width: 14,
+                      height: 14,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                    )
+                  : const Icon(Icons.check, size: 18),
+              label: Text(l10n.saveButton),
+            ),
+          ),
         ],
       ),
     );
@@ -324,6 +415,8 @@ class _ProfilePageState extends State<ProfilePage> {
                 ],
               ),
             ),
+            const SizedBox(height: 16),
+            _buildInterestsPanel(context, l10n),
             const SizedBox(height: 16),
             _buildLanguageSwitcher(context, l10n),
             const SizedBox(height: 16),

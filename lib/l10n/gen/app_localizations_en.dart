@@ -282,6 +282,23 @@ class AppLocalizationsEn extends AppLocalizations {
   String get languageFrench => 'French';
 
   @override
+  String get interestsLabel => 'Areas of interest';
+
+  @override
+  String get interestsHelper =>
+      'Pick a few things you enjoy - we\'ll use these to recommend Yaoundé spots for you.';
+
+  @override
+  String get interestsUpdatedSnackbar => 'Interests updated.';
+
+  @override
+  String get nearbyTitle => 'Eat & stay nearby';
+
+  @override
+  String get nearbySubtitle =>
+      'Real restaurants and hotels close to this spot.';
+
+  @override
   String get sessionExpiredTitle => 'Your session has expired';
 
   @override

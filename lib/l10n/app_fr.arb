@@ -89,6 +89,13 @@
   "languageEnglish": "Anglais",
   "languageFrench": "Français",
 
+  "interestsLabel": "Centres d'intérêt",
+  "interestsHelper": "Choisissez ce qui vous intéresse - nous nous en servirons pour vous recommander des lieux à Yaoundé.",
+  "interestsUpdatedSnackbar": "Centres d'intérêt mis à jour.",
+
+  "nearbyTitle": "Manger et dormir à proximité",
+  "nearbySubtitle": "Vrais restaurants et hôtels proches de ce lieu.",
+
   "sessionExpiredTitle": "Votre session a expiré",
   "sessionExpiredSubtitle": "Veuillez vous reconnecter pour continuer.",
   "signInAgainButton": "Se reconnecter"

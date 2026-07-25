@@ -289,6 +289,23 @@ class AppLocalizationsFr extends AppLocalizations {
   String get languageFrench => 'Français';
 
   @override
+  String get interestsLabel => 'Centres d\'intérêt';
+
+  @override
+  String get interestsHelper =>
+      'Choisissez ce qui vous intéresse - nous nous en servirons pour vous recommander des lieux à Yaoundé.';
+
+  @override
+  String get interestsUpdatedSnackbar => 'Centres d\'intérêt mis à jour.';
+
+  @override
+  String get nearbyTitle => 'Manger et dormir à proximité';
+
+  @override
+  String get nearbySubtitle =>
+      'Vrais restaurants et hôtels proches de ce lieu.';
+
+  @override
   String get sessionExpiredTitle => 'Votre session a expiré';
 
   @override

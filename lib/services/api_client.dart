@@ -55,6 +55,7 @@ class ApiClient {
     String username,
     String password, {
     String? email,
+    List<String>? interests,
   }) async {
     final response = await _client.post(
       _uri('/register'),
@@ -63,6 +64,7 @@ class ApiClient {
         'username': username,
         'password': password,
         if (email != null && email.trim().isNotEmpty) 'email': email.trim(),
+        if (interests != null && interests.isNotEmpty) 'interests': interests,
       }),
     );
     return _extractToken(response);
@@ -75,6 +77,28 @@ class ApiClient {
       body: jsonEncode({'username': username, 'password': password}),
     );
     return _extractToken(response);
+  }
+
+  Future<UserProfile> getProfile(String token) async {
+    final response = await _client.get(
+      _uri('/me'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+    _throwIfNotOk(response);
+    return UserProfile.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
+  }
+
+  Future<UserProfile> updateInterests(String token, List<String> interests) async {
+    final response = await _client.put(
+      _uri('/me/interests'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({'interests': interests}),
+    );
+    _throwIfNotOk(response);
+    return UserProfile.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
   }
 
   Future<List<Destination>> getDestinations({String? query}) async {

@@ -2,6 +2,7 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:trip_io/l10n/gen/app_localizations.dart';
+import 'package:trip_io/models/interest_tags.dart';
 import 'package:trip_io/services/session_controller.dart';
 import 'package:trip_io/widgets/feature_pill.dart';
 
@@ -23,6 +24,7 @@ class _AuthScreenState extends State<AuthScreen> {
   bool _loginMode = true;
   bool _showPassword = false;
   bool _showConfirmPassword = false;
+  final Set<String> _selectedInterests = {};
 
   // Breakpoints: a phone gets the tall portrait background + a bottom
   // sheet-style card; tablets and desktop/web get the wide landscape
@@ -51,6 +53,7 @@ class _AuthScreenState extends State<AuthScreen> {
         _usernameController.text.trim(),
         _passwordController.text,
         email: _emailController.text.trim(),
+        interests: _selectedInterests.toList(),
       );
     }
   }
@@ -84,6 +87,48 @@ class _AuthScreenState extends State<AuthScreen> {
       ],
     );
   }
+
+  Widget _buildInterestsPicker(BuildContext context, AppLocalizations l10n, ColorScheme colorScheme) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          l10n.interestsLabel,
+          style: Theme.of(context).textTheme.labelLarge?.copyWith(color: colorScheme.onSurfaceVariant),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          l10n.interestsHelper,
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
+        ),
+        const SizedBox(height: 10),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: interestTags.map((tag) {
+            final selected = _selectedInterests.contains(tag);
+            return FilterChip(
+              label: Text(_capitalize(tag)),
+              selected: selected,
+              showCheckmark: false,
+              avatar: selected ? const Icon(Icons.check, size: 16) : null,
+              onSelected: (value) {
+                setState(() {
+                  if (value) {
+                    _selectedInterests.add(tag);
+                  } else {
+                    _selectedInterests.remove(tag);
+                  }
+                });
+              },
+            );
+          }).toList(),
+        ),
+      ],
+    );
+  }
+
+  String _capitalize(String value) => value.isEmpty ? value : '${value[0].toUpperCase()}${value.substring(1)}';
 
   Widget _buildPasswordField({
     required BuildContext context,
@@ -179,6 +224,8 @@ class _AuthScreenState extends State<AuthScreen> {
                 return null;
               },
             ),
+            const SizedBox(height: 16),
+            _buildInterestsPicker(context, l10n, colorScheme),
           ],
           if (_loginMode)
             Padding(

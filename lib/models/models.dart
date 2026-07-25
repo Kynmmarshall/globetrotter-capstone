@@ -1,3 +1,33 @@
+/// A real, verified restaurant or hotel near a destination - not
+/// generated content. See trip_io_backend/data/data.json.
+class NearbyPlace {
+  NearbyPlace({
+    required this.name,
+    required this.category,
+    this.description,
+    this.tags = const [],
+    this.location,
+  });
+
+  final String name;
+  final String category; // "hotel" | "restaurant"
+  final String? description;
+  final List<String> tags;
+  final String? location;
+
+  bool get isHotel => category == 'hotel';
+
+  factory NearbyPlace.fromJson(Map<String, dynamic> json) {
+    return NearbyPlace(
+      name: (json['name'] ?? '').toString(),
+      category: (json['category'] ?? '').toString(),
+      description: json['description']?.toString(),
+      tags: (json['tags'] as List<dynamic>? ?? <dynamic>[]).map((e) => e.toString()).toList(),
+      location: json['location']?.toString(),
+    );
+  }
+}
+
 class Destination {
   Destination({
     required this.id,
@@ -7,6 +37,7 @@ class Destination {
     this.imageUrl,
     this.description,
     this.location,
+    this.nearby = const [],
   });
 
   final String id;
@@ -16,6 +47,7 @@ class Destination {
   final String? imageUrl;
   final String? description;
   final String? location;
+  final List<NearbyPlace> nearby;
 
   /// Whether the backend supplied enough content to show this as a
   /// featured, photo-led card rather than a plain search result.
@@ -40,6 +72,25 @@ class Destination {
       imageUrl: optionalString('image_url'),
       description: optionalString('description'),
       location: optionalString('location'),
+      nearby: (json['nearby'] as List<dynamic>? ?? <dynamic>[])
+          .map((e) => NearbyPlace.fromJson(e as Map<String, dynamic>))
+          .toList(),
+    );
+  }
+}
+
+class UserProfile {
+  UserProfile({required this.username, this.email, this.interests = const []});
+
+  final String username;
+  final String? email;
+  final List<String> interests;
+
+  factory UserProfile.fromJson(Map<String, dynamic> json) {
+    return UserProfile(
+      username: (json['username'] ?? '').toString(),
+      email: json['email']?.toString(),
+      interests: (json['interests'] as List<dynamic>? ?? <dynamic>[]).map((e) => e.toString()).toList(),
     );
   }
 }
