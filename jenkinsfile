@@ -118,8 +118,16 @@ pipeline {
                 stage('Build Windows Installer') {
                     steps {
                         bat '''
+                            rem The Jenkins Windows agent runs as a service, which
+                            rem doesn't inherit the interactive user's PATH - Flutter
+                            rem lives at C:\\flutter\\bin (confirmed via `where flutter`)
+                            rem but is invisible to the service without this.
+                            set PATH=C:\\flutter\\bin;%PATH%
+
                             flutter pub get
+                            if %errorlevel% neq 0 exit /b %errorlevel%
                             flutter build windows --release --dart-define=API_BASE_URL=%API_BASE_URL%
+                            if %errorlevel% neq 0 exit /b %errorlevel%
                             if exist Output rmdir /s /q Output
                             "C:\\Program Files (x86)\\Inno Setup 6\\ISCC.exe" trip_io_setup.iss
                         '''
@@ -175,7 +183,18 @@ pipeline {
         }
 
         stage('Analyze & Test') {
+            // This box is the same Jenkins controller BatchIt's pipeline runs
+            // on (same /var/lib/jenkins home, same built-in node) - reusing
+            // its known-working Flutter/Android SDK paths here rather than
+            // assuming they're on PATH by default, which they aren't for
+            // non-interactive `sh` steps.
             agent any
+            environment {
+                ANDROID_HOME = '/usr/lib/android-sdk'
+                ANDROID_SDK_ROOT = '/usr/lib/android-sdk'
+                JAVA_HOME = '/usr/lib/jvm/java-17-openjdk-amd64'
+                PATH = "/opt/flutter/bin:/usr/lib/jvm/java-17-openjdk-amd64/bin:/usr/lib/android-sdk/cmdline-tools/11.0/bin:/usr/lib/android-sdk/platform-tools:${env.PATH}"
+            }
             steps {
                 sh '''
                     flutter pub get
@@ -187,6 +206,12 @@ pipeline {
 
         stage('Build APK & Web') {
             agent any
+            environment {
+                ANDROID_HOME = '/usr/lib/android-sdk'
+                ANDROID_SDK_ROOT = '/usr/lib/android-sdk'
+                JAVA_HOME = '/usr/lib/jvm/java-17-openjdk-amd64'
+                PATH = "/opt/flutter/bin:/usr/lib/jvm/java-17-openjdk-amd64/bin:/usr/lib/android-sdk/cmdline-tools/11.0/bin:/usr/lib/android-sdk/platform-tools:${env.PATH}"
+            }
             steps {
                 sh '''
                     flutter build apk --release --dart-define=API_BASE_URL=$API_BASE_URL
