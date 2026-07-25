@@ -35,6 +35,9 @@ class Destination(BaseModel):
     description: Optional[str] = None
     location: Optional[str] = None
     nearby: Optional[List[NearbyPlace]] = None
+    opening_hours: Optional[str] = None
+    entry_fee: Optional[str] = None
+    tips: Optional[str] = None
 
 class ScheduleItem(BaseModel):
     destination_id: str
