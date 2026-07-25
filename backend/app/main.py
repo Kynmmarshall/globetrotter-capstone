@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from . import crud
-from .schemas import UserCreate, Token, Itinerary, Destination, ItineraryCreate
+from .schemas import UserCreate, Token, Itinerary, Destination, ItineraryCreate, UserProfile, InterestsUpdate
 from .auth import create_access_token, get_current_user
 
 app = FastAPI(title="GlobeTrotter Phase1")
@@ -24,7 +24,7 @@ app.mount("/static", StaticFiles(directory=_static_dir), name="static")
 
 @app.post("/register", response_model=Token)
 def register(u: UserCreate):
-    user = crud.register_user(u.username, u.password, u.email)
+    user = crud.register_user(u.username, u.password, u.email, u.interests)
     if not user:
         raise HTTPException(status_code=400, detail="User already exists")
     token = create_access_token(user["username"])
@@ -43,6 +43,22 @@ def login(u: UserCreate):
 @app.get("/health")
 def health():
     return {"status": "ok"}
+
+
+@app.get("/me", response_model=UserProfile)
+def me(user: str = Depends(get_current_user)):
+    profile = crud.get_user(user)
+    if not profile:
+        raise HTTPException(status_code=404, detail="User not found")
+    return profile
+
+
+@app.put("/me/interests", response_model=UserProfile)
+def update_interests(payload: InterestsUpdate, user: str = Depends(get_current_user)):
+    profile = crud.update_user_interests(user, payload.interests)
+    if not profile:
+        raise HTTPException(status_code=404, detail="User not found")
+    return profile
 
 
 @app.get("/destinations", response_model=list[Destination])
