@@ -47,6 +47,16 @@ class ItineraryDetailPage extends StatelessWidget {
     final totalDuration = schedule.isEmpty
         ? Duration.zero
         : schedule.last.end.difference(schedule.first.start);
+    final startDate = itinerary.startDate;
+    final endDate = itinerary.endDate;
+    final dateFormat = MaterialLocalizations.of(context);
+    String? dateRangeLabel;
+    if (startDate != null && endDate != null) {
+      dateRangeLabel = startDate == endDate
+          ? dateFormat.formatMediumDate(startDate)
+          : '${dateFormat.formatMediumDate(startDate)} – '
+                '${dateFormat.formatMediumDate(endDate)}';
+    }
     return _glassPanel(
       borderRadius: BorderRadius.circular(22),
       child: Column(
@@ -68,6 +78,26 @@ class ItineraryDetailPage extends StatelessWidget {
             ),
             style: const TextStyle(color: Colors.white70, fontSize: 13.5),
           ),
+          if (dateRangeLabel != null) ...[
+            const SizedBox(height: 6),
+            Row(
+              children: [
+                const Icon(
+                  Icons.calendar_month,
+                  size: 14,
+                  color: Colors.white70,
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  dateRangeLabel,
+                  style: const TextStyle(
+                    color: Colors.white70,
+                    fontSize: 13.5,
+                  ),
+                ),
+              ],
+            ),
+          ],
         ],
       ),
     );
@@ -164,11 +194,29 @@ class ItineraryDetailPage extends StatelessWidget {
     }
 
     final timeFormat = MaterialLocalizations.of(context);
+    bool isSameDay(DateTime a, DateTime b) =>
+        a.year == b.year && a.month == b.month && a.day == b.day;
+    final multiDay = schedule.isNotEmpty &&
+        !isSameDay(schedule.first.start, schedule.last.start);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         for (var i = 0; i < schedule.length; i++) ...[
-          if (i > 0) _buildTravelConnector(context, l10n),
+          if (multiDay && (i == 0 || !isSameDay(schedule[i].start, schedule[i - 1].start))) ...[
+            if (i > 0) const SizedBox(height: 18),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: Text(
+                timeFormat.formatMediumDate(schedule[i].start),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 14,
+                ),
+              ),
+            ),
+          ] else if (i > 0)
+            _buildTravelConnector(context, l10n),
           IntrinsicHeight(
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,

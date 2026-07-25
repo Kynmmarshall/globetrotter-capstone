@@ -166,6 +166,8 @@ class SessionController extends ChangeNotifier {
     String title,
     List<String> destinations, {
     List<ScheduleEntry>? schedule,
+    DateTime? startDate,
+    DateTime? endDate,
   }) async {
     final token = _token;
     if (token == null || token.isEmpty) {
@@ -176,6 +178,8 @@ class SessionController extends ChangeNotifier {
       title,
       destinations,
       schedule: schedule,
+      startDate: startDate,
+      endDate: endDate,
     );
   }
 

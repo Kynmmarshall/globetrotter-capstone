@@ -33,6 +33,12 @@ class _ItinerariesPageState extends State<ItinerariesPage> {
   bool _creating = false;
   TimeOfDay _startTime = const TimeOfDay(hour: 9, minute: 0);
   double _availableHours = 4;
+  DateTimeRange? _tripDates;
+
+  bool get _tripSpansMultipleDays {
+    final dates = _tripDates;
+    return dates != null && dates.end.difference(dates.start).inDays > 0;
+  }
 
   @override
   void initState() {
@@ -68,30 +74,32 @@ class _ItinerariesPageState extends State<ItinerariesPage> {
     try {
       final destinationIds = _selectedDestinationIds.toList();
       final totalAvailable = Duration(minutes: (_availableHours * 60).round());
-      final now = DateTime.now();
-      final start = DateTime(
-        now.year,
-        now.month,
-        now.day,
-        _startTime.hour,
-        _startTime.minute,
-      );
-      final schedule = generateSchedule(
+      final tripStart = _tripDates?.start ?? DateTime.now();
+      final tripEnd = _tripDates?.end ?? tripStart;
+      final dayCount = tripEnd.difference(tripStart).inDays + 1;
+      final result = generateMultiDaySchedule(
         destinationIds: destinationIds,
-        start: start,
-        totalAvailable: totalAvailable,
+        tripStart: tripStart,
+        dayCount: dayCount,
+        startHour: _startTime.hour,
+        startMinute: _startTime.minute,
+        dailyAvailable: totalAvailable,
       );
-      final overrun = schedule.isNotEmpty
-          ? schedule.last.end.difference(start.add(totalAvailable))
-          : Duration.zero;
+      final schedule = result.entries;
+      final overrun = result.overrun;
 
       await widget.session.createItinerary(
         title,
         destinationIds,
         schedule: schedule,
+        startDate: _tripDates?.start,
+        endDate: _tripDates?.end,
       );
       _titleController.clear();
-      setState(() => _selectedDestinationIds.clear());
+      setState(() {
+        _selectedDestinationIds.clear();
+        _tripDates = null;
+      });
       await _refresh();
       if (!mounted) return;
       ScaffoldMessenger.of(
@@ -229,9 +237,68 @@ class _ItinerariesPageState extends State<ItinerariesPage> {
       context: context,
       initialTime: _startTime,
     );
+    if (!mounted) return;
     if (picked != null) {
       setState(() => _startTime = picked);
     }
+  }
+
+  Future<void> _pickTripDates() async {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final picked = await showDateRangePicker(
+      context: context,
+      firstDate: today,
+      lastDate: today.add(const Duration(days: 730)),
+      initialDateRange: _tripDates ?? DateTimeRange(start: today, end: today),
+    );
+    if (!mounted) return;
+    if (picked != null) {
+      setState(() => _tripDates = picked);
+    }
+  }
+
+  Widget _buildTripDatesInput(AppLocalizations l10n) {
+    final dateFormat = MaterialLocalizations.of(context);
+    final dates = _tripDates;
+    final label = dates == null
+        ? l10n.tripDatesHint
+        : dates.start == dates.end
+        ? dateFormat.formatMediumDate(dates.start)
+        : '${dateFormat.formatMediumDate(dates.start)} – '
+              '${dateFormat.formatMediumDate(dates.end)}';
+    return InkWell(
+      borderRadius: BorderRadius.circular(12),
+      onTap: _pickTripDates,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+        ),
+        child: Row(
+          children: [
+            const Icon(
+              Icons.calendar_month,
+              size: 18,
+              color: Colors.white70,
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                label,
+                style: TextStyle(
+                  color: dates == null ? Colors.white60 : Colors.white,
+                  fontSize: 13.5,
+                ),
+              ),
+            ),
+            const Icon(Icons.edit, size: 16, color: Colors.white54),
+          ],
+        ),
+      ),
+    );
   }
 
   Widget _buildTimeInputs(AppLocalizations l10n) {
@@ -242,6 +309,17 @@ class _ItinerariesPageState extends State<ItinerariesPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        Text(
+          l10n.tripDatesLabel,
+          style: const TextStyle(
+            color: Colors.white70,
+            fontSize: 12.5,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: 8),
+        _buildTripDatesInput(l10n),
+        const SizedBox(height: 14),
         InkWell(
           borderRadius: BorderRadius.circular(12),
           onTap: _pickStartTime,
@@ -269,7 +347,9 @@ class _ItinerariesPageState extends State<ItinerariesPage> {
         ),
         const SizedBox(height: 14),
         Text(
-          l10n.itineraryAvailableTime(durationLabel),
+          _tripSpansMultipleDays
+              ? l10n.itineraryAvailableTimePerDay(durationLabel)
+              : l10n.itineraryAvailableTime(durationLabel),
           style: const TextStyle(
             color: Colors.white,
             fontSize: 13.5,

@@ -213,6 +213,11 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String itineraryAvailableTimePerDay(String duration) {
+    return 'Available time per day: $duration';
+  }
+
+  @override
   String itineraryOverrunWarning(String extra, String minStop) {
     return 'This plan needs about $extra more than you have available, so stops get $minStop min each at minimum.';
   }
@@ -230,6 +235,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get itineraryTravelTime => 'Travel time';
+
+  @override
+  String get tripDatesLabel => 'Trip dates';
+
+  @override
+  String get tripDatesHint => 'Choose start and end date';
 
   @override
   String get memberSinceDevice => 'Member since this device';

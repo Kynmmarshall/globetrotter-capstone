@@ -132,7 +132,10 @@ class ApiClient {
     String title,
     List<String> destinations, {
     List<ScheduleEntry>? schedule,
+    DateTime? startDate,
+    DateTime? endDate,
   }) async {
+    String dateOnly(DateTime d) => d.toIso8601String().split('T').first;
     final response = await _client.post(
       _uri('/itineraries'),
       headers: {
@@ -144,6 +147,8 @@ class ApiClient {
         'destinations': destinations,
         if (schedule != null)
           'schedule': schedule.map((e) => e.toJson()).toList(),
+        if (startDate != null) 'start_date': dateOnly(startDate),
+        if (endDate != null) 'end_date': dateOnly(endDate),
       }),
     );
     _throwIfNotOk(response);

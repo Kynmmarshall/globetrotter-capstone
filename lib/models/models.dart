@@ -143,6 +143,8 @@ class Itinerary {
     required this.title,
     required this.destinations,
     this.schedule = const [],
+    this.startDate,
+    this.endDate,
   });
 
   final String id;
@@ -150,6 +152,8 @@ class Itinerary {
   final String title;
   final List<String> destinations;
   final List<ScheduleEntry> schedule;
+  final DateTime? startDate;
+  final DateTime? endDate;
 
   factory Itinerary.fromJson(Map<String, dynamic> json) {
     final rawSchedule = json['schedule'] as List<dynamic>?;
@@ -164,6 +168,8 @@ class Itinerary {
           .map((e) => ScheduleEntry.fromJson(e as Map<String, dynamic>))
           .whereType<ScheduleEntry>()
           .toList(),
+      startDate: DateTime.tryParse((json['start_date'] ?? '').toString()),
+      endDate: DateTime.tryParse((json['end_date'] ?? '').toString()),
     );
   }
 }

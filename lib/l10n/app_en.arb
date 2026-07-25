@@ -83,6 +83,10 @@
   "@itineraryAvailableTime": {
     "placeholders": { "duration": { "type": "String" } }
   },
+  "itineraryAvailableTimePerDay": "Available time per day: {duration}",
+  "@itineraryAvailableTimePerDay": {
+    "placeholders": { "duration": { "type": "String" } }
+  },
   "itineraryOverrunWarning": "This plan needs about {extra} more than you have available, so stops get {minStop} min each at minimum.",
   "@itineraryOverrunWarning": {
     "placeholders": { "extra": { "type": "String" }, "minStop": { "type": "String" } }
@@ -94,6 +98,8 @@
   },
   "itineraryNoSchedule": "No timed plan for this itinerary yet.",
   "itineraryTravelTime": "Travel time",
+  "tripDatesLabel": "Trip dates",
+  "tripDatesHint": "Choose start and end date",
 
   "memberSinceDevice": "Member since this device",
   "memberSince": "Member since {date}",

@@ -464,6 +464,12 @@ abstract class AppLocalizations {
   /// **'Available time: {duration}'**
   String itineraryAvailableTime(String duration);
 
+  /// No description provided for @itineraryAvailableTimePerDay.
+  ///
+  /// In en, this message translates to:
+  /// **'Available time per day: {duration}'**
+  String itineraryAvailableTimePerDay(String duration);
+
   /// No description provided for @itineraryOverrunWarning.
   ///
   /// In en, this message translates to:
@@ -493,6 +499,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Travel time'**
   String get itineraryTravelTime;
+
+  /// No description provided for @tripDatesLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Trip dates'**
+  String get tripDatesLabel;
+
+  /// No description provided for @tripDatesHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose start and end date'**
+  String get tripDatesHint;
 
   /// No description provided for @memberSinceDevice.
   ///
