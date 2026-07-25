@@ -133,6 +133,16 @@ class AppLocalizationsFr extends AppLocalizations {
   String get destinationsEmpty => 'Aucune destination trouvée.';
 
   @override
+  String get destinationsFilterLabel => 'Filtrer par centre d\'intérêt';
+
+  @override
+  String get destinationsFilterClear => 'Effacer';
+
+  @override
+  String get destinationsFilterEmpty =>
+      'Aucune destination ne correspond aux filtres sélectionnés.';
+
+  @override
   String get recommendationsTitle => 'Sélectionné pour vous';
 
   @override
@@ -209,6 +219,11 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
+  String itineraryAvailableTimePerDay(String duration) {
+    return 'Temps disponible par jour : $duration';
+  }
+
+  @override
   String itineraryOverrunWarning(String extra, String minStop) {
     return 'Ce plan nécessite environ $extra de plus que le temps disponible ; chaque arrêt dure donc au moins $minStop min.';
   }
@@ -227,6 +242,12 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get itineraryTravelTime => 'Temps de trajet';
+
+  @override
+  String get tripDatesLabel => 'Dates du voyage';
+
+  @override
+  String get tripDatesHint => 'Choisissez une date de début et de fin';
 
   @override
   String get memberSinceDevice => 'Membre depuis cet appareil';
@@ -287,6 +308,35 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get languageFrench => 'Français';
+
+  @override
+  String get interestsLabel => 'Centres d\'intérêt';
+
+  @override
+  String get interestsHelper =>
+      'Choisissez ce qui vous intéresse - nous nous en servirons pour vous recommander des lieux à Yaoundé.';
+
+  @override
+  String get interestsUpdatedSnackbar => 'Centres d\'intérêt mis à jour.';
+
+  @override
+  String get nearbyTitle => 'Manger et dormir à proximité';
+
+  @override
+  String get nearbySubtitle =>
+      'Vrais restaurants et hôtels proches de ce lieu.';
+
+  @override
+  String get practicalInfoTitle => 'Bon à savoir';
+
+  @override
+  String get openingHoursLabel => 'Horaires d\'ouverture';
+
+  @override
+  String get entryFeeLabel => 'Prix d\'entrée';
+
+  @override
+  String get tipsLabel => 'Astuces';
 
   @override
   String get sessionExpiredTitle => 'Votre session a expiré';

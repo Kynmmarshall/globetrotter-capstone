@@ -13,6 +13,7 @@ class SessionController extends ChangeNotifier {
   static const _bioKey = 'gt_bio';
   static const _memberSinceKey = 'gt_member_since';
   static const _localeKey = 'gt_locale';
+  static const _interestsKey = 'gt_interests';
 
   bool _ready = false;
   bool _loading = false;
@@ -24,6 +25,7 @@ class SessionController extends ChangeNotifier {
   String? _bio;
   DateTime? _memberSince;
   Locale? _locale;
+  List<String> _interests = [];
 
   bool get ready => _ready;
   bool get isLoading => _loading;
@@ -36,6 +38,7 @@ class SessionController extends ChangeNotifier {
   DateTime? get memberSince => _memberSince;
   // Null means "follow the device's system language".
   Locale? get locale => _locale;
+  List<String> get interests => _interests;
 
   void clearError() {
     _error = null;
@@ -55,6 +58,7 @@ class SessionController extends ChangeNotifier {
         : null;
     final localeCode = prefs.getString(_localeKey);
     _locale = localeCode != null ? Locale(localeCode) : null;
+    _interests = prefs.getStringList(_interestsKey) ?? [];
     _ready = true;
     notifyListeners();
   }
@@ -74,14 +78,16 @@ class SessionController extends ChangeNotifier {
     String username,
     String password, {
     String? email,
+    List<String>? interests,
   }) async {
     await _runGuarded(() async {
       final token = await ApiClient().register(
         username,
         password,
         email: email,
+        interests: interests,
       );
-      await _saveAuth(token, username, email: email, isNewAccount: true);
+      await _saveAuth(token, username, email: email, interests: interests, isNewAccount: true);
     });
   }
 
@@ -89,6 +95,14 @@ class SessionController extends ChangeNotifier {
     await _runGuarded(() async {
       final token = await ApiClient().login(username, password);
       await _saveAuth(token, username);
+      // Pull interests/email set on another device, if any - best-effort,
+      // login shouldn't fail just because this sync call did.
+      try {
+        final profile = await ApiClient().getProfile(token);
+        await _applyProfile(profile);
+      } catch (_) {
+        // Ignore - local state (if any) still stands.
+      }
     });
   }
 
@@ -99,6 +113,26 @@ class SessionController extends ChangeNotifier {
     _token = null;
     _username = null;
     _error = null;
+    notifyListeners();
+  }
+
+  Future<void> updateInterests(List<String> interests) async {
+    final token = _token;
+    if (token == null || token.isEmpty) {
+      throw Exception('Not authenticated.');
+    }
+    final profile = await ApiClient().updateInterests(token, interests);
+    await _applyProfile(profile);
+  }
+
+  Future<void> _applyProfile(UserProfile profile) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList(_interestsKey, profile.interests);
+    _interests = profile.interests;
+    if ((profile.email ?? '').isNotEmpty) {
+      await prefs.setString(_emailKey, profile.email!);
+      _email = profile.email;
+    }
     notifyListeners();
   }
 
@@ -132,6 +166,8 @@ class SessionController extends ChangeNotifier {
     String title,
     List<String> destinations, {
     List<ScheduleEntry>? schedule,
+    DateTime? startDate,
+    DateTime? endDate,
   }) async {
     final token = _token;
     if (token == null || token.isEmpty) {
@@ -142,6 +178,8 @@ class SessionController extends ChangeNotifier {
       title,
       destinations,
       schedule: schedule,
+      startDate: startDate,
+      endDate: endDate,
     );
   }
 
@@ -157,6 +195,7 @@ class SessionController extends ChangeNotifier {
     String token,
     String username, {
     String? email,
+    List<String>? interests,
     bool isNewAccount = false,
   }) async {
     final prefs = await SharedPreferences.getInstance();
@@ -169,6 +208,11 @@ class SessionController extends ChangeNotifier {
     if (email != null && email.trim().isNotEmpty) {
       await prefs.setString(_emailKey, email.trim());
       _email = email.trim();
+    }
+
+    if (interests != null) {
+      await prefs.setStringList(_interestsKey, interests);
+      _interests = interests;
     }
 
     if (isNewAccount || _memberSince == null) {

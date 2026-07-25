@@ -94,8 +94,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
           return _frostedSurface(
             child: NavigationBar(
               backgroundColor: Colors.transparent,
+              indicatorColor: Colors.white.withValues(alpha: 0.22),
               selectedIndex: _index,
               onDestinationSelected: (idx) => setState(() => _index = idx),
+              labelTextStyle: WidgetStateProperty.resolveWith((states) {
+                final selected = states.contains(WidgetState.selected);
+                return TextStyle(
+                  color: selected ? Colors.white : Colors.white.withValues(alpha: 0.85),
+                  fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+                  fontSize: 12,
+                );
+              }),
               destinations: List.generate(labels.length, (i) {
                 return NavigationDestination(
                   icon: Icon(_icons[i], color: Colors.white70),

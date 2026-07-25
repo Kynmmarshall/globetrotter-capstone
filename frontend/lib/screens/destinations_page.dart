@@ -2,6 +2,7 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:trip_io/l10n/gen/app_localizations.dart';
+import 'package:trip_io/models/interest_tags.dart';
 import 'package:trip_io/models/models.dart';
 import 'package:trip_io/screens/destination_detail_page.dart';
 import 'package:trip_io/services/api_client.dart';
@@ -20,6 +21,7 @@ class DestinationsPage extends StatefulWidget {
 class _DestinationsPageState extends State<DestinationsPage> {
   final TextEditingController _searchController = TextEditingController();
   late Future<List<Destination>> _future;
+  final Set<String> _selectedTags = {};
 
   @override
   void initState() {
@@ -40,6 +42,26 @@ class _DestinationsPageState extends State<DestinationsPage> {
       );
     });
   }
+
+  void _toggleTag(String tag) {
+    setState(() {
+      if (_selectedTags.contains(tag)) {
+        _selectedTags.remove(tag);
+      } else {
+        _selectedTags.add(tag);
+      }
+    });
+  }
+
+  List<Destination> _applyFilters(List<Destination> items) {
+    if (_selectedTags.isEmpty) return items;
+    return items
+        .where((d) => d.tags.any(_selectedTags.contains))
+        .toList();
+  }
+
+  String _capitalize(String s) =>
+      s.isEmpty ? s : '${s[0].toUpperCase()}${s.substring(1)}';
 
   Widget _sectionTitle(BuildContext context, String title, {String? subtitle}) {
     return Column(
@@ -269,6 +291,78 @@ class _DestinationsPageState extends State<DestinationsPage> {
     );
   }
 
+  Widget _buildFilterBar(AppLocalizations l10n) {
+    return _glassPanel(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.tune, color: Colors.white.withValues(alpha: 0.85), size: 18),
+              const SizedBox(width: 8),
+              Text(
+                l10n.destinationsFilterLabel,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 13,
+                ),
+              ),
+              const Spacer(),
+              if (_selectedTags.isNotEmpty)
+                TextButton(
+                  onPressed: () => setState(() => _selectedTags.clear()),
+                  style: TextButton.styleFrom(
+                    padding: EdgeInsets.zero,
+                    minimumSize: const Size(0, 0),
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                  child: Text(
+                    l10n.destinationsFilterClear,
+                    style: const TextStyle(
+                      color: Colors.white70,
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: interestTags.map((tag) {
+              final selected = _selectedTags.contains(tag);
+              return FilterChip(
+                label: Text(
+                  _capitalize(tag),
+                  style: TextStyle(
+                    color: selected ? Colors.white : const Color(0xFF1A2530),
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                selected: selected,
+                showCheckmark: false,
+                avatar: selected
+                    ? const Icon(Icons.check, size: 16, color: Colors.white)
+                    : null,
+                backgroundColor: Colors.white.withValues(alpha: 0.88),
+                selectedColor: Theme.of(
+                  context,
+                ).colorScheme.primary.withValues(alpha: 0.85),
+                side: BorderSide(color: Colors.white.withValues(alpha: 0.4)),
+                onSelected: (_) => _toggleTag(tag),
+              );
+            }).toList(),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
@@ -286,6 +380,8 @@ class _DestinationsPageState extends State<DestinationsPage> {
               ),
               const SizedBox(height: 14),
               _buildSearchBar(l10n),
+              const SizedBox(height: 12),
+              _buildFilterBar(l10n),
               const SizedBox(height: 16),
               FutureBuilder<List<Destination>>(
                 future: _future,
@@ -303,13 +399,25 @@ class _DestinationsPageState extends State<DestinationsPage> {
                       ),
                     );
                   }
-                  final items = snapshot.data ?? <Destination>[];
-                  if (items.isEmpty) {
+                  final allItems = snapshot.data ?? <Destination>[];
+                  if (allItems.isEmpty) {
                     return Padding(
                       padding: const EdgeInsets.symmetric(vertical: 40),
                       child: Center(
                         child: Text(
                           l10n.destinationsEmpty,
+                          style: const TextStyle(color: Colors.white70),
+                        ),
+                      ),
+                    );
+                  }
+                  final items = _applyFilters(allItems);
+                  if (items.isEmpty) {
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 40),
+                      child: Center(
+                        child: Text(
+                          l10n.destinationsFilterEmpty,
                           style: const TextStyle(color: Colors.white70),
                         ),
                       ),

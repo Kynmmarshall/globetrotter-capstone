@@ -129,6 +129,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get destinationsEmpty => 'No destinations found.';
 
   @override
+  String get destinationsFilterLabel => 'Filter by interest';
+
+  @override
+  String get destinationsFilterClear => 'Clear';
+
+  @override
+  String get destinationsFilterEmpty =>
+      'No destinations match the selected filters.';
+
+  @override
   String get recommendationsTitle => 'Picked for you';
 
   @override
@@ -203,6 +213,11 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String itineraryAvailableTimePerDay(String duration) {
+    return 'Available time per day: $duration';
+  }
+
+  @override
   String itineraryOverrunWarning(String extra, String minStop) {
     return 'This plan needs about $extra more than you have available, so stops get $minStop min each at minimum.';
   }
@@ -220,6 +235,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get itineraryTravelTime => 'Travel time';
+
+  @override
+  String get tripDatesLabel => 'Trip dates';
+
+  @override
+  String get tripDatesHint => 'Choose start and end date';
 
   @override
   String get memberSinceDevice => 'Member since this device';
@@ -280,6 +301,35 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get languageFrench => 'French';
+
+  @override
+  String get interestsLabel => 'Areas of interest';
+
+  @override
+  String get interestsHelper =>
+      'Pick a few things you enjoy - we\'ll use these to recommend Yaoundé spots for you.';
+
+  @override
+  String get interestsUpdatedSnackbar => 'Interests updated.';
+
+  @override
+  String get nearbyTitle => 'Eat & stay nearby';
+
+  @override
+  String get nearbySubtitle =>
+      'Real restaurants and hotels close to this spot.';
+
+  @override
+  String get practicalInfoTitle => 'Good to know';
+
+  @override
+  String get openingHoursLabel => 'Opening hours';
+
+  @override
+  String get entryFeeLabel => 'Entry fee';
+
+  @override
+  String get tipsLabel => 'Tips';
 
   @override
   String get sessionExpiredTitle => 'Your session has expired';

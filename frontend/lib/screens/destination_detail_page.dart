@@ -1,6 +1,7 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:trip_io/l10n/gen/app_localizations.dart';
 import 'package:trip_io/models/models.dart';
 import 'package:trip_io/services/api_client.dart';
 
@@ -55,6 +56,120 @@ class DestinationDetailPage extends StatelessWidget {
             fontSize: 12,
             fontWeight: FontWeight.w600,
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInfoRow(IconData icon, String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 34,
+            height: 34,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.white.withValues(alpha: 0.14),
+            ),
+            child: Icon(icon, color: Colors.white, size: 17),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.65),
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.3,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  value,
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.92),
+                    fontSize: 13.5,
+                    height: 1.4,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNearbyCard(BuildContext context, NearbyPlace place) {
+    final icon = place.isHotel ? Icons.hotel : Icons.restaurant;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: _glassPanel(
+        borderRadius: BorderRadius.circular(16),
+        padding: const EdgeInsets.all(14),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white.withValues(alpha: 0.14),
+              ),
+              child: Icon(icon, color: Colors.white, size: 20),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    place.name,
+                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 14.5),
+                  ),
+                  if ((place.location ?? '').isNotEmpty) ...[
+                    const SizedBox(height: 3),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Icon(Icons.location_on, size: 13, color: Colors.white60),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            place.location!,
+                            style: const TextStyle(color: Colors.white60, fontSize: 12),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                  if ((place.description ?? '').isNotEmpty) ...[
+                    const SizedBox(height: 6),
+                    Text(
+                      place.description!,
+                      style: TextStyle(color: Colors.white.withValues(alpha: 0.85), fontSize: 12.5, height: 1.3),
+                    ),
+                  ],
+                  if (place.tags.isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
+                      children: place.tags.map(_buildTagChip).toList(),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -233,6 +348,65 @@ class DestinationDetailPage extends StatelessWidget {
                                 ],
                               ),
                             ),
+                            if (destination.openingHours != null ||
+                                destination.entryFee != null ||
+                                destination.tips != null) ...[
+                              const SizedBox(height: 22),
+                              Text(
+                                AppLocalizations.of(context)!.practicalInfoTitle,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 17,
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              _glassPanel(
+                                borderRadius: BorderRadius.circular(20),
+                                padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    if (destination.openingHours != null)
+                                      _buildInfoRow(
+                                        Icons.schedule,
+                                        AppLocalizations.of(context)!.openingHoursLabel,
+                                        destination.openingHours!,
+                                      ),
+                                    if (destination.entryFee != null)
+                                      _buildInfoRow(
+                                        Icons.confirmation_number_outlined,
+                                        AppLocalizations.of(context)!.entryFeeLabel,
+                                        destination.entryFee!,
+                                      ),
+                                    if (destination.tips != null)
+                                      _buildInfoRow(
+                                        Icons.lightbulb_outline,
+                                        AppLocalizations.of(context)!.tipsLabel,
+                                        destination.tips!,
+                                      ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                            if (destination.nearby.isNotEmpty) ...[
+                              const SizedBox(height: 22),
+                              Text(
+                                AppLocalizations.of(context)!.nearbyTitle,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 17,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                AppLocalizations.of(context)!.nearbySubtitle,
+                                style: const TextStyle(color: Colors.white70, fontSize: 12.5),
+                              ),
+                              const SizedBox(height: 12),
+                              ...destination.nearby.map((place) => _buildNearbyCard(context, place)),
+                            ],
                           ],
                         ),
                       ),

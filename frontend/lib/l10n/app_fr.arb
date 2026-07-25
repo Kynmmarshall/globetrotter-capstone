@@ -42,6 +42,9 @@
   "destinationsSearchHint": "Rechercher une destination par nom ou mot-clé",
   "searchButton": "Rechercher",
   "destinationsEmpty": "Aucune destination trouvée.",
+  "destinationsFilterLabel": "Filtrer par centre d'intérêt",
+  "destinationsFilterClear": "Effacer",
+  "destinationsFilterEmpty": "Aucune destination ne correspond aux filtres sélectionnés.",
 
   "recommendationsTitle": "Sélectionné pour vous",
   "recommendationsSubtitle": "Une courte liste de lieux à Yaoundé à ajouter à votre itinéraire.",
@@ -64,11 +67,14 @@
   "destinationsLoadError": "Impossible de charger les destinations.\n{error}",
   "itineraryStartTime": "Heure de départ : {time}",
   "itineraryAvailableTime": "Temps disponible : {duration}",
+  "itineraryAvailableTimePerDay": "Temps disponible par jour : {duration}",
   "itineraryOverrunWarning": "Ce plan nécessite environ {extra} de plus que le temps disponible ; chaque arrêt dure donc au moins {minStop} min.",
   "itineraryPlanSectionTitle": "Votre plan",
   "itineraryStopsSummary": "{count} arrêts · {duration} au total",
   "itineraryNoSchedule": "Aucun plan chronométré pour cet itinéraire pour l'instant.",
   "itineraryTravelTime": "Temps de trajet",
+  "tripDatesLabel": "Dates du voyage",
+  "tripDatesHint": "Choisissez une date de début et de fin",
 
   "memberSinceDevice": "Membre depuis cet appareil",
   "memberSince": "Membre depuis {date}",
@@ -88,6 +94,18 @@
   "languageLabel": "Langue",
   "languageEnglish": "Anglais",
   "languageFrench": "Français",
+
+  "interestsLabel": "Centres d'intérêt",
+  "interestsHelper": "Choisissez ce qui vous intéresse - nous nous en servirons pour vous recommander des lieux à Yaoundé.",
+  "interestsUpdatedSnackbar": "Centres d'intérêt mis à jour.",
+
+  "nearbyTitle": "Manger et dormir à proximité",
+  "nearbySubtitle": "Vrais restaurants et hôtels proches de ce lieu.",
+
+  "practicalInfoTitle": "Bon à savoir",
+  "openingHoursLabel": "Horaires d'ouverture",
+  "entryFeeLabel": "Prix d'entrée",
+  "tipsLabel": "Astuces",
 
   "sessionExpiredTitle": "Votre session a expiré",
   "sessionExpiredSubtitle": "Veuillez vous reconnecter pour continuer.",

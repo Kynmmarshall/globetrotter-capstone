@@ -1,0 +1,258 @@
+// trip_io CI/CD: builds the Android APK, the Flutter web app, and the
+// Windows installer, then deploys all three onto the trip_io_backend
+// website (served at trip-io.duckdns.org) so the download page always
+// has the latest build.
+//
+// Two agents are involved, same reasoning as the Grid Survival pipeline:
+// `flutter build windows` and Inno Setup's ISCC.exe are Windows-only, so
+// that part has to run on a Windows agent (your PC), while the APK/web
+// build and their deployment run directly on the VPS agent as a local
+// file copy into website/downloads and website/webapp (no SSH needed for
+// those two, since that agent IS the target machine).
+//
+// Prerequisites:
+//   - A Windows Jenkins agent labeled "windows" with: Flutter SDK, the
+//     Visual Studio Desktop-development-with-C++ workload (required for
+//     `flutter build windows`), and Inno Setup 6 installed at the default
+//     path below.
+//   - An SSH key at C:\jenkins-agent\.ssh\id_ed25519 on that Windows agent,
+//     authorized on the VPS for VPS_USER@VPS_HOST (reuse the Grid Survival
+//     key if this is the same machine, or generate + authorize a new one).
+//   - The VPS-side agent (wherever `agent any` lands) needs Flutter set up
+//     the same way it is for manual builds today.
+//   - VERIFY the environment{} values below against your actual setup
+//     before the first run (repo URL, VPS path, SSH user).
+//
+// No custom keystore stage (unlike BatchIt): android/app/build.gradle.kts
+// signs the release build with the Flutter/Gradle debug key, which Gradle
+// generates on demand if it's missing, so there's nothing to provision.
+//
+// This repo is PRIVATE, so Git needs credentials in two separate places -
+// missing either one fails checkout the same way ("Repository not found"):
+//   1. The Jenkins JOB config itself (Manage Jenkins > the job > Configure >
+//      Pipeline > "Pipeline script from SCM" > the repository URL field has
+//      its own credentials dropdown) - this is what fetches this Jenkinsfile
+//      in the first place, before any stage below even runs.
+//   2. The checkout steps inside this file (GIT_CREDENTIALS_ID below) - the
+//      actual per-agent clones each stage does.
+// For both: Manage Jenkins > Credentials > System > Global credentials >
+// Add Credentials > kind "Username with password", username = your GitHub
+// username, password = a GitHub Personal Access Token (Settings > Developer
+// settings > Personal access tokens > generate one with the "repo" scope).
+// Give it a memorable ID (e.g. b473f67d-d2a3-42ec-baa3-b38c9b8d6bc6) and use that same ID in both
+// places above.
+
+pipeline {
+    agent none
+    options {
+        skipDefaultCheckout(true)
+        disableConcurrentBuilds()
+        timeout(time: 45, unit: 'MINUTES')
+    }
+
+    triggers {
+        githubPush()
+    }
+
+    environment {
+        REPO_URL = 'https://github.com/Kynmmarshall/trip_io.git'
+        // VERIFY: must match the credential ID you create in Jenkins (see
+        // note above) - a GitHub username + Personal Access Token, since
+        // this repo is private.
+        GIT_CREDENTIALS_ID = 'b473f67d-d2a3-42ec-baa3-b38c9b8d6bc6'
+        API_BASE_URL = 'https://trip-io.duckdns.org'
+        VPS_HOST = '38.242.246.126'
+        // VERIFY: the SSH user + absolute path you actually deployed
+        // trip_io_backend under on the VPS.
+        VPS_USER = 'root'
+        VPS_APP_DIR = '/root/trip_io_backend'
+        SSH_KEY = 'C:\\jenkins-agent\\.ssh\\id_ed25519'
+    }
+
+    stages {
+        stage('Windows: build + deploy') {
+            // Runs directly in your real desktop working copy instead of a
+            // Jenkins-managed workspace, per your request - so checkout
+            // below deliberately does NOT clean/reset the folder (that would
+            // silently discard any uncommitted edits sitting there when a
+            // build fires, including from an automatic githubPush trigger).
+            // It only fetches + fast-forwards; if local changes conflict
+            // with origin/main, the merge fails loudly instead of
+            // overwriting anything.
+            agent {
+                node {
+                    label 'windows'
+                    customWorkspace 'C:\\Users\\kynm\\Desktop\\trip_io'
+                }
+            }
+            stages {
+                stage('Checkout (Windows)') {
+                    steps {
+                        // withCredentials (not the native `checkout` step)
+                        // because `checkout` would want to reconcile the
+                        // working tree with the target commit itself, which
+                        // risks the same "discard local changes" outcome we
+                        // just avoided by dropping CleanBeforeCheckout.
+                        withCredentials([usernamePassword(
+                            credentialsId: env.GIT_CREDENTIALS_ID,
+                            usernameVariable: 'GIT_USER',
+                            passwordVariable: 'GIT_TOKEN'
+                        )]) {
+                            bat '''
+                                git config --global --add safe.directory "*"
+                                if not exist .git (
+                                    echo === No repo here yet, cloning once ===
+                                    git clone --branch main https://%GIT_USER%:%GIT_TOKEN%@github.com/Kynmmarshall/trip_io.git .
+                                ) else (
+                                    echo === Existing checkout found - fetching latest main only, not touching local changes ===
+                                    git fetch https://%GIT_USER%:%GIT_TOKEN%@github.com/Kynmmarshall/trip_io.git main
+                                    git merge --ff-only FETCH_HEAD
+                                )
+                                echo Local HEAD:
+                                git rev-parse --short HEAD
+                            '''
+                        }
+                    }
+                }
+
+                stage('Build Windows Installer') {
+                    steps {
+                        bat '''
+                            flutter pub get
+                            flutter build windows --release --dart-define=API_BASE_URL=%API_BASE_URL%
+                            if exist Output rmdir /s /q Output
+                            "C:\\Program Files (x86)\\Inno Setup 6\\ISCC.exe" trip_io_setup.iss
+                        '''
+                    }
+                }
+
+                stage('Deploy Windows Installer (scp)') {
+                    when {
+                        expression { currentBuild.result != 'FAILURE' }
+                    }
+                    steps {
+                        powershell '''
+                            $ErrorActionPreference = "Continue"
+                            $remote = "$env:VPS_USER@$env:VPS_HOST"
+                            $remoteDir = "$env:VPS_APP_DIR/website/downloads"
+                            $remoteTmp = "$remoteDir/trip_io_windows.exe.uploading"
+                            $remoteFinal = "$remoteDir/trip_io_windows.exe"
+                            $sshOpts = @("-i", $env:SSH_KEY, "-o", "StrictHostKeyChecking=accept-new")
+
+                            $installer = Get-ChildItem -Path "Output" -Filter "*.exe" | Select-Object -First 1
+                            if (-not $installer) { throw "No installer .exe found in Output/" }
+
+                            $totalMB = [math]::Round($installer.Length / 1MB, 2)
+                            Write-Output "=== Uploading $($installer.Name) ($totalMB MB) to $remote ==="
+
+                            & ssh @sshOpts $remote "mkdir -p '$remoteDir'"
+                            if ($LASTEXITCODE -ne 0) { throw "Failed to prepare remote downloads directory" }
+
+                            & scp @sshOpts $installer.FullName "${remote}:${remoteTmp}"
+                            if ($LASTEXITCODE -ne 0) { throw "scp upload failed" }
+
+                            & ssh @sshOpts $remote "mv '$remoteTmp' '$remoteFinal' && ls -lh '$remoteFinal'"
+                            if ($LASTEXITCODE -ne 0) { throw "Failed to finalize remote file" }
+                            Write-Output "Deployed to ${remote}:${remoteFinal}"
+                        '''
+                    }
+                }
+            }
+        }
+
+        stage('Checkout (VPS)') {
+            // Same reasoning as the Windows checkout above: native
+            // `checkout` step so GIT_CREDENTIALS_ID actually gets used.
+            agent any
+            steps {
+                sh 'git config --global --add safe.directory "*" || true'
+                checkout([$class: 'GitSCM',
+                    branches: [[name: 'refs/heads/main']],
+                    userRemoteConfigs: [[url: env.REPO_URL, credentialsId: env.GIT_CREDENTIALS_ID]],
+                    extensions: [[$class: 'CleanBeforeCheckout']]
+                ])
+            }
+        }
+
+        stage('Analyze & Test') {
+            agent any
+            steps {
+                sh '''
+                    flutter pub get
+                    flutter analyze --no-pub || echo "Analysis completed with warnings"
+                    if [ -d test ]; then flutter test || echo "Tests completed with failures"; fi
+                '''
+            }
+        }
+
+        stage('Build APK & Web') {
+            agent any
+            steps {
+                sh '''
+                    flutter build apk --release --dart-define=API_BASE_URL=$API_BASE_URL
+                    flutter build web --release --base-href /app/ --dart-define=API_BASE_URL=$API_BASE_URL
+                '''
+            }
+        }
+
+        stage('Deploy APK & Web (local copy)') {
+            agent any
+            when {
+                expression { currentBuild.result != 'FAILURE' }
+            }
+            steps {
+                sh '''
+                    set -e
+                    DEST="$VPS_APP_DIR/website"
+                    mkdir -p "$DEST/downloads" "$DEST/webapp"
+
+                    cp build/app/outputs/flutter-apk/app-release.apk "$DEST/downloads/trip_io.apk"
+                    echo "APK deployed to $DEST/downloads/trip_io.apk"
+
+                    rm -rf "${DEST:?}/webapp"/*
+                    cp -r build/web/* "$DEST/webapp/"
+                    echo "Web app deployed to $DEST/webapp"
+                '''
+            }
+        }
+    }
+
+    post {
+        always {
+            script {
+                node('windows') {
+                    // ws(...) here matters: node('windows') alone reopens
+                    // Jenkins' own default workspace for this job, not the
+                    // customWorkspace the build stages actually ran in -
+                    // without it, this would silently archive nothing.
+                    ws('C:\\Users\\kynm\\Desktop\\trip_io') {
+                        archiveArtifacts artifacts: 'Output/*.exe', fingerprint: true, allowEmptyArchive: true
+                    }
+                }
+                node('!windows') {
+                    archiveArtifacts artifacts: 'build/app/outputs/flutter-apk/app-release.apk', fingerprint: true, allowEmptyArchive: true
+                }
+            }
+        }
+        success {
+            echo 'Build successful! trip_io downloads updated.'
+            script {
+                node('!windows') {
+                    sh '''
+                        echo "trip_io build ${BUILD_NUMBER} completed successfully!\\nBuild URL: ${BUILD_URL}" | mail -s "SUCCESS: trip_io Build ${BUILD_NUMBER}" kynmmarshall@gmail.com || echo "Email failed, but build succeeded"
+                    '''
+                }
+            }
+        }
+        failure {
+            echo 'Build failed! Check the logs for errors.'
+            script {
+                node('!windows') {
+                    sh '''
+                        echo "trip_io build ${BUILD_NUMBER} failed. Check: ${BUILD_URL}" | mail -s "FAILURE: trip_io Build ${BUILD_NUMBER}" kynmmarshall@gmail.com || echo "Email failed"
+                    '''
+                }
+            }
+        }
+    }
+}

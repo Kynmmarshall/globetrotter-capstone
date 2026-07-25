@@ -326,6 +326,24 @@ abstract class AppLocalizations {
   /// **'No destinations found.'**
   String get destinationsEmpty;
 
+  /// No description provided for @destinationsFilterLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Filter by interest'**
+  String get destinationsFilterLabel;
+
+  /// No description provided for @destinationsFilterClear.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear'**
+  String get destinationsFilterClear;
+
+  /// No description provided for @destinationsFilterEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No destinations match the selected filters.'**
+  String get destinationsFilterEmpty;
+
   /// No description provided for @recommendationsTitle.
   ///
   /// In en, this message translates to:
@@ -446,6 +464,12 @@ abstract class AppLocalizations {
   /// **'Available time: {duration}'**
   String itineraryAvailableTime(String duration);
 
+  /// No description provided for @itineraryAvailableTimePerDay.
+  ///
+  /// In en, this message translates to:
+  /// **'Available time per day: {duration}'**
+  String itineraryAvailableTimePerDay(String duration);
+
   /// No description provided for @itineraryOverrunWarning.
   ///
   /// In en, this message translates to:
@@ -475,6 +499,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Travel time'**
   String get itineraryTravelTime;
+
+  /// No description provided for @tripDatesLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Trip dates'**
+  String get tripDatesLabel;
+
+  /// No description provided for @tripDatesHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose start and end date'**
+  String get tripDatesHint;
 
   /// No description provided for @memberSinceDevice.
   ///
@@ -583,6 +619,60 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'French'**
   String get languageFrench;
+
+  /// No description provided for @interestsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Areas of interest'**
+  String get interestsLabel;
+
+  /// No description provided for @interestsHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a few things you enjoy - we\'ll use these to recommend Yaoundé spots for you.'**
+  String get interestsHelper;
+
+  /// No description provided for @interestsUpdatedSnackbar.
+  ///
+  /// In en, this message translates to:
+  /// **'Interests updated.'**
+  String get interestsUpdatedSnackbar;
+
+  /// No description provided for @nearbyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Eat & stay nearby'**
+  String get nearbyTitle;
+
+  /// No description provided for @nearbySubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Real restaurants and hotels close to this spot.'**
+  String get nearbySubtitle;
+
+  /// No description provided for @practicalInfoTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Good to know'**
+  String get practicalInfoTitle;
+
+  /// No description provided for @openingHoursLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Opening hours'**
+  String get openingHoursLabel;
+
+  /// No description provided for @entryFeeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Entry fee'**
+  String get entryFeeLabel;
+
+  /// No description provided for @tipsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Tips'**
+  String get tipsLabel;
 
   /// No description provided for @sessionExpiredTitle.
   ///
