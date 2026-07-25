@@ -410,6 +410,56 @@ section {
   object-fit: cover;
 }
 
+/* ---------- Community (WhatsApp) ---------- */
+
+#community {
+  padding: 0 0 30px;
+}
+
+.community-card {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+  padding: 28px 30px;
+}
+
+.community-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #25d366, #128c7e);
+}
+
+.community-icon svg {
+  width: 26px;
+  height: 26px;
+  fill: #fff;
+}
+
+.community-copy {
+  flex: 1 1 260px;
+}
+
+.community-copy h3 {
+  margin: 0 0 4px;
+  font-size: 1.1rem;
+}
+
+.community-copy p {
+  margin: 0;
+  color: var(--text-dim);
+  font-size: 0.9rem;
+}
+
+.community-card .btn {
+  flex-shrink: 0;
+}
+
 /* ---------- Footer ---------- */
 
 footer {

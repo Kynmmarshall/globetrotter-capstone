@@ -2,13 +2,15 @@ from .data import read_data, write_data
 from .auth import hash_password, verify_password
 import uuid
 
-def register_user(username: str, password: str, email: str | None = None):
+def register_user(username: str, password: str, email: str | None = None, interests: list[str] | None = None):
     data = read_data()
     if any(u["username"] == username for u in data.get("users", [])):
         return None
     user = {"id": str(uuid.uuid4()), "username": username, "password": hash_password(password)}
     if email:
         user["email"] = email
+    if interests:
+        user["interests"] = interests
     data.setdefault("users", []).append(user)
     write_data(data)
     return user
@@ -17,6 +19,22 @@ def authenticate_user(username: str, password: str):
     data = read_data()
     for u in data.get("users", []):
         if u["username"] == username and verify_password(password, u["password"]):
+            return u
+    return None
+
+def get_user(username: str):
+    data = read_data()
+    for u in data.get("users", []):
+        if u["username"] == username:
+            return u
+    return None
+
+def update_user_interests(username: str, interests: list[str]):
+    data = read_data()
+    for u in data.get("users", []):
+        if u["username"] == username:
+            u["interests"] = interests
+            write_data(data)
             return u
     return None
 
@@ -45,5 +63,16 @@ def search_destinations(q: str = None):
 
 def recommendations_for(user: str):
     data = read_data()
-    # simple: return top 3 popular destinations
-    return data.get("destinations", [])[:3]
+    dests = data.get("destinations", [])
+    profile = get_user(user)
+    interests = set((profile or {}).get("interests") or [])
+
+    if not interests:
+        return dests[:3]
+
+    def score(d):
+        return len(set(d.get("tags") or []) & interests)
+
+    matched = [d for d in dests if score(d) > 0]
+    matched.sort(key=score, reverse=True)
+    return matched[:6] if matched else dests[:3]
