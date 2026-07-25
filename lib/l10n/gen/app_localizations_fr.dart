@@ -316,6 +316,18 @@ class AppLocalizationsFr extends AppLocalizations {
       'Vrais restaurants et hôtels proches de ce lieu.';
 
   @override
+  String get practicalInfoTitle => 'Bon à savoir';
+
+  @override
+  String get openingHoursLabel => 'Horaires d\'ouverture';
+
+  @override
+  String get entryFeeLabel => 'Prix d\'entrée';
+
+  @override
+  String get tipsLabel => 'Astuces';
+
+  @override
   String get sessionExpiredTitle => 'Votre session a expiré';
 
   @override

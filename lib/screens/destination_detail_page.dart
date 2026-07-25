@@ -61,6 +61,52 @@ class DestinationDetailPage extends StatelessWidget {
     );
   }
 
+  Widget _buildInfoRow(IconData icon, String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 34,
+            height: 34,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.white.withValues(alpha: 0.14),
+            ),
+            child: Icon(icon, color: Colors.white, size: 17),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.65),
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.3,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  value,
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.92),
+                    fontSize: 13.5,
+                    height: 1.4,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildNearbyCard(BuildContext context, NearbyPlace place) {
     final icon = place.isHotel ? Icons.hotel : Icons.restaurant;
     return Padding(
@@ -302,6 +348,47 @@ class DestinationDetailPage extends StatelessWidget {
                                 ],
                               ),
                             ),
+                            if (destination.openingHours != null ||
+                                destination.entryFee != null ||
+                                destination.tips != null) ...[
+                              const SizedBox(height: 22),
+                              Text(
+                                AppLocalizations.of(context)!.practicalInfoTitle,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 17,
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              _glassPanel(
+                                borderRadius: BorderRadius.circular(20),
+                                padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    if (destination.openingHours != null)
+                                      _buildInfoRow(
+                                        Icons.schedule,
+                                        AppLocalizations.of(context)!.openingHoursLabel,
+                                        destination.openingHours!,
+                                      ),
+                                    if (destination.entryFee != null)
+                                      _buildInfoRow(
+                                        Icons.confirmation_number_outlined,
+                                        AppLocalizations.of(context)!.entryFeeLabel,
+                                        destination.entryFee!,
+                                      ),
+                                    if (destination.tips != null)
+                                      _buildInfoRow(
+                                        Icons.lightbulb_outline,
+                                        AppLocalizations.of(context)!.tipsLabel,
+                                        destination.tips!,
+                                      ),
+                                  ],
+                                ),
+                              ),
+                            ],
                             if (destination.nearby.isNotEmpty) ...[
                               const SizedBox(height: 22),
                               Text(

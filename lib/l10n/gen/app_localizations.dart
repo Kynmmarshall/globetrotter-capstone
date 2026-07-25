@@ -632,6 +632,30 @@ abstract class AppLocalizations {
   /// **'Real restaurants and hotels close to this spot.'**
   String get nearbySubtitle;
 
+  /// No description provided for @practicalInfoTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Good to know'**
+  String get practicalInfoTitle;
+
+  /// No description provided for @openingHoursLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Opening hours'**
+  String get openingHoursLabel;
+
+  /// No description provided for @entryFeeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Entry fee'**
+  String get entryFeeLabel;
+
+  /// No description provided for @tipsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Tips'**
+  String get tipsLabel;
+
   /// No description provided for @sessionExpiredTitle.
   ///
   /// In en, this message translates to:

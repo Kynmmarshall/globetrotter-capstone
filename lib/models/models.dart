@@ -38,6 +38,9 @@ class Destination {
     this.description,
     this.location,
     this.nearby = const [],
+    this.openingHours,
+    this.entryFee,
+    this.tips,
   });
 
   final String id;
@@ -48,6 +51,9 @@ class Destination {
   final String? description;
   final String? location;
   final List<NearbyPlace> nearby;
+  final String? openingHours;
+  final String? entryFee;
+  final String? tips;
 
   /// Whether the backend supplied enough content to show this as a
   /// featured, photo-led card rather than a plain search result.
@@ -75,6 +81,9 @@ class Destination {
       nearby: (json['nearby'] as List<dynamic>? ?? <dynamic>[])
           .map((e) => NearbyPlace.fromJson(e as Map<String, dynamic>))
           .toList(),
+      openingHours: optionalString('opening_hours'),
+      entryFee: optionalString('entry_fee'),
+      tips: optionalString('tips'),
     );
   }
 }

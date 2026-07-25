@@ -130,6 +130,11 @@
   "nearbyTitle": "Eat & stay nearby",
   "nearbySubtitle": "Real restaurants and hotels close to this spot.",
 
+  "practicalInfoTitle": "Good to know",
+  "openingHoursLabel": "Opening hours",
+  "entryFeeLabel": "Entry fee",
+  "tipsLabel": "Tips",
+
   "sessionExpiredTitle": "Your session has expired",
   "sessionExpiredSubtitle": "Please sign in again to continue.",
   "signInAgainButton": "Sign in again"

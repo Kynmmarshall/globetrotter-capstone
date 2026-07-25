@@ -99,6 +99,11 @@
   "nearbyTitle": "Manger et dormir à proximité",
   "nearbySubtitle": "Vrais restaurants et hôtels proches de ce lieu.",
 
+  "practicalInfoTitle": "Bon à savoir",
+  "openingHoursLabel": "Horaires d'ouverture",
+  "entryFeeLabel": "Prix d'entrée",
+  "tipsLabel": "Astuces",
+
   "sessionExpiredTitle": "Votre session a expiré",
   "sessionExpiredSubtitle": "Veuillez vous reconnecter pour continuer.",
   "signInAgainButton": "Se reconnecter"
