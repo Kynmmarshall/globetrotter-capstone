@@ -70,64 +70,93 @@ pipeline {
     }
 
     stages {
-        stage('Checkout (Windows)') {
-            // Uses the native `checkout` step (not raw git commands) so
-            // Jenkins actually injects GIT_CREDENTIALS_ID - this repo is
-            // private, and a plain `git clone <url>` has no way to
-            // authenticate on its own.
-            agent { label 'windows' }
-            steps {
-                bat 'git config --global --add safe.directory "*"'
-                checkout([$class: 'GitSCM',
-                    branches: [[name: 'refs/heads/main']],
-                    userRemoteConfigs: [[url: env.REPO_URL, credentialsId: env.GIT_CREDENTIALS_ID]],
-                    extensions: [[$class: 'CleanBeforeCheckout']]
-                ])
+        stage('Windows: build + deploy') {
+            // Runs directly in your real desktop working copy instead of a
+            // Jenkins-managed workspace, per your request - so checkout
+            // below deliberately does NOT clean/reset the folder (that would
+            // silently discard any uncommitted edits sitting there when a
+            // build fires, including from an automatic githubPush trigger).
+            // It only fetches + fast-forwards; if local changes conflict
+            // with origin/main, the merge fails loudly instead of
+            // overwriting anything.
+            agent {
+                node {
+                    label 'windows'
+                    customWorkspace 'C:\\Users\\kynm\\Desktop\\trip_io'
+                }
             }
-        }
+            stages {
+                stage('Checkout (Windows)') {
+                    steps {
+                        // withCredentials (not the native `checkout` step)
+                        // because `checkout` would want to reconcile the
+                        // working tree with the target commit itself, which
+                        // risks the same "discard local changes" outcome we
+                        // just avoided by dropping CleanBeforeCheckout.
+                        withCredentials([usernamePassword(
+                            credentialsId: env.GIT_CREDENTIALS_ID,
+                            usernameVariable: 'GIT_USER',
+                            passwordVariable: 'GIT_TOKEN'
+                        )]) {
+                            bat '''
+                                git config --global --add safe.directory "*"
+                                if not exist .git (
+                                    echo === No repo here yet, cloning once ===
+                                    git clone --branch main https://%GIT_USER%:%GIT_TOKEN%@github.com/Kynmmarshall/trip_io.git .
+                                ) else (
+                                    echo === Existing checkout found - fetching latest main only, not touching local changes ===
+                                    git fetch https://%GIT_USER%:%GIT_TOKEN%@github.com/Kynmmarshall/trip_io.git main
+                                    git merge --ff-only FETCH_HEAD
+                                )
+                                echo Local HEAD:
+                                git rev-parse --short HEAD
+                            '''
+                        }
+                    }
+                }
 
-        stage('Build Windows Installer') {
-            agent { label 'windows' }
-            steps {
-                bat '''
-                    flutter pub get
-                    flutter build windows --release --dart-define=API_BASE_URL=%API_BASE_URL%
-                    if exist Output rmdir /s /q Output
-                    "C:\\Program Files (x86)\\Inno Setup 6\\ISCC.exe" trip_io_setup.iss
-                '''
-            }
-        }
+                stage('Build Windows Installer') {
+                    steps {
+                        bat '''
+                            flutter pub get
+                            flutter build windows --release --dart-define=API_BASE_URL=%API_BASE_URL%
+                            if exist Output rmdir /s /q Output
+                            "C:\\Program Files (x86)\\Inno Setup 6\\ISCC.exe" trip_io_setup.iss
+                        '''
+                    }
+                }
 
-        stage('Deploy Windows Installer (scp)') {
-            agent { label 'windows' }
-            when {
-                expression { currentBuild.result != 'FAILURE' }
-            }
-            steps {
-                powershell '''
-                    $ErrorActionPreference = "Continue"
-                    $remote = "$env:VPS_USER@$env:VPS_HOST"
-                    $remoteDir = "$env:VPS_APP_DIR/website/downloads"
-                    $remoteTmp = "$remoteDir/trip_io_windows.exe.uploading"
-                    $remoteFinal = "$remoteDir/trip_io_windows.exe"
-                    $sshOpts = @("-i", $env:SSH_KEY, "-o", "StrictHostKeyChecking=accept-new")
+                stage('Deploy Windows Installer (scp)') {
+                    when {
+                        expression { currentBuild.result != 'FAILURE' }
+                    }
+                    steps {
+                        powershell '''
+                            $ErrorActionPreference = "Continue"
+                            $remote = "$env:VPS_USER@$env:VPS_HOST"
+                            $remoteDir = "$env:VPS_APP_DIR/website/downloads"
+                            $remoteTmp = "$remoteDir/trip_io_windows.exe.uploading"
+                            $remoteFinal = "$remoteDir/trip_io_windows.exe"
+                            $sshOpts = @("-i", $env:SSH_KEY, "-o", "StrictHostKeyChecking=accept-new")
 
-                    $installer = Get-ChildItem -Path "Output" -Filter "*.exe" | Select-Object -First 1
-                    if (-not $installer) { throw "No installer .exe found in Output/" }
+                            $installer = Get-ChildItem -Path "Output" -Filter "*.exe" | Select-Object -First 1
+                            if (-not $installer) { throw "No installer .exe found in Output/" }
 
-                    $totalMB = [math]::Round($installer.Length / 1MB, 2)
-                    Write-Output "=== Uploading $($installer.Name) ($totalMB MB) to $remote ==="
+                            $totalMB = [math]::Round($installer.Length / 1MB, 2)
+                            Write-Output "=== Uploading $($installer.Name) ($totalMB MB) to $remote ==="
 
-                    & ssh @sshOpts $remote "mkdir -p '$remoteDir'"
-                    if ($LASTEXITCODE -ne 0) { throw "Failed to prepare remote downloads directory" }
+                            & ssh @sshOpts $remote "mkdir -p '$remoteDir'"
+                            if ($LASTEXITCODE -ne 0) { throw "Failed to prepare remote downloads directory" }
 
-                    & scp @sshOpts $installer.FullName "${remote}:${remoteTmp}"
-                    if ($LASTEXITCODE -ne 0) { throw "scp upload failed" }
+                            & scp @sshOpts $installer.FullName "${remote}:${remoteTmp}"
+                            if ($LASTEXITCODE -ne 0) { throw "scp upload failed" }
 
-                    & ssh @sshOpts $remote "mv '$remoteTmp' '$remoteFinal' && ls -lh '$remoteFinal'"
-                    if ($LASTEXITCODE -ne 0) { throw "Failed to finalize remote file" }
-                    Write-Output "Deployed to ${remote}:${remoteFinal}"
-                '''
+                            & ssh @sshOpts $remote "mv '$remoteTmp' '$remoteFinal' && ls -lh '$remoteFinal'"
+                            if ($LASTEXITCODE -ne 0) { throw "Failed to finalize remote file" }
+                            Write-Output "Deployed to ${remote}:${remoteFinal}"
+                        '''
+                    }
+                }
             }
         }
 
@@ -192,7 +221,13 @@ pipeline {
         always {
             script {
                 node('windows') {
-                    archiveArtifacts artifacts: 'Output/*.exe', fingerprint: true, allowEmptyArchive: true
+                    // ws(...) here matters: node('windows') alone reopens
+                    // Jenkins' own default workspace for this job, not the
+                    // customWorkspace the build stages actually ran in -
+                    // without it, this would silently archive nothing.
+                    ws('C:\\Users\\kynm\\Desktop\\trip_io') {
+                        archiveArtifacts artifacts: 'Output/*.exe', fingerprint: true, allowEmptyArchive: true
+                    }
                 }
                 node('!windows') {
                     archiveArtifacts artifacts: 'build/app/outputs/flutter-apk/app-release.apk', fingerprint: true, allowEmptyArchive: true
