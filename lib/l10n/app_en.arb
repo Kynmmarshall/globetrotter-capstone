@@ -43,6 +43,9 @@
   "destinationsSearchHint": "Search destinations by name or tag",
   "searchButton": "Search",
   "destinationsEmpty": "No destinations found.",
+  "destinationsFilterLabel": "Filter by interest",
+  "destinationsFilterClear": "Clear",
+  "destinationsFilterEmpty": "No destinations match the selected filters.",
 
   "recommendationsTitle": "Picked for you",
   "recommendationsSubtitle": "A quick shortlist of Yaoundé spots worth adding to your itinerary.",

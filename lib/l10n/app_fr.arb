@@ -42,6 +42,9 @@
   "destinationsSearchHint": "Rechercher une destination par nom ou mot-clé",
   "searchButton": "Rechercher",
   "destinationsEmpty": "Aucune destination trouvée.",
+  "destinationsFilterLabel": "Filtrer par centre d'intérêt",
+  "destinationsFilterClear": "Effacer",
+  "destinationsFilterEmpty": "Aucune destination ne correspond aux filtres sélectionnés.",
 
   "recommendationsTitle": "Sélectionné pour vous",
   "recommendationsSubtitle": "Une courte liste de lieux à Yaoundé à ajouter à votre itinéraire.",

@@ -326,6 +326,24 @@ abstract class AppLocalizations {
   /// **'No destinations found.'**
   String get destinationsEmpty;
 
+  /// No description provided for @destinationsFilterLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Filter by interest'**
+  String get destinationsFilterLabel;
+
+  /// No description provided for @destinationsFilterClear.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear'**
+  String get destinationsFilterClear;
+
+  /// No description provided for @destinationsFilterEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No destinations match the selected filters.'**
+  String get destinationsFilterEmpty;
+
   /// No description provided for @recommendationsTitle.
   ///
   /// In en, this message translates to:

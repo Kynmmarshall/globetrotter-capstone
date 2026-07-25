@@ -129,6 +129,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get destinationsEmpty => 'No destinations found.';
 
   @override
+  String get destinationsFilterLabel => 'Filter by interest';
+
+  @override
+  String get destinationsFilterClear => 'Clear';
+
+  @override
+  String get destinationsFilterEmpty =>
+      'No destinations match the selected filters.';
+
+  @override
   String get recommendationsTitle => 'Picked for you';
 
   @override

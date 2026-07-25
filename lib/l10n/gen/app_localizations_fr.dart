@@ -133,6 +133,16 @@ class AppLocalizationsFr extends AppLocalizations {
   String get destinationsEmpty => 'Aucune destination trouvée.';
 
   @override
+  String get destinationsFilterLabel => 'Filtrer par centre d\'intérêt';
+
+  @override
+  String get destinationsFilterClear => 'Effacer';
+
+  @override
+  String get destinationsFilterEmpty =>
+      'Aucune destination ne correspond aux filtres sélectionnés.';
+
+  @override
   String get recommendationsTitle => 'Sélectionné pour vous';
 
   @override

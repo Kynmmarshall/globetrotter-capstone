@@ -223,17 +223,19 @@ class _ProfilePageState extends State<ProfilePage> {
                 label: Text(
                   _capitalize(tag),
                   style: TextStyle(
-                    color: selected ? Colors.white : Colors.white.withValues(alpha: 0.92),
+                    color: selected ? Colors.white : const Color(0xFF1A2530),
                     fontSize: 12.5,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
                 selected: selected,
                 showCheckmark: false,
-                avatar: selected ? const Icon(Icons.check, size: 16, color: Colors.white) : null,
-                backgroundColor: Colors.white.withValues(alpha: 0.14),
+                avatar: selected
+                    ? const Icon(Icons.check, size: 16, color: Colors.white)
+                    : null,
+                backgroundColor: Colors.white.withValues(alpha: 0.88),
                 selectedColor: colors.primary.withValues(alpha: 0.85),
-                side: BorderSide(color: Colors.white.withValues(alpha: 0.28)),
+                side: BorderSide(color: Colors.white.withValues(alpha: 0.4)),
                 onSelected: (value) {
                   setState(() {
                     if (value) {
