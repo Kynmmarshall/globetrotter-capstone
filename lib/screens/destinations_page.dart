@@ -5,6 +5,7 @@ import 'package:trip_io/l10n/gen/app_localizations.dart';
 import 'package:trip_io/models/interest_tags.dart';
 import 'package:trip_io/models/models.dart';
 import 'package:trip_io/screens/destination_detail_page.dart';
+import 'package:trip_io/services/analytics.dart';
 import 'package:trip_io/services/api_client.dart';
 import 'package:trip_io/services/session_controller.dart';
 import 'package:trip_io/widgets/session_expired_card.dart';
@@ -167,6 +168,7 @@ class _DestinationsPageState extends State<DestinationsPage> {
     final heroTag = 'destination-${d.id}';
     return GestureDetector(
       onTap: () {
+        Analytics.instance.trackEvent('destination', 'view', name: d.id);
         Navigator.of(context).push(
           MaterialPageRoute(
             builder: (_) =>

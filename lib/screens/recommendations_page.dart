@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:trip_io/l10n/gen/app_localizations.dart';
 import 'package:trip_io/models/models.dart';
 import 'package:trip_io/screens/destination_detail_page.dart';
+import 'package:trip_io/services/analytics.dart';
 import 'package:trip_io/services/api_client.dart';
 import 'package:trip_io/services/session_controller.dart';
 import 'package:trip_io/widgets/feature_pill.dart';
@@ -108,6 +109,7 @@ class _RecommendationsPageState extends State<RecommendationsPage> {
     final heroTag = 'destination-${item.id}';
     return GestureDetector(
       onTap: () {
+        Analytics.instance.trackEvent('destination', 'view', name: item.id);
         Navigator.of(context).push(
           MaterialPageRoute(
             builder: (_) =>

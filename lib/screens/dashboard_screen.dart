@@ -2,6 +2,7 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:trip_io/l10n/gen/app_localizations.dart';
+import 'package:trip_io/services/analytics.dart';
 import 'package:trip_io/services/session_controller.dart';
 import 'package:trip_io/screens/destinations_page.dart';
 import 'package:trip_io/screens/itineraries_page.dart';
@@ -22,6 +23,25 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   static const _icons = <IconData>[Icons.public, Icons.star, Icons.map, Icons.person];
   static const double _backgroundBreakpoint = 700;
+  // Locale-independent identifiers for analytics, distinct from the
+  // user-facing (translated) tab labels below.
+  static const _screenNames = <String>[
+    'destinations',
+    'recommendations',
+    'itineraries',
+    'profile',
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    Analytics.instance.trackScreen(_screenNames[_index]);
+  }
+
+  void _selectTab(int index) {
+    setState(() => _index = index);
+    Analytics.instance.trackScreen(_screenNames[index]);
+  }
 
   List<String> _labels(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
@@ -79,7 +99,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               selectedLabelTextStyle: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
               unselectedIconTheme: const IconThemeData(color: Colors.white70),
               selectedIconTheme: const IconThemeData(color: Colors.white),
-              onDestinationSelected: (idx) => setState(() => _index = idx),
+              onDestinationSelected: _selectTab,
               destinations: List.generate(labels.length, (i) {
                 return NavigationRailDestination(
                   icon: Icon(_icons[i]),
@@ -96,7 +116,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               backgroundColor: Colors.transparent,
               indicatorColor: Colors.white.withValues(alpha: 0.22),
               selectedIndex: _index,
-              onDestinationSelected: (idx) => setState(() => _index = idx),
+              onDestinationSelected: _selectTab,
               labelTextStyle: WidgetStateProperty.resolveWith((states) {
                 final selected = states.contains(WidgetState.selected);
                 return TextStyle(

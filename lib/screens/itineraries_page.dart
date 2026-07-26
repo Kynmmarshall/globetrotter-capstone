@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:trip_io/l10n/gen/app_localizations.dart';
 import 'package:trip_io/models/models.dart';
 import 'package:trip_io/screens/itinerary_detail_page.dart';
+import 'package:trip_io/services/analytics.dart';
 import 'package:trip_io/services/itinerary_scheduler.dart';
 import 'package:trip_io/services/session_controller.dart';
 import 'package:trip_io/widgets/session_expired_card.dart';
@@ -494,14 +495,21 @@ class _ItinerariesPageState extends State<ItinerariesPage> {
                 borderRadius: BorderRadius.circular(16),
                 clipBehavior: Clip.antiAlias,
                 child: InkWell(
-                  onTap: () => Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => ItineraryDetailPage(
-                        itinerary: item,
-                        destinationsById: destinationsById,
+                  onTap: () {
+                    Analytics.instance.trackEvent(
+                      'itinerary',
+                      'view',
+                      name: item.id,
+                    );
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => ItineraryDetailPage(
+                          itinerary: item,
+                          destinationsById: destinationsById,
+                        ),
                       ),
-                    ),
-                  ),
+                    );
+                  },
                   child: _glassPanel(
                     borderRadius: BorderRadius.circular(16),
                     child: Column(
