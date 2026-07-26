@@ -1,0 +1,40 @@
+services:
+  matomo_db:
+    image: mariadb:10.11
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MATOMO_DB_ROOT_PASSWORD}
+      MYSQL_DATABASE: matomo
+      MYSQL_USER: matomo
+      MYSQL_PASSWORD: ${MATOMO_DB_PASSWORD}
+    volumes:
+      - matomo_db_data:/var/lib/mysql
+    command: --max-allowed-packet=64MB
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  matomo:
+    image: matomo:apache
+    restart: unless-stopped
+    depends_on:
+      matomo_db:
+        condition: service_healthy
+    environment:
+      MATOMO_DATABASE_HOST: matomo_db
+      MATOMO_DATABASE_USERNAME: matomo
+      MATOMO_DATABASE_PASSWORD: ${MATOMO_DB_PASSWORD}
+      MATOMO_DATABASE_DBNAME: matomo
+    # Bound to localhost only - nginx on the host is the only thing that
+    # should reach this directly, same pattern as trip_io_backend's uvicorn
+    # on 127.0.0.1:8000.
+    ports:
+      - "127.0.0.1:8091:80"
+    volumes:
+      - matomo_data:/var/www/html
+
+volumes:
+  matomo_db_data:
+  matomo_data:
