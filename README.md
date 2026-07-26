@@ -36,6 +36,7 @@ The Phase 1 monolith is deployed on a VPS and reachable at **[https://trip-io.du
 - [API Reference](#api-reference)
 - [Configuration](#configuration)
 - [Testing](#testing)
+- [Containers & CI/CD](#containers--cicd)
 - [Data Storage](#data-storage)
 - [Roadmap](#roadmap)
 - [Contributing](#contributing)
@@ -82,9 +83,11 @@ globetrotter-capstone/
 │   │   ├── data.py          # JSON-file read/write with a thread lock
 │   │   └── schemas.py       # Pydantic request/response models
 │   ├── data/                # Runtime JSON data store (gitignored)
+│   ├── scripts/              # Destination discovery/image-vetting tooling (not run in prod)
 │   ├── static/               # Uploaded/served assets (e.g. destination images)
 │   ├── website/              # Static marketing site + hosted web/app builds
 │   ├── tests/                # Pytest + httpx API tests
+│   ├── Dockerfile / docker-compose.yml
 │   └── requirements.txt
 │
 └── frontend/                 # Flutter client ("trip_io")
@@ -92,10 +95,12 @@ globetrotter-capstone/
     │   ├── main.dart / app.dart
     │   ├── screens/           # Auth, dashboard, destinations, itineraries, profile
     │   ├── services/          # ApiClient, session controller, itinerary scheduler
-    │   ├── models/            # Data models
+    │   ├── models/            # Data models (incl. shared interest-tag vocabulary)
     │   ├── themes/             # App theming
     │   └── l10n/                # Localization (English, French)
     ├── assets/
+    ├── Dockerfile / nginx.conf   # Web-release container image
+    ├── jenkinsfile               # CI/CD: builds + deploys Windows/Android/Web to the VPS
     └── pubspec.yaml
 ```
 
@@ -170,12 +175,17 @@ Base URL: `https://trip-io.duckdns.org` (production) or `http://localhost:8000` 
 
 | Method | Path | Auth | Description |
 |---|---|---|---|
-| `POST` | `/register` | — | Create a user account, returns a JWT |
+| `GET` | `/health` | — | Liveness check (used by Docker/orchestration health checks) |
+| `POST` | `/register` | — | Create a user account (optionally with `interests`), returns a JWT |
 | `POST` | `/login` | — | Authenticate, returns a JWT |
+| `GET` | `/me` | Bearer token | Get the current user's profile (username, email, interests) |
+| `PUT` | `/me/interests` | Bearer token | Replace the current user's interest tags |
 | `GET` | `/destinations?q=` | — | Search/list destinations by name or tag |
-| `GET` | `/recommendations` | Bearer token | Get personalized destination recommendations |
-| `POST` | `/itineraries` | Bearer token | Create an itinerary for the current user |
+| `GET` | `/recommendations` | Bearer token | Personalized destinations, ranked by overlap with the user's interest tags (falls back to popular picks if none are set) |
+| `POST` | `/itineraries` | Bearer token | Create an itinerary (title, destinations, optional `schedule`, `start_date`/`end_date`) |
 | `GET` | `/itineraries` | Bearer token | List itineraries owned by the current user |
+
+Destinations also carry richer detail fields — `nearby` (nearby hotels/restaurants), `opening_hours`, `entry_fee`, and `tips` — returned by both `/destinations` and `/recommendations`. The interest-tag vocabulary used for filtering/recommendations is kept in sync between backend seed data and [`frontend/lib/models/interest_tags.dart`](frontend/lib/models/interest_tags.dart).
 
 Authenticated requests must include:
 
@@ -239,6 +249,24 @@ cd frontend
 flutter analyze
 flutter test
 ```
+
+## Containers & CI/CD
+
+Both services can also run in Docker, as an alternative to local `venv`/`flutter run` development:
+
+```powershell
+cd backend
+docker compose up --build
+# Backend:  http://localhost:8000  (website, API, /docs)
+# Frontend: http://localhost:8081  (Flutter web build via Nginx)
+```
+
+`backend/docker-compose.yml` builds the backend from `backend/Dockerfile` and the frontend web build from `../frontend` (`frontend/Dockerfile`, served via `nginx.conf`), assuming the two project folders are siblings on disk. The frontend's `API_BASE_URL` build arg must point somewhere the *browser* can reach — override it for anything other than local dev (see comments in the compose file).
+
+The live deployment at `trip-io.duckdns.org` is **not** container-based — it runs directly on the VPS via systemd + Nginx, kept up to date by a Jenkins pipeline (`frontend/jenkinsfile`) that triggers on every push to `main` and:
+
+1. Builds and deploys the Windows installer from a Windows build agent (via SCP).
+2. Runs `flutter analyze`/`flutter test`, then builds and deploys the Android APK and the Flutter web release directly onto the VPS's `website/downloads/` and `website/webapp/` (the same directories served by the backend, see [Architecture](#architecture)).
 
 ## Data Storage
 
