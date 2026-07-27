@@ -10,3 +10,6 @@ website/downloads/*
 !website/downloads/.gitkeep
 website/webapp/*
 !website/webapp/.gitkeep
+
+# Real secrets live only in the VPS's own matomo/.env, never in git.
+matomo/.env

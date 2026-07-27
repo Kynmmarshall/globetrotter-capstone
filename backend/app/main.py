@@ -4,7 +4,7 @@ from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
-from . import crud
+from . import crud, stats
 from .schemas import UserCreate, Token, Itinerary, Destination, ItineraryCreate, UserProfile, InterestsUpdate
 from .auth import create_access_token, get_current_user
 
@@ -43,6 +43,11 @@ def login(u: UserCreate):
 @app.get("/health")
 def health():
     return {"status": "ok"}
+
+
+@app.get("/stats/public")
+def public_stats():
+    return stats.get_public_stats()
 
 
 @app.get("/me", response_model=UserProfile)
