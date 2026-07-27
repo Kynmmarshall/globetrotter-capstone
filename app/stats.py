@@ -26,16 +26,20 @@ class MatomoApiError(Exception):
 
 
 def _matomo_get(client: httpx.Client, method: str, **params) -> object:
-    resp = client.get(
+    # Recent Matomo versions reject token_auth sent as a GET query parameter
+    # (it would end up in access/proxy logs) and require it as a POST body
+    # parameter instead - hence client.post(..., data=...) below, not a GET
+    # with everything in the query string.
+    resp = client.post(
         f"{MATOMO_URL}/index.php",
         params={
             "module": "API",
             "method": method,
             "idSite": MATOMO_SITE_ID,
             "format": "JSON",
-            "token_auth": MATOMO_API_TOKEN,
             **params,
         },
+        data={"token_auth": MATOMO_API_TOKEN},
     )
     resp.raise_for_status()
     payload = resp.json()
@@ -48,9 +52,11 @@ def _matomo_get(client: httpx.Client, method: str, **params) -> object:
 
 
 def _unique_visitors(client: httpx.Client, period: str) -> int:
-    value = _matomo_get(
+    payload = _matomo_get(
         client, "VisitsSummary.getUniqueVisitors", period=period, date="today"
     )
+    # A single-period request comes back as {"value": N}, not a bare number.
+    value = payload.get("value") if isinstance(payload, dict) else payload
     return int(value) if isinstance(value, (int, float)) else 0
 
 
@@ -84,7 +90,7 @@ def _top_sections(client: httpx.Client, limit: int = 6) -> list[dict]:
         return []
     rows = [
         {
-            "name": str(row.get("label", "unknown")),
+            "name": str(row.get("label", "unknown")).strip(),
             "count": int(row.get("nb_visits") or 0),
         }
         for row in raw
