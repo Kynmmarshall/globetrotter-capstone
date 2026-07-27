@@ -25,7 +25,10 @@ async function checkAvailability(link) {
   link.dataset.unavailable = 'true';
   const badge = document.createElement('span');
   badge.className = 'badge';
-  badge.textContent = 'Coming soon';
+  // data-i18n (not a one-off textContent set) so this badge keeps up if the
+  // visitor switches language after it's already been inserted.
+  badge.dataset.i18n = 'comingSoon';
+  badge.textContent = window.tripIoI18n ? window.tripIoI18n.t('comingSoon') : 'Coming soon';
   link.appendChild(badge);
 }
 
@@ -36,6 +39,26 @@ document.querySelectorAll('[data-download]').forEach(checkAvailability);
 const heroWebLink = document.getElementById('hero-web-link');
 if (heroWebLink) {
   checkAvailability(heroWebLink);
+}
+
+// Mobile nav menu: the nav-links row is hidden below 720px (see style.css),
+// so this toggle is the only way to reach any nav link - including Stats -
+// on a phone.
+const navToggle = document.getElementById('nav-toggle');
+const navLinks = document.getElementById('nav-links');
+if (navToggle && navLinks) {
+  navToggle.addEventListener('click', () => {
+    const isOpen = navLinks.classList.toggle('is-open');
+    navToggle.setAttribute('aria-expanded', String(isOpen));
+  });
+  // Tapping a link should close the menu too, not leave it open behind
+  // whatever section/page it just navigated to.
+  navLinks.querySelectorAll('a').forEach((link) => {
+    link.addEventListener('click', () => {
+      navLinks.classList.remove('is-open');
+      navToggle.setAttribute('aria-expanded', 'false');
+    });
+  });
 }
 
 // Simple fade-in-on-scroll for section content.
