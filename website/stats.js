@@ -285,14 +285,31 @@ function renderBarChart(wrap, tableBody, rows) {
 
 // ---------- Fetch + wire up ----------
 
+const AUTO_REFRESH_MS = 60 * 1000;
+
 function setKpi(id, value) {
   const node = document.getElementById(id);
   if (node) node.textContent = value === null || value === undefined ? '—' : String(value);
 }
 
-fetch('/stats/public')
-  .then((res) => (res.ok ? res.json() : Promise.reject(res.status)))
-  .then((data) => {
+function setUpdatedAt(date) {
+  const node = document.getElementById('updated-at');
+  if (!node) return;
+  node.textContent = `Updated ${date.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}`;
+}
+
+async function loadStats() {
+  const refreshBtn = document.getElementById('refresh-btn');
+  if (refreshBtn) {
+    refreshBtn.classList.add('is-loading');
+    refreshBtn.disabled = true;
+  }
+
+  try {
+    const res = await fetch('/stats/public', { cache: 'no-store' });
+    if (!res.ok) throw res.status;
+    const data = await res.json();
+
     setKpi('kpi-total-users', data.total_users);
     setKpi('kpi-active-today', data.active_today);
     setKpi('kpi-active-week', data.active_this_week);
@@ -300,19 +317,39 @@ fetch('/stats/public')
     const lineWrap = document.getElementById('line-chart-wrap');
     const lineTableBody = document.querySelector('#line-chart-table tbody');
     if (lineWrap && lineTableBody) {
+      lineTableBody.innerHTML = '';
       renderLineChart(lineWrap, lineTableBody, data.daily_active || []);
     }
 
     const barWrap = document.getElementById('bar-chart-wrap');
     const barTableBody = document.querySelector('#bar-chart-table tbody');
     if (barWrap && barTableBody) {
+      barTableBody.innerHTML = '';
       renderBarChart(barWrap, barTableBody, data.top_sections || []);
     }
-  })
-  .catch(() => {
+
+    setUpdatedAt(new Date());
+  } catch (err) {
     ['kpi-total-users', 'kpi-active-today', 'kpi-active-week'].forEach((id) => setKpi(id, null));
     const lineWrap = document.getElementById('line-chart-wrap');
     const barWrap = document.getElementById('bar-chart-wrap');
     if (lineWrap) showEmpty(lineWrap, 'Could not load stats right now.');
     if (barWrap) showEmpty(barWrap, 'Could not load stats right now.');
-  });
+  } finally {
+    if (refreshBtn) {
+      refreshBtn.classList.remove('is-loading');
+      refreshBtn.disabled = false;
+    }
+  }
+}
+
+document.getElementById('refresh-btn')?.addEventListener('click', loadStats);
+
+// Auto-refresh while the tab is actually visible - no point polling a
+// backgrounded tab, and it avoids piling up requests if someone leaves it
+// open for hours.
+setInterval(() => {
+  if (document.visibilityState === 'visible') loadStats();
+}, AUTO_REFRESH_MS);
+
+loadStats();

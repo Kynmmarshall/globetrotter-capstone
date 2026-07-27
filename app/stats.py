@@ -17,7 +17,7 @@ MATOMO_URL = os.getenv("MATOMO_URL", "https://trip-io-analytics.duckdns.org")
 MATOMO_API_TOKEN = os.getenv("MATOMO_API_TOKEN")
 MATOMO_SITE_ID = os.getenv("MATOMO_SITE_ID", "1")
 
-_CACHE_TTL_SECONDS = 300
+_CACHE_TTL_SECONDS = 60
 _cache = {"data": None, "at": 0.0}
 
 

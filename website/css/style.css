@@ -513,6 +513,36 @@ footer .footer-brand img {
   margin: 0;
 }
 
+.stats-refresh-row {
+  margin-top: 18px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.stats-refresh-row .btn {
+  padding: 9px 16px;
+  font-size: 0.85rem;
+}
+
+.stats-refresh-row .btn svg {
+  transition: transform 0.5s ease;
+}
+
+.stats-refresh-row .btn.is-loading svg {
+  animation: stats-spin 0.8s linear infinite;
+}
+
+@keyframes stats-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.stats-updated-at {
+  font-size: 0.8rem;
+  color: var(--text-faint);
+}
+
 .kpi-row {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));

@@ -29,6 +29,13 @@
     <div class="container stats-page-header">
       <h1>trip_io by the numbers</h1>
       <p>Real usage data pulled live from the app, refreshed every few minutes.</p>
+      <div class="stats-refresh-row">
+        <button type="button" class="btn btn-ghost" id="refresh-btn">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M17.65 6.35A7.958 7.958 0 0 0 12 4a8 8 0 1 0 7.75 10h-2.1A6 6 0 1 1 12 6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35Z"/></svg>
+          Refresh
+        </button>
+        <span class="stats-updated-at" id="updated-at"></span>
+      </div>
     </div>
 
     <div class="container">
