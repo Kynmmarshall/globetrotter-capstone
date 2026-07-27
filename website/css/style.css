@@ -101,6 +101,23 @@ img {
   color: #fff;
 }
 
+.nav-toggle {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-bg);
+  color: #fff;
+  cursor: pointer;
+}
+
+.nav-toggle svg {
+  fill: currentColor;
+}
+
 /* ---------- Hero ---------- */
 
 .hero {
@@ -488,8 +505,38 @@ footer .footer-brand img {
 /* ---------- Responsive ---------- */
 
 @media (max-width: 720px) {
+  .nav-toggle {
+    display: flex;
+  }
   .nav-links {
-    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    flex-direction: column;
+    gap: 0;
+    padding: 8px 24px 18px;
+    background: rgba(7, 19, 26, 0.97);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    /* Collapsed by default; JS toggles .is-open. Height-animated (not
+       display:none) so the open/close has a transition instead of a snap. */
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    transition: max-height 0.25s ease, opacity 0.2s ease;
+  }
+  .nav-links.is-open {
+    max-height: 400px;
+    opacity: 1;
+  }
+  .nav-links a {
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  }
+  .nav-links a:last-child {
+    border-bottom: none;
   }
   .screens {
     grid-template-columns: repeat(2, 1fr);
