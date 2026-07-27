@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart' show ChangeNotifier;
 import 'package:flutter/widgets.dart' show Locale;
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:trip_io/services/analytics.dart';
 import 'package:trip_io/services/api_client.dart';
 import 'package:trip_io/models/models.dart';
 
@@ -59,6 +60,9 @@ class SessionController extends ChangeNotifier {
     final localeCode = prefs.getString(_localeKey);
     _locale = localeCode != null ? Locale(localeCode) : null;
     _interests = prefs.getStringList(_interestsKey) ?? [];
+    if ((_username ?? '').isNotEmpty) {
+      Analytics.instance.setUser(_username);
+    }
     _ready = true;
     notifyListeners();
   }
@@ -113,6 +117,8 @@ class SessionController extends ChangeNotifier {
     _token = null;
     _username = null;
     _error = null;
+    Analytics.instance.trackEvent('auth', 'logout');
+    Analytics.instance.setUser(null);
     notifyListeners();
   }
 
@@ -123,6 +129,7 @@ class SessionController extends ChangeNotifier {
     }
     final profile = await ApiClient().updateInterests(token, interests);
     await _applyProfile(profile);
+    Analytics.instance.trackEvent('profile', 'interests_updated');
   }
 
   Future<void> _applyProfile(UserProfile profile) async {
@@ -173,7 +180,7 @@ class SessionController extends ChangeNotifier {
     if (token == null || token.isEmpty) {
       throw Exception('Not authenticated.');
     }
-    return ApiClient().createItinerary(
+    final itinerary = await ApiClient().createItinerary(
       token,
       title,
       destinations,
@@ -181,6 +188,12 @@ class SessionController extends ChangeNotifier {
       startDate: startDate,
       endDate: endDate,
     );
+    Analytics.instance.trackEvent(
+      'itinerary',
+      'created',
+      name: destinations.length.toString(),
+    );
+    return itinerary;
   }
 
   Future<List<Itinerary>> itineraries() async {
@@ -220,6 +233,12 @@ class SessionController extends ChangeNotifier {
       await prefs.setString(_memberSinceKey, now.toIso8601String());
       _memberSince = now;
     }
+
+    Analytics.instance.setUser(username);
+    Analytics.instance.trackEvent(
+      'auth',
+      isNewAccount ? 'register' : 'login',
+    );
   }
 
   Future<void> _runGuarded(Future<void> Function() action) async {
