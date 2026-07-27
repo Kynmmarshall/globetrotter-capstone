@@ -13,6 +13,13 @@ Planned for **Phase 2: Microservices** — see [README → Roadmap](README.md#ro
 - Replace direct in-process calls with REST (sync) and message-queue (async) inter-service communication.
 - Give each service its own datastore instead of a shared JSON file.
 
+## [0.6.0] - 2026-07-27 — Product analytics & public stats page
+
+- Integrated [Matomo](https://matomo.org/) for product analytics: the Flutter client (`frontend/lib/services/analytics.dart`) tracks screen views and events via Matomo's HTTP Tracking API — a hand-rolled client (not the `matomo_tracker` package) so behavior is identical across mobile/Windows/web with no platform channels or extra dependency risk. Tracking never breaks the app: network/tracker failures are swallowed silently. Events are attributed to the logged-in user after login/register.
+- Added a public, aggregated stats endpoint, `GET /stats/public` (`backend/app/stats.py`): total registered users (from local data), unique visitors today/this week, a 14-day daily-active series, and top visited sections — all sourced from the Matomo Reporting API server-side, with a 60s in-process cache. The Matomo API token stays server-side only; it is never exposed to the browser.
+- Added a public stats page to the marketing site (`website/stats.html`, `website/stats.js`) rendering the above as charts/tables, localized in English and French alongside the rest of the now-bilingual website (`website/i18n.js`).
+- Fixed Matomo rejecting `token_auth` when sent as a GET query parameter (recent Matomo versions require it as a POST body field instead) and fixed the tracker not showing data on the website; added a manual refresh control so stats update without a full page reload.
+
 ## [0.5.0] - 2026-07-25 — CI/CD pipeline
 
 - Added a Jenkins pipeline (`frontend/jenkinsfile`) triggered on every push to `main`, spanning two agents:

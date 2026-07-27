@@ -16,6 +16,7 @@ The Phase 1 monolith is deployed on a VPS and reachable at **[https://trip-io.du
 | Surface | URL | Notes |
 |---|---|---|
 | Marketing site + downloads | https://trip-io.duckdns.org | Landing page with Windows/Android download links |
+| Public stats | https://trip-io.duckdns.org/stats.html | Live visitor/usage stats (bilingual EN/FR), backed by `GET /stats/public` |
 | Web app | https://trip-io.duckdns.org/app/ | The Flutter app running directly in the browser |
 | API | https://trip-io.duckdns.org | Same host, serves `/register`, `/login`, `/destinations`, etc. |
 | API docs (Swagger UI) | https://trip-io.duckdns.org/docs | Interactive request/response reference |
@@ -184,6 +185,7 @@ Base URL: `https://trip-io.duckdns.org` (production) or `http://localhost:8000` 
 | `GET` | `/recommendations` | Bearer token | Personalized destinations, ranked by overlap with the user's interest tags (falls back to popular picks if none are set) |
 | `POST` | `/itineraries` | Bearer token | Create an itinerary (title, destinations, optional `schedule`, `start_date`/`end_date`) |
 | `GET` | `/itineraries` | Bearer token | List itineraries owned by the current user |
+| `GET` | `/stats/public` | — | Aggregated, anonymized usage stats (total users, active today/this week, 14-day daily-active series, top sections) for the public stats page, sourced from Matomo server-side and cached for 60s |
 
 Destinations also carry richer detail fields — `nearby` (nearby hotels/restaurants), `opening_hours`, `entry_fee`, and `tips` — returned by both `/destinations` and `/recommendations`. The interest-tag vocabulary used for filtering/recommendations is kept in sync between backend seed data and [`frontend/lib/models/interest_tags.dart`](frontend/lib/models/interest_tags.dart).
 
@@ -218,6 +220,9 @@ Full request/response schemas are available live via the Swagger UI at `/docs`.
 |---|---|---|
 | `JWT_SECRET` | `dev-secret-change-me` | Secret used to sign/verify JWTs — **must** be overridden in any non-local environment |
 | `GLOBETROTTER_DATA_PATH` | `backend/data/data.json` | Path to the JSON data store (also used to isolate test runs) |
+| `MATOMO_URL` | `https://trip-io-analytics.duckdns.org` | Base URL of the Matomo instance queried for `/stats/public` |
+| `MATOMO_API_TOKEN` | *(unset)* | Matomo API token used server-side to fetch stats; without it, `/stats/public` degrades to zeros instead of failing |
+| `MATOMO_SITE_ID` | `1` | Matomo site ID to report on |
 
 Set them before starting the server, e.g.:
 
