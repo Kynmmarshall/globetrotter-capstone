@@ -25,7 +25,10 @@ async function checkAvailability(link) {
   link.dataset.unavailable = 'true';
   const badge = document.createElement('span');
   badge.className = 'badge';
-  badge.textContent = 'Coming soon';
+  // data-i18n (not a one-off textContent set) so this badge keeps up if the
+  // visitor switches language after it's already been inserted.
+  badge.dataset.i18n = 'comingSoon';
+  badge.textContent = window.tripIoI18n ? window.tripIoI18n.t('comingSoon') : 'Coming soon';
   link.appendChild(badge);
 }
 

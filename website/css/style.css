@@ -89,6 +89,12 @@ img {
   color: var(--brand-teal-light);
 }
 
+.nav-right {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
 .nav-links {
   display: flex;
   gap: 28px;
@@ -99,6 +105,37 @@ img {
 
 .nav-links a:hover {
   color: #fff;
+}
+
+.lang-toggle {
+  display: flex;
+  gap: 2px;
+  padding: 3px;
+  border-radius: 999px;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-bg);
+}
+
+.lang-btn {
+  border: none;
+  background: transparent;
+  color: var(--text-faint);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  padding: 5px 10px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.lang-btn:hover {
+  color: #fff;
+}
+
+.lang-btn.is-active {
+  background: var(--brand-teal-light);
+  color: #06181c;
 }
 
 .nav-toggle {
@@ -153,8 +190,8 @@ img {
 }
 
 .hero-logo {
-  width: 84px;
-  height: 84px;
+  width: 150px;
+  height: 150px;
   margin: 0 auto 20px;
   filter: drop-shadow(0 8px 24px rgba(0, 0, 0, 0.45));
 }

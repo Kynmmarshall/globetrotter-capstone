@@ -21,9 +21,33 @@ function niceStep(maxValue, tickCount) {
   return niceResidual * magnitude;
 }
 
+function currentLocale() {
+  return window.tripIoI18n && window.tripIoI18n.lang === 'fr' ? 'fr-FR' : 'en-US';
+}
+
 function formatDate(iso) {
   const d = new Date(iso + 'T00:00:00');
-  return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  return d.toLocaleDateString(currentLocale(), { month: 'short', day: 'numeric' });
+}
+
+// Matomo returns the raw action_name the app tracked (e.g. "destinations"),
+// which is a stable English identifier, not display copy - map the known
+// ones to a translated label, and fall back to the raw name for anything
+// not in this list (future sections, etc.) rather than hiding it.
+const SECTION_LABEL_KEYS = {
+  destinations: 'sectionDestinations',
+  recommendations: 'sectionRecommendations',
+  itineraries: 'sectionItineraries',
+  profile: 'sectionProfile',
+};
+
+function sectionLabel(rawName) {
+  const key = SECTION_LABEL_KEYS[rawName.toLowerCase()];
+  return key && window.tripIoI18n ? window.tripIoI18n.t(key) : rawName;
+}
+
+function t(key, vars) {
+  return window.tripIoI18n ? window.tripIoI18n.t(key, vars) : key;
 }
 
 function showEmpty(wrap, message) {
@@ -56,7 +80,7 @@ function positionTooltip(tip, wrap, svg, svgX, svgY, viewBox) {
 
 function renderLineChart(wrap, tableBody, series) {
   if (!series.length) {
-    showEmpty(wrap, 'Not enough data yet — check back once the app has some real usage.');
+    showEmpty(wrap, t('chartEmpty'));
     return;
   }
 
@@ -87,7 +111,7 @@ function renderLineChart(wrap, tableBody, series) {
     marginLeft + (series.length === 1 ? plotWidth / 2 : (i / (series.length - 1)) * plotWidth);
   const yAt = (v) => marginTop + plotHeight - (v / niceMax) * plotHeight;
 
-  const svg = el('svg', { viewBox: `0 0 ${width} ${height}`, role: 'img', 'aria-label': 'Daily active users, last 14 days' });
+  const svg = el('svg', { viewBox: `0 0 ${width} ${height}`, role: 'img', 'aria-label': `${t('chartDailyTitle')} - ${t('chartDailySub')}` });
 
   // Gridlines + y-axis labels (nice ticks only, recessive).
   const gridGroup = el('g', { class: 'chart-grid' });
@@ -190,14 +214,14 @@ function renderLineChart(wrap, tableBody, series) {
 
 function renderBarChart(wrap, tableBody, rows) {
   if (!rows.length) {
-    showEmpty(wrap, 'Not enough data yet — check back once the app has some real usage.');
+    showEmpty(wrap, t('chartEmpty'));
     return;
   }
 
   rows.forEach((row) => {
     const tr = document.createElement('tr');
     const nameCell = document.createElement('td');
-    nameCell.textContent = row.name;
+    nameCell.textContent = sectionLabel(row.name);
     const countCell = document.createElement('td');
     countCell.textContent = String(row.count);
     tr.append(nameCell, countCell);
@@ -215,7 +239,7 @@ function renderBarChart(wrap, tableBody, rows) {
   const plotWidth = width - marginLeft - marginRight;
   const maxCount = Math.max(...rows.map((r) => r.count), 1);
 
-  const svg = el('svg', { viewBox: `0 0 ${width} ${height}`, role: 'img', 'aria-label': 'Most-visited sections this week' });
+  const svg = el('svg', { viewBox: `0 0 ${width} ${height}`, role: 'img', 'aria-label': `${t('chartSectionsTitle')} - ${t('chartSectionsSub')}` });
   const tooltip = makeTooltip(wrap);
   const viewBox = [0, 0, width, height];
 
@@ -240,7 +264,7 @@ function renderBarChart(wrap, tableBody, rows) {
     const nameLabel = el('text', {
       class: 'chart-bar-label', x: marginLeft - 10, y: y + barThickness / 2 + 4, 'text-anchor': 'end',
     });
-    nameLabel.textContent = row.name;
+    nameLabel.textContent = sectionLabel(row.name);
     svg.appendChild(nameLabel);
 
     // Value at the bar's tip when it fits; otherwise it's tooltip-only, per
@@ -266,7 +290,7 @@ function renderBarChart(wrap, tableBody, rows) {
       valueSpan.textContent = String(row.count);
       const labelSpan = document.createElement('span');
       labelSpan.className = 'tt-label';
-      labelSpan.textContent = row.name;
+      labelSpan.textContent = sectionLabel(row.name);
       tooltip.append(valueSpan, labelSpan);
       tooltip.classList.add('is-visible');
       positionTooltip(tooltip, wrap, svg, x1, y + barThickness / 2, viewBox);
@@ -292,10 +316,47 @@ function setKpi(id, value) {
   if (node) node.textContent = value === null || value === undefined ? '—' : String(value);
 }
 
+let lastUpdatedAt = null;
+
 function setUpdatedAt(date) {
+  lastUpdatedAt = date;
   const node = document.getElementById('updated-at');
-  if (!node) return;
-  node.textContent = `Updated ${date.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}`;
+  if (!node || !date) return;
+  const time = date.toLocaleTimeString(currentLocale(), { hour: 'numeric', minute: '2-digit' });
+  node.textContent = t('statsUpdatedAt', { time });
+}
+
+let lastData = null;
+
+// Renders the currently-known data (from the last successful fetch) without
+// hitting the network - used both after a real fetch and to re-render with
+// translated labels when the visitor switches language.
+function renderCharts(data) {
+  setKpi('kpi-total-users', data.total_users);
+  setKpi('kpi-active-today', data.active_today);
+  setKpi('kpi-active-week', data.active_this_week);
+
+  const lineWrap = document.getElementById('line-chart-wrap');
+  const lineTableBody = document.querySelector('#line-chart-table tbody');
+  if (lineWrap && lineTableBody) {
+    lineTableBody.innerHTML = '';
+    renderLineChart(lineWrap, lineTableBody, data.daily_active || []);
+  }
+
+  const barWrap = document.getElementById('bar-chart-wrap');
+  const barTableBody = document.querySelector('#bar-chart-table tbody');
+  if (barWrap && barTableBody) {
+    barTableBody.innerHTML = '';
+    renderBarChart(barWrap, barTableBody, data.top_sections || []);
+  }
+}
+
+function renderLoadError() {
+  ['kpi-total-users', 'kpi-active-today', 'kpi-active-week'].forEach((id) => setKpi(id, null));
+  const lineWrap = document.getElementById('line-chart-wrap');
+  const barWrap = document.getElementById('bar-chart-wrap');
+  if (lineWrap) showEmpty(lineWrap, t('chartLoadError'));
+  if (barWrap) showEmpty(barWrap, t('chartLoadError'));
 }
 
 async function loadStats() {
@@ -309,32 +370,12 @@ async function loadStats() {
     const res = await fetch('/stats/public', { cache: 'no-store' });
     if (!res.ok) throw res.status;
     const data = await res.json();
-
-    setKpi('kpi-total-users', data.total_users);
-    setKpi('kpi-active-today', data.active_today);
-    setKpi('kpi-active-week', data.active_this_week);
-
-    const lineWrap = document.getElementById('line-chart-wrap');
-    const lineTableBody = document.querySelector('#line-chart-table tbody');
-    if (lineWrap && lineTableBody) {
-      lineTableBody.innerHTML = '';
-      renderLineChart(lineWrap, lineTableBody, data.daily_active || []);
-    }
-
-    const barWrap = document.getElementById('bar-chart-wrap');
-    const barTableBody = document.querySelector('#bar-chart-table tbody');
-    if (barWrap && barTableBody) {
-      barTableBody.innerHTML = '';
-      renderBarChart(barWrap, barTableBody, data.top_sections || []);
-    }
-
+    lastData = data;
+    renderCharts(data);
     setUpdatedAt(new Date());
   } catch (err) {
-    ['kpi-total-users', 'kpi-active-today', 'kpi-active-week'].forEach((id) => setKpi(id, null));
-    const lineWrap = document.getElementById('line-chart-wrap');
-    const barWrap = document.getElementById('bar-chart-wrap');
-    if (lineWrap) showEmpty(lineWrap, 'Could not load stats right now.');
-    if (barWrap) showEmpty(barWrap, 'Could not load stats right now.');
+    lastData = null;
+    renderLoadError();
   } finally {
     if (refreshBtn) {
       refreshBtn.classList.remove('is-loading');
@@ -351,5 +392,17 @@ document.getElementById('refresh-btn')?.addEventListener('click', loadStats);
 setInterval(() => {
   if (document.visibilityState === 'visible') loadStats();
 }, AUTO_REFRESH_MS);
+
+// Re-render with the already-fetched data (no network round-trip) when the
+// language changes, so section names / empty-states / the "Updated" label
+// switch immediately instead of waiting for the next auto-refresh.
+document.addEventListener('i18n:changed', () => {
+  if (lastData) {
+    renderCharts(lastData);
+    setUpdatedAt(lastUpdatedAt);
+  } else {
+    renderLoadError();
+  }
+});
 
 loadStats();
