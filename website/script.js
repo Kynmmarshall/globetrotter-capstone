@@ -1,12 +1,63 @@
 document.getElementById('year').textContent = new Date().getFullYear();
 
+if (window.AOS) {
+  AOS.init({ duration: 700, once: true, offset: 60, easing: 'ease-out-cubic' });
+}
+
+// Counts a stat value up from 0 to its target once it scrolls into view,
+// rather than just appearing - reads the target from data-count-to so the
+// destinations count (set async below, from the live API) animates too.
+function animateCountUp(el) {
+  const target = Number(el.dataset.countTo);
+  if (!Number.isFinite(target)) return;
+  const duration = 1000;
+  const start = performance.now();
+  function tick(now) {
+    const progress = Math.min((now - start) / duration, 1);
+    const eased = 1 - Math.pow(1 - progress, 3);
+    el.textContent = String(Math.round(target * eased));
+    if (progress < 1) requestAnimationFrame(tick);
+    else el.textContent = String(target);
+  }
+  requestAnimationFrame(tick);
+}
+
+// stat-destinations is excluded here and handled separately below: its
+// real value only arrives once the /destinations fetch resolves, which
+// often happens after this observer would already have fired using a
+// meaningless placeholder target.
+const countTargets = document.querySelectorAll('[data-count-to]:not(#stat-destinations)');
+if ('IntersectionObserver' in window && countTargets.length) {
+  const countObserver = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          animateCountUp(entry.target);
+          countObserver.unobserve(entry.target);
+        }
+      });
+    },
+    { threshold: 0.6 }
+  );
+  countTargets.forEach((el) => countObserver.observe(el));
+}
+
 // Live destination count, pulled straight from the API so the number
-// never goes stale relative to what's actually in the app.
+// never goes stale relative to what's actually in the app. Animated once
+// the real value is known, rather than racing the generic observer above
+// with a placeholder target.
 fetch('/destinations')
   .then((res) => (res.ok ? res.json() : Promise.reject(res.status)))
   .then((data) => {
     const el = document.getElementById('stat-destinations');
-    if (el) el.textContent = Array.isArray(data) ? data.length : '—';
+    if (!el) return;
+    const count = Array.isArray(data) ? data.length : null;
+    if (count === null) {
+      el.textContent = '—';
+      return;
+    }
+    el.dataset.countTo = String(count);
+    animateCountUp(el);
   })
   .catch(() => {
     // Leave the placeholder dash in place if the API isn't reachable.
@@ -59,23 +110,4 @@ if (navToggle && navLinks) {
       navToggle.setAttribute('aria-expanded', 'false');
     });
   });
-}
-
-// Simple fade-in-on-scroll for section content.
-const revealTargets = document.querySelectorAll('.reveal');
-if ('IntersectionObserver' in window && revealTargets.length) {
-  const observer = new IntersectionObserver(
-    (entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add('in-view');
-          observer.unobserve(entry.target);
-        }
-      });
-    },
-    { threshold: 0.15 }
-  );
-  revealTargets.forEach((el) => observer.observe(el));
-} else {
-  revealTargets.forEach((el) => el.classList.add('in-view'));
 }
