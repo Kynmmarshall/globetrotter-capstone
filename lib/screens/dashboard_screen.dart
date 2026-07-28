@@ -1,5 +1,6 @@
 import 'dart:ui';
 
+import 'package:flutter/foundation.dart' show kIsWeb, defaultTargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:trip_io/l10n/gen/app_localizations.dart';
 import 'package:trip_io/services/analytics.dart';
@@ -32,6 +33,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
     'profile',
   ];
 
+  // Web and mobile get a menu-icon-triggered drawer instead of a
+  // permanently-visible side rail - only the native Windows desktop build
+  // keeps the always-on NavigationRail/NavigationBar responsive layout,
+  // where the extra chrome doesn't compete with limited screen space.
+  bool get _useDrawerNav =>
+      kIsWeb ||
+      defaultTargetPlatform == TargetPlatform.android ||
+      defaultTargetPlatform == TargetPlatform.iOS;
+
   @override
   void initState() {
     super.initState();
@@ -55,6 +65,56 @@ class _DashboardScreenState extends State<DashboardScreen> {
         child: DecoratedBox(
           decoration: BoxDecoration(color: Colors.white.withValues(alpha: alpha)),
           child: child,
+        ),
+      ),
+    );
+  }
+
+  Widget _navDrawer(List<String> labels) {
+    return Drawer(
+      backgroundColor: Colors.transparent,
+      child: _frostedSurface(
+        blur: 24,
+        alpha: 0.2,
+        child: SafeArea(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Padding(
+                padding: EdgeInsets.fromLTRB(20, 20, 20, 8),
+                child: Text(
+                  'trip_io',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 20,
+                  ),
+                ),
+              ),
+              const Divider(color: Colors.white24, height: 1),
+              const SizedBox(height: 8),
+              for (var i = 0; i < labels.length; i++)
+                ListTile(
+                  leading: Icon(
+                    _icons[i],
+                    color: _index == i ? Colors.white : Colors.white70,
+                  ),
+                  title: Text(
+                    labels[i],
+                    style: TextStyle(
+                      color: _index == i ? Colors.white : Colors.white70,
+                      fontWeight: _index == i ? FontWeight.w700 : FontWeight.w500,
+                    ),
+                  ),
+                  selected: _index == i,
+                  selectedTileColor: Colors.white.withValues(alpha: 0.12),
+                  onTap: () {
+                    _selectTab(i);
+                    Navigator.of(context).pop();
+                  },
+                ),
+            ],
+          ),
         ),
       ),
     );
@@ -136,15 +196,34 @@ class _DashboardScreenState extends State<DashboardScreen> {
           );
         }
 
-        final body = wide || medium
-            ? Row(
-                children: [
-                  navRail(),
-                  const VerticalDivider(width: 1, color: Colors.white24),
-                  Expanded(child: pages[_index]),
-                ],
-              )
-            : pages[_index];
+        final Widget scaffold;
+        if (_useDrawerNav) {
+          // Web/mobile: no permanently-visible rail or bottom bar - just the
+          // menu icon Scaffold automatically adds to the AppBar once a
+          // `drawer` is set.
+          scaffold = Scaffold(
+            backgroundColor: Colors.transparent,
+            appBar: appBar,
+            drawer: _navDrawer(labels),
+            body: pages[_index],
+          );
+        } else {
+          final body = wide || medium
+              ? Row(
+                  children: [
+                    navRail(),
+                    const VerticalDivider(width: 1, color: Colors.white24),
+                    Expanded(child: pages[_index]),
+                  ],
+                )
+              : pages[_index];
+          scaffold = Scaffold(
+            backgroundColor: Colors.transparent,
+            appBar: appBar,
+            body: body,
+            bottomNavigationBar: (!wide && !medium) ? bottomNav() : null,
+          );
+        }
 
         return Stack(
           fit: StackFit.expand,
@@ -157,12 +236,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             DecoratedBox(
               decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.58)),
             ),
-            Scaffold(
-              backgroundColor: Colors.transparent,
-              appBar: appBar,
-              body: body,
-              bottomNavigationBar: (!wide && !medium) ? bottomNav() : null,
-            ),
+            scaffold,
           ],
         );
       },
