@@ -4,18 +4,48 @@ import 'package:flutter/material.dart';
 import 'package:trip_io/l10n/gen/app_localizations.dart';
 import 'package:trip_io/models/models.dart';
 import 'package:trip_io/services/api_client.dart';
+import 'package:trip_io/services/session_controller.dart';
 
-class DestinationDetailPage extends StatelessWidget {
+class DestinationDetailPage extends StatefulWidget {
   const DestinationDetailPage({
     super.key,
     required this.destination,
     required this.heroTag,
+    required this.session,
   });
 
   final Destination destination;
   final String heroTag;
+  final SessionController session;
 
+  @override
+  State<DestinationDetailPage> createState() => _DestinationDetailPageState();
+}
+
+class _DestinationDetailPageState extends State<DestinationDetailPage> {
   static const double _backgroundBreakpoint = 700;
+
+  bool _explaining = false;
+  String? _explanation;
+  String? _explainError;
+
+  Destination get destination => widget.destination;
+  String get heroTag => widget.heroTag;
+
+  Future<void> _askAi() async {
+    setState(() {
+      _explaining = true;
+      _explainError = null;
+    });
+    try {
+      final reply = await widget.session.aiExplain(destination.id);
+      setState(() => _explanation = reply);
+    } catch (e) {
+      setState(() => _explainError = e.toString().replaceFirst('Exception: ', ''));
+    } finally {
+      setState(() => _explaining = false);
+    }
+  }
 
   Widget _glassPanel({
     required Widget child,
@@ -171,6 +201,67 @@ class DestinationDetailPage extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildAiExplainSection(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return _glassPanel(
+      borderRadius: BorderRadius.circular(22),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.smart_toy, color: Colors.white, size: 18),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  l10n.aiExplainTitle,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14.5,
+                  ),
+                ),
+              ),
+              if (_explanation == null)
+                TextButton.icon(
+                  onPressed: _explaining ? null : _askAi,
+                  icon: _explaining
+                      ? const SizedBox(
+                          width: 14,
+                          height: 14,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white70),
+                        )
+                      : const Icon(Icons.auto_awesome, size: 16, color: Colors.white),
+                  label: Text(
+                    l10n.aiExplainButton,
+                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+                  ),
+                ),
+            ],
+          ),
+          if (_explainError != null) ...[
+            const SizedBox(height: 8),
+            Text(
+              l10n.aiExplainError,
+              style: TextStyle(color: Colors.red.shade100, fontSize: 12.5),
+            ),
+          ],
+          if (_explanation != null) ...[
+            const SizedBox(height: 10),
+            Text(
+              _explanation!,
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.92),
+                fontSize: 14,
+                height: 1.5,
+              ),
+            ),
+          ],
+        ],
       ),
     );
   }
@@ -348,6 +439,8 @@ class DestinationDetailPage extends StatelessWidget {
                                 ],
                               ),
                             ),
+                            const SizedBox(height: 18),
+                            _buildAiExplainSection(context),
                             if (destination.openingHours != null ||
                                 destination.entryFee != null ||
                                 destination.tips != null) ...[

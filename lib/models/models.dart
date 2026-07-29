@@ -88,6 +88,19 @@ class Destination {
   }
 }
 
+/// A single turn in an AI assistant conversation. `role` is "user" or
+/// "assistant" - mirrors the backend's ChatMessage schema.
+class ChatMessage {
+  ChatMessage({required this.role, required this.content});
+
+  final String role;
+  final String content;
+
+  bool get isUser => role == 'user';
+
+  Map<String, dynamic> toJson() => {'role': role, 'content': content};
+}
+
 class UserProfile {
   UserProfile({required this.username, this.email, this.interests = const []});
 

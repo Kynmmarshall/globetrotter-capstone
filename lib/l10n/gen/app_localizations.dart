@@ -290,11 +290,71 @@ abstract class AppLocalizations {
   /// **'Itineraries'**
   String get navItineraries;
 
+  /// No description provided for @navAskAi.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask AI'**
+  String get navAskAi;
+
   /// No description provided for @navProfile.
   ///
   /// In en, this message translates to:
   /// **'Profile'**
   String get navProfile;
+
+  /// No description provided for @aiChatTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask AI'**
+  String get aiChatTitle;
+
+  /// No description provided for @aiChatSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Chat about Yaoundé destinations and get personalized suggestions.'**
+  String get aiChatSubtitle;
+
+  /// No description provided for @aiChatInputHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask about a place, or what to do today…'**
+  String get aiChatInputHint;
+
+  /// No description provided for @aiChatEmptyState.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask me anything about visiting Yaoundé - I can suggest spots based on your interests or explain what makes a place worth a visit.'**
+  String get aiChatEmptyState;
+
+  /// No description provided for @aiChatErrorMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t reach the AI assistant.\n{error}'**
+  String aiChatErrorMessage(String error);
+
+  /// No description provided for @aiChatNotConfigured.
+  ///
+  /// In en, this message translates to:
+  /// **'The AI assistant isn\'t set up yet. Please check back soon.'**
+  String get aiChatNotConfigured;
+
+  /// No description provided for @aiExplainButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask AI to explain'**
+  String get aiExplainButton;
+
+  /// No description provided for @aiExplainTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'AI explanation'**
+  String get aiExplainTitle;
+
+  /// No description provided for @aiExplainError.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t get an explanation right now.'**
+  String get aiExplainError;
 
   /// No description provided for @destinationsTitle.
   ///

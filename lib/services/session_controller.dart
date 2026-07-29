@@ -204,6 +204,26 @@ class SessionController extends ChangeNotifier {
     return ApiClient().getItineraries(token);
   }
 
+  Future<String> aiChat(List<ChatMessage> messages) async {
+    final token = _token;
+    if (token == null || token.isEmpty) {
+      throw Exception('Not authenticated.');
+    }
+    final reply = await ApiClient().aiChat(token, messages);
+    Analytics.instance.trackEvent('ai', 'chat_message');
+    return reply;
+  }
+
+  Future<String> aiExplain(String destinationId) async {
+    final token = _token;
+    if (token == null || token.isEmpty) {
+      throw Exception('Not authenticated.');
+    }
+    final reply = await ApiClient().aiExplain(token, destinationId);
+    Analytics.instance.trackEvent('ai', 'explain_destination', name: destinationId);
+    return reply;
+  }
+
   Future<void> _saveAuth(
     String token,
     String username, {

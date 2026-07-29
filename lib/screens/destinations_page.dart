@@ -171,8 +171,11 @@ class _DestinationsPageState extends State<DestinationsPage> {
         Analytics.instance.trackEvent('destination', 'view', name: d.id);
         Navigator.of(context).push(
           MaterialPageRoute(
-            builder: (_) =>
-                DestinationDetailPage(destination: d, heroTag: heroTag),
+            builder: (_) => DestinationDetailPage(
+              destination: d,
+              heroTag: heroTag,
+              session: widget.session,
+            ),
           ),
         );
       },

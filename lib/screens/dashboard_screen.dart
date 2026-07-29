@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:trip_io/l10n/gen/app_localizations.dart';
 import 'package:trip_io/services/analytics.dart';
 import 'package:trip_io/services/session_controller.dart';
+import 'package:trip_io/screens/ask_ai_page.dart';
 import 'package:trip_io/screens/destinations_page.dart';
 import 'package:trip_io/screens/itineraries_page.dart';
 import 'package:trip_io/screens/profile_page.dart';
@@ -22,7 +23,13 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen> {
   int _index = 0;
 
-  static const _icons = <IconData>[Icons.public, Icons.star, Icons.map, Icons.person];
+  static const _icons = <IconData>[
+    Icons.public,
+    Icons.star,
+    Icons.map,
+    Icons.smart_toy,
+    Icons.person,
+  ];
   static const double _backgroundBreakpoint = 700;
   // Locale-independent identifiers for analytics, distinct from the
   // user-facing (translated) tab labels below.
@@ -30,6 +37,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     'destinations',
     'recommendations',
     'itineraries',
+    'ask_ai',
     'profile',
   ];
 
@@ -55,7 +63,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   List<String> _labels(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    return [l10n.navDestinations, l10n.navRecommendations, l10n.navItineraries, l10n.navProfile];
+    return [
+      l10n.navDestinations,
+      l10n.navRecommendations,
+      l10n.navItineraries,
+      l10n.navAskAi,
+      l10n.navProfile,
+    ];
   }
 
   Widget _frostedSurface({required Widget child, double blur = 18, double alpha = 0.16}) {
@@ -126,6 +140,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       DestinationsPage(session: widget.session),
       RecommendationsPage(session: widget.session),
       ItinerariesPage(session: widget.session),
+      AskAiPage(session: widget.session),
       ProfilePage(session: widget.session),
     ];
 

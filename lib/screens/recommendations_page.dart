@@ -112,8 +112,11 @@ class _RecommendationsPageState extends State<RecommendationsPage> {
         Analytics.instance.trackEvent('destination', 'view', name: item.id);
         Navigator.of(context).push(
           MaterialPageRoute(
-            builder: (_) =>
-                DestinationDetailPage(destination: item, heroTag: heroTag),
+            builder: (_) => DestinationDetailPage(
+              destination: item,
+              heroTag: heroTag,
+              session: widget.session,
+            ),
           ),
         );
       },
