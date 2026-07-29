@@ -49,6 +49,13 @@ def get_itineraries_for(user: str):
     data = read_data()
     return [i for i in data.get("itineraries", []) if i.get("user") == user]
 
+def get_destination(destination_id: str):
+    data = read_data()
+    for d in data.get("destinations", []):
+        if d.get("id") == destination_id:
+            return d
+    return None
+
 def search_destinations(q: str = None):
     data = read_data()
     dests = data.get("destinations", [])
