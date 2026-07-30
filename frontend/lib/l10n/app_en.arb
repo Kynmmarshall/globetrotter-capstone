@@ -36,7 +36,21 @@
   "navDestinations": "Destinations",
   "navRecommendations": "Recommendations",
   "navItineraries": "Itineraries",
+  "navAskAi": "Ask AI",
   "navProfile": "Profile",
+
+  "aiChatTitle": "Ask AI",
+  "aiChatSubtitle": "Chat about Yaoundé destinations and get personalized suggestions.",
+  "aiChatInputHint": "Ask about a place, or what to do today…",
+  "aiChatEmptyState": "Ask me anything about visiting Yaoundé - I can suggest spots based on your interests or explain what makes a place worth a visit.",
+  "aiChatErrorMessage": "Couldn't reach the AI assistant.\n{error}",
+  "@aiChatErrorMessage": {
+    "placeholders": { "error": { "type": "String" } }
+  },
+  "aiChatNotConfigured": "The AI assistant isn't set up yet. Please check back soon.",
+  "aiExplainButton": "Ask AI to explain",
+  "aiExplainTitle": "AI explanation",
+  "aiExplainError": "Couldn't get an explanation right now.",
 
   "destinationsTitle": "Yaoundé Destinations",
   "destinationsSubtitle": "Search Cameroon's capital for landmarks, culture and nature spots.",

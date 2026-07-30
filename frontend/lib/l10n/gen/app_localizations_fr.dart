@@ -113,7 +113,44 @@ class AppLocalizationsFr extends AppLocalizations {
   String get navItineraries => 'Itinéraires';
 
   @override
+  String get navAskAi => 'IA';
+
+  @override
   String get navProfile => 'Profil';
+
+  @override
+  String get aiChatTitle => 'Demander à l\'IA';
+
+  @override
+  String get aiChatSubtitle =>
+      'Discutez des destinations de Yaoundé et recevez des suggestions personnalisées.';
+
+  @override
+  String get aiChatInputHint =>
+      'Demandez à propos d\'un lieu, ou quoi faire aujourd\'hui…';
+
+  @override
+  String get aiChatEmptyState =>
+      'Posez-moi une question sur Yaoundé - je peux suggérer des lieux selon vos centres d\'intérêt ou expliquer pourquoi un lieu vaut le détour.';
+
+  @override
+  String aiChatErrorMessage(String error) {
+    return 'Impossible de contacter l\'assistant IA.\n$error';
+  }
+
+  @override
+  String get aiChatNotConfigured =>
+      'L\'assistant IA n\'est pas encore configuré. Revenez bientôt.';
+
+  @override
+  String get aiExplainButton => 'Demander une explication à l\'IA';
+
+  @override
+  String get aiExplainTitle => 'Explication de l\'IA';
+
+  @override
+  String get aiExplainError =>
+      'Impossible d\'obtenir une explication pour le moment.';
 
   @override
   String get destinationsTitle => 'Destinations à Yaoundé';

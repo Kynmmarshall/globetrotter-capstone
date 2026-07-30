@@ -35,7 +35,18 @@
   "navDestinations": "Destinations",
   "navRecommendations": "Recommandations",
   "navItineraries": "Itinéraires",
+  "navAskAi": "IA",
   "navProfile": "Profil",
+
+  "aiChatTitle": "Demander à l'IA",
+  "aiChatSubtitle": "Discutez des destinations de Yaoundé et recevez des suggestions personnalisées.",
+  "aiChatInputHint": "Demandez à propos d'un lieu, ou quoi faire aujourd'hui…",
+  "aiChatEmptyState": "Posez-moi une question sur Yaoundé - je peux suggérer des lieux selon vos centres d'intérêt ou expliquer pourquoi un lieu vaut le détour.",
+  "aiChatErrorMessage": "Impossible de contacter l'assistant IA.\n{error}",
+  "aiChatNotConfigured": "L'assistant IA n'est pas encore configuré. Revenez bientôt.",
+  "aiExplainButton": "Demander une explication à l'IA",
+  "aiExplainTitle": "Explication de l'IA",
+  "aiExplainError": "Impossible d'obtenir une explication pour le moment.",
 
   "destinationsTitle": "Destinations à Yaoundé",
   "destinationsSubtitle": "Explorez les monuments, la culture et la nature de la capitale du Cameroun.",

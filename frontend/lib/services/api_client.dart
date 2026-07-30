@@ -169,6 +169,32 @@ class ApiClient {
         .toList();
   }
 
+  Future<String> aiChat(String token, List<ChatMessage> messages) async {
+    final response = await _client.post(
+      _uri('/ai/chat'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({
+        'messages': messages.map((m) => m.toJson()).toList(),
+      }),
+    );
+    _throwIfNotOk(response);
+    final decoded = jsonDecode(response.body) as Map<String, dynamic>;
+    return (decoded['reply'] ?? '').toString();
+  }
+
+  Future<String> aiExplain(String token, String destinationId) async {
+    final response = await _client.post(
+      _uri('/ai/explain/$destinationId'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+    _throwIfNotOk(response);
+    final decoded = jsonDecode(response.body) as Map<String, dynamic>;
+    return (decoded['reply'] ?? '').toString();
+  }
+
   String _extractToken(http.Response response) {
     _throwIfNotOk(response);
     final decoded = jsonDecode(response.body) as Map<String, dynamic>;

@@ -110,7 +110,42 @@ class AppLocalizationsEn extends AppLocalizations {
   String get navItineraries => 'Itineraries';
 
   @override
+  String get navAskAi => 'Ask AI';
+
+  @override
   String get navProfile => 'Profile';
+
+  @override
+  String get aiChatTitle => 'Ask AI';
+
+  @override
+  String get aiChatSubtitle =>
+      'Chat about Yaoundé destinations and get personalized suggestions.';
+
+  @override
+  String get aiChatInputHint => 'Ask about a place, or what to do today…';
+
+  @override
+  String get aiChatEmptyState =>
+      'Ask me anything about visiting Yaoundé - I can suggest spots based on your interests or explain what makes a place worth a visit.';
+
+  @override
+  String aiChatErrorMessage(String error) {
+    return 'Couldn\'t reach the AI assistant.\n$error';
+  }
+
+  @override
+  String get aiChatNotConfigured =>
+      'The AI assistant isn\'t set up yet. Please check back soon.';
+
+  @override
+  String get aiExplainButton => 'Ask AI to explain';
+
+  @override
+  String get aiExplainTitle => 'AI explanation';
+
+  @override
+  String get aiExplainError => 'Couldn\'t get an explanation right now.';
 
   @override
   String get destinationsTitle => 'Yaoundé Destinations';
