@@ -1,7 +1,9 @@
-"""Google Gemini proxy for the in-app AI assistant - keeps the API key
-server-side (same pattern as stats.py's Matomo token) and grounds every
-answer in the app's real destinations data so the assistant can't invent
-places, ratings, or facts that aren't in data.json.
+"""Groq (OpenAI-compatible chat completions) proxy for the in-app AI
+assistant - keeps the API key server-side (same pattern as stats.py's
+Matomo token) and grounds every answer in the app's real destinations data
+so the assistant can't invent places, ratings, or facts that aren't in
+data.json. Groq's free tier needs no billing account, unlike Gemini's,
+which is why this replaced the original Gemini-based implementation.
 """
 import logging
 import os
@@ -12,9 +14,9 @@ from .data import read_data
 
 logger = logging.getLogger("trip_io.ai")
 
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
-GEMINI_URL = f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent"
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
+GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
 
 
 class AiNotConfiguredError(Exception):
@@ -52,29 +54,33 @@ _BASE_INSTRUCTIONS = (
 )
 
 
-async def _generate(contents: list[dict], system_text: str) -> str:
-    if not GEMINI_API_KEY:
-        raise AiNotConfiguredError("GEMINI_API_KEY is not set")
+async def _generate(messages: list[dict]) -> str:
+    if not GROQ_API_KEY:
+        raise AiNotConfiguredError("GROQ_API_KEY is not set")
 
     body = {
-        "system_instruction": {"parts": [{"text": system_text}]},
-        "contents": contents,
-        "generationConfig": {"temperature": 0.6, "maxOutputTokens": 512},
+        "model": GROQ_MODEL,
+        "messages": messages,
+        "temperature": 0.6,
+        "max_tokens": 512,
     }
     try:
         async with httpx.AsyncClient(timeout=20) as client:
-            resp = await client.post(GEMINI_URL, params={"key": GEMINI_API_KEY}, json=body)
+            resp = await client.post(
+                GROQ_URL,
+                headers={"Authorization": f"Bearer {GROQ_API_KEY}"},
+                json=body,
+            )
         resp.raise_for_status()
         payload = resp.json()
     except httpx.HTTPError as exc:
-        logger.warning("Gemini request failed: %s", exc)
+        logger.warning("Groq request failed: %s", exc)
         raise AiRequestError(str(exc)) from exc
 
     try:
-        parts = payload["candidates"][0]["content"]["parts"]
-        return "".join(p.get("text", "") for p in parts).strip()
+        return payload["choices"][0]["message"]["content"].strip()
     except (KeyError, IndexError, TypeError) as exc:
-        logger.warning("Unexpected Gemini response shape: %s", payload)
+        logger.warning("Unexpected Groq response shape: %s", payload)
         raise AiRequestError("Unexpected response from AI service") from exc
 
 
@@ -86,11 +92,11 @@ async def chat(messages: list[dict], interests: list[str] | None = None) -> str:
             + ", ".join(interests)
             + ". Lean on these when making suggestions, but don't ignore an explicit request for something else."
         )
-    contents = [
-        {"role": "model" if m["role"] == "assistant" else "user", "parts": [{"text": m["content"]}]}
+    full_messages = [{"role": "system", "content": system_text}] + [
+        {"role": "assistant" if m["role"] == "assistant" else "user", "content": m["content"]}
         for m in messages
     ]
-    return await _generate(contents, system_text)
+    return await _generate(full_messages)
 
 
 async def explain_destination(destination: dict) -> str:
@@ -114,6 +120,9 @@ async def explain_destination(destination: dict) -> str:
         "historical/cultural context, but do not invent specific facts (prices, "
         "hours, addresses, ratings) beyond what's given here:\n\n" + "\n".join(detail_lines)
     )
-    contents = [{"role": "user", "parts": [{"text": prompt}]}]
     system_text = _BASE_INSTRUCTIONS + _destination_catalog()
-    return await _generate(contents, system_text)
+    messages = [
+        {"role": "system", "content": system_text},
+        {"role": "user", "content": prompt},
+    ]
+    return await _generate(messages)

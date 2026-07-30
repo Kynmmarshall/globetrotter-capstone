@@ -48,7 +48,7 @@ async def test_ai_chat_not_configured(tmp_path, monkeypatch):
     data_file.write_text('{"users": [], "itineraries": [], "destinations": []}')
     import os
     os.environ["GLOBETROTTER_DATA_PATH"] = str(data_file)
-    monkeypatch.setattr(ai, "GEMINI_API_KEY", None)
+    monkeypatch.setattr(ai, "GROQ_API_KEY", None)
 
     async with AsyncClient(app=app, base_url="http://test") as ac:
         r = await ac.post("/register", json={"username": "bob", "password": "secret"})
@@ -69,9 +69,9 @@ async def test_ai_chat_and_explain(tmp_path, monkeypatch):
     )
     import os
     os.environ["GLOBETROTTER_DATA_PATH"] = str(data_file)
-    monkeypatch.setattr(ai, "GEMINI_API_KEY", "fake-key")
+    monkeypatch.setattr(ai, "GROQ_API_KEY", "fake-key")
 
-    async def fake_generate(contents, system_text):
+    async def fake_generate(messages):
         return "This is a real, grounded answer."
 
     monkeypatch.setattr(ai, "_generate", fake_generate)
