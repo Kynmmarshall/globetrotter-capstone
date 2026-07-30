@@ -590,6 +590,12 @@ section {
   grid-row: span 2;
 }
 
+/* Reserved for wide/panoramic shots (e.g. a stadium exterior) that read
+   better spanning columns than rows. */
+.gallery-item.wide {
+  grid-column: span 2;
+}
+
 .gallery-item img {
   width: 100%;
   height: 100%;
