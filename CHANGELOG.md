@@ -13,6 +13,31 @@ Planned for **Phase 2: Microservices** — see [README → Roadmap](README.md#ro
 - Replace direct in-process calls with REST (sync) and message-queue (async) inter-service communication.
 - Give each service its own datastore instead of a shared JSON file.
 
+## [0.10.0] - 2026-07-30 — Social & personalization: avatars, comments, favorites
+
+- **Avatar upload**: `POST /me/avatar` accepts a JPEG/PNG/WEBP/GIF up to 5MB, stores it under `static/avatars/<user-id>.<ext>` (keyed by the server-generated user id, never the raw username, to avoid path-traversal risk), and replaces any previous avatar for that user.
+- **Destination comments**: threaded comments per destination with replies and up/down voting — `GET`/`POST /destinations/{id}/comments` and `POST /comments/{id}/vote` — surfaced in the app via a new `CommentsSection` widget on the destination detail page, with per-viewer vote state and a 2000-character limit.
+- **Favorites**: `GET /me/favorites`, `POST`/`DELETE /me/favorites/{destination_id}` let users save destinations to a personal list; added a `FavoriteToggleButton` and a dedicated favorites screen in the app, localized in English and French.
+- `UserProfile` now also reports `avatar_url` and `favorite_ids`.
+
+## [0.9.0] - 2026-07-30 — AI travel assistant
+
+- Added an AI chat assistant (`POST /ai/chat`) and a per-destination "explain this place" endpoint (`POST /ai/explain/{destination_id}`), backed by Groq's OpenAI-compatible chat completions API (`backend/app/ai.py`). Every answer is grounded in the app's real destination catalog — the assistant is instructed never to invent places, prices, hours, or ratings that aren't in the data — and responses lean on the asking user's stored interests when relevant.
+- `/ai/explain` results are cached per-destination (`Destination.ai_explanation`) so the same explanation isn't regenerated on every view.
+- Added a dedicated "Ask AI" screen in the app (`frontend/lib/screens/ask_ai_page.dart`) with localized copy, and client-side chat history: the last 16 messages persist across app restarts via `SessionController`/`shared_preferences` and are cleared on logout, so the assistant isn't silently sent a user's entire lifetime chat history on every turn.
+- Both AI endpoints degrade gracefully (503 if unconfigured, 502 on upstream failure) instead of crashing the request when Groq is unreachable or `GROQ_API_KEY` isn't set.
+
+## [0.8.0] - 2026-07-30 — Google Sign-In
+
+- Added `POST /auth/google`: verifies a Google ID token server-side against Google's `tokeninfo` endpoint (checking issuer, expiry, and that the audience matches `GOOGLE_OAUTH_CLIENT_ID`) and transparently creates or logs in the matching local account.
+- Added a platform-aware Google Sign-In button to the auth screen — a native button on mobile, and Google's own rendered button on web (required there for a reliably returned ID token).
+- The Jenkins pipeline now injects `GOOGLE_WEB_CLIENT_ID` via `--dart-define` into the Android and web release builds.
+
+## [0.7.0] - 2026-07-28 — UI polish: responsive dashboard & website redesign
+
+- Reworked the dashboard screen layout so it adapts to the available space instead of using fixed sizing.
+- Refreshed the marketing website's visual design (layout, styling, copy) across the landing page and stats page.
+
 ## [0.6.0] - 2026-07-27 — Product analytics & public stats page
 
 - Integrated [Matomo](https://matomo.org/) for product analytics: the Flutter client (`frontend/lib/services/analytics.dart`) tracks screen views and events via Matomo's HTTP Tracking API — a hand-rolled client (not the `matomo_tracker` package) so behavior is identical across mobile/Windows/web with no platform channels or extra dependency risk. Tracking never breaks the app: network/tracker failures are swallowed silently. Events are attributed to the logged-in user after login/register.

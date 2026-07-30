@@ -1,6 +1,6 @@
 # GlobeTrotter — Travel Recommendation & Itinerary Platform
 
-GlobeTrotter is a full-stack travel assistant that lets users search destinations, receive personalized recommendations, and build shareable travel itineraries. The repository contains two independently deployable projects:
+GlobeTrotter is a full-stack travel assistant that lets users search destinations, receive personalized recommendations, plan itineraries, and interact with an AI travel assistant — with social features like comments, favorites, and profile avatars, plus Google Sign-In and public usage analytics. The repository contains two independently deployable projects:
 
 | Project | Description | Stack |
 |---|---|---|
@@ -179,12 +179,22 @@ Base URL: `https://trip-io.duckdns.org` (production) or `http://localhost:8000` 
 | `GET` | `/health` | — | Liveness check (used by Docker/orchestration health checks) |
 | `POST` | `/register` | — | Create a user account (optionally with `interests`), returns a JWT |
 | `POST` | `/login` | — | Authenticate, returns a JWT |
-| `GET` | `/me` | Bearer token | Get the current user's profile (username, email, interests) |
+| `POST` | `/auth/google` | — | Exchange a Google ID token for a JWT, creating the account on first sign-in |
+| `GET` | `/me` | Bearer token | Get the current user's profile (username, email, interests, avatar, favorites) |
 | `PUT` | `/me/interests` | Bearer token | Replace the current user's interest tags |
+| `POST` | `/me/avatar` | Bearer token | Upload a profile picture (JPEG/PNG/WEBP/GIF, max 5MB) |
+| `GET` | `/me/favorites` | Bearer token | List the current user's favorited destinations |
+| `POST` | `/me/favorites/{destination_id}` | Bearer token | Add a destination to favorites |
+| `DELETE` | `/me/favorites/{destination_id}` | Bearer token | Remove a destination from favorites |
 | `GET` | `/destinations?q=` | — | Search/list destinations by name or tag |
+| `GET` | `/destinations/{id}/comments` | Bearer token | Get threaded comments for a destination, with the viewer's own vote on each |
+| `POST` | `/destinations/{id}/comments` | Bearer token | Post a comment or reply (`parent_id`), max 2000 characters |
+| `POST` | `/comments/{id}/vote` | Bearer token | Upvote/downvote/clear your vote on a comment (`direction`: `up`/`down`/`none`) |
 | `GET` | `/recommendations` | Bearer token | Personalized destinations, ranked by overlap with the user's interest tags (falls back to popular picks if none are set) |
 | `POST` | `/itineraries` | Bearer token | Create an itinerary (title, destinations, optional `schedule`, `start_date`/`end_date`) |
 | `GET` | `/itineraries` | Bearer token | List itineraries owned by the current user |
+| `POST` | `/ai/chat` | Bearer token | Chat with the in-app AI travel assistant (Groq-backed, grounded in the real destination catalog) |
+| `POST` | `/ai/explain/{destination_id}` | Bearer token | Get (and cache) an AI-generated explanation of a destination |
 | `GET` | `/stats/public` | — | Aggregated, anonymized usage stats (total users, active today/this week, 14-day daily-active series, top sections) for the public stats page, sourced from Matomo server-side and cached for 60s |
 
 Destinations also carry richer detail fields — `nearby` (nearby hotels/restaurants), `opening_hours`, `entry_fee`, and `tips` — returned by both `/destinations` and `/recommendations`. The interest-tag vocabulary used for filtering/recommendations is kept in sync between backend seed data and [`frontend/lib/models/interest_tags.dart`](frontend/lib/models/interest_tags.dart).
@@ -223,6 +233,9 @@ Full request/response schemas are available live via the Swagger UI at `/docs`.
 | `MATOMO_URL` | `https://trip-io-analytics.duckdns.org` | Base URL of the Matomo instance queried for `/stats/public` |
 | `MATOMO_API_TOKEN` | *(unset)* | Matomo API token used server-side to fetch stats; without it, `/stats/public` degrades to zeros instead of failing |
 | `MATOMO_SITE_ID` | `1` | Matomo site ID to report on |
+| `GROQ_API_KEY` | *(unset)* | API key for Groq's chat completions API, powering `/ai/chat` and `/ai/explain`; without it, both endpoints return `503` |
+| `GROQ_MODEL` | `llama-3.3-70b-versatile` | Groq model used for the AI assistant |
+| `GOOGLE_OAUTH_CLIENT_ID` | *(unset)* | Expected audience for Google Sign-In ID tokens verified by `/auth/google`; without it, that endpoint returns `401` |
 
 Set them before starting the server, e.g.:
 
@@ -236,6 +249,7 @@ uvicorn app.main:app --port 8000
 | Define | Default | Purpose |
 |---|---|---|
 | `API_BASE_URL` | `https://trip-io.duckdns.org` | Backend base URL, passed via `--dart-define`; override to `http://localhost:8000` (or `http://10.0.2.2:8000` on the Android emulator) for local dev |
+| `GOOGLE_WEB_CLIENT_ID` | *(unset)* | Google OAuth web client ID for Google Sign-In, passed via `--dart-define`; required for the Google Sign-In button to work on Android/web |
 
 ## Testing
 
