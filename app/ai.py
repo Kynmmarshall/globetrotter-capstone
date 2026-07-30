@@ -28,6 +28,12 @@ class AiRequestError(Exception):
 
 
 def _destination_catalog() -> str:
+    # Name/tags/location only - deliberately no description. This catalog
+    # gets embedded in the system prompt on every /ai/chat turn (unlike
+    # /ai/explain, which is cached), so trimming it here directly cuts the
+    # tokens spent per message. explain_destination() still passes the full
+    # description for the one destination it's actually explaining, via its
+    # own detail_lines below - nothing is lost there.
     dests = read_data().get("destinations", [])
     lines = []
     for d in dests:
@@ -36,8 +42,6 @@ def _destination_catalog() -> str:
             bits.append("tags: " + ", ".join(d["tags"]))
         if d.get("location"):
             bits.append("location: " + d["location"])
-        if d.get("description"):
-            bits.append(d["description"])
         lines.append(f"- ({d.get('id')}) {d.get('name', '')} | " + " | ".join(bits))
     return "\n".join(lines)
 
