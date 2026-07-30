@@ -1,7 +1,7 @@
 import pytest
 from httpx import AsyncClient
 from app.main import app
-from app import ai
+from app import ai, google_auth
 
 
 @pytest.mark.asyncio
@@ -90,3 +90,82 @@ async def test_ai_chat_and_explain(tmp_path, monkeypatch):
 
         r4 = await ac.post("/ai/explain/does-not-exist", headers=headers)
         assert r4.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_google_auth_not_configured(tmp_path, monkeypatch):
+    data_file = tmp_path / "data.json"
+    data_file.write_text('{"users": [], "itineraries": [], "destinations": []}')
+    import os
+    os.environ["GLOBETROTTER_DATA_PATH"] = str(data_file)
+    monkeypatch.setattr(google_auth, "GOOGLE_OAUTH_CLIENT_ID", None)
+
+    async with AsyncClient(app=app, base_url="http://test") as ac:
+        r = await ac.post("/auth/google", json={"id_token": "whatever"})
+        assert r.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_google_auth_creates_and_reuses_user(tmp_path, monkeypatch):
+    data_file = tmp_path / "data.json"
+    data_file.write_text('{"users": [], "itineraries": [], "destinations": []}')
+    import os
+    os.environ["GLOBETROTTER_DATA_PATH"] = str(data_file)
+    monkeypatch.setattr(google_auth, "GOOGLE_OAUTH_CLIENT_ID", "test-client-id")
+
+    async def fake_verify(id_token):
+        return {
+            "sub": "google-sub-123",
+            "email": "dora@example.com",
+            "name": "Dora Explorer",
+            "aud": "test-client-id",
+            "iss": "accounts.google.com",
+            "email_verified": "true",
+        }
+
+    monkeypatch.setattr(google_auth, "verify_id_token", fake_verify)
+
+    async with AsyncClient(app=app, base_url="http://test") as ac:
+        r1 = await ac.post("/auth/google", json={"id_token": "fake"})
+        assert r1.status_code == 200
+        token1 = r1.json()["access_token"]
+
+        headers = {"Authorization": f"Bearer {token1}"}
+        r2 = await ac.get("/me", headers=headers)
+        assert r2.status_code == 200
+        assert r2.json()["username"] == "dora"
+        assert r2.json()["email"] == "dora@example.com"
+
+        # Signing in again with the same Google account should reuse the
+        # same user, not create a second "dora2" account.
+        r3 = await ac.post("/auth/google", json={"id_token": "fake"})
+        assert r3.status_code == 200
+        headers3 = {"Authorization": f"Bearer {r3.json()['access_token']}"}
+        r4 = await ac.get("/me", headers=headers3)
+        assert r4.json()["username"] == "dora"
+
+
+@pytest.mark.asyncio
+async def test_google_only_account_rejects_password_login(tmp_path, monkeypatch):
+    data_file = tmp_path / "data.json"
+    data_file.write_text('{"users": [], "itineraries": [], "destinations": []}')
+    import os
+    os.environ["GLOBETROTTER_DATA_PATH"] = str(data_file)
+    monkeypatch.setattr(google_auth, "GOOGLE_OAUTH_CLIENT_ID", "test-client-id")
+
+    async def fake_verify(id_token):
+        return {
+            "sub": "google-sub-456",
+            "email": "bob@example.com",
+            "name": "Bob",
+            "aud": "test-client-id",
+            "iss": "accounts.google.com",
+            "email_verified": "true",
+        }
+
+    monkeypatch.setattr(google_auth, "verify_id_token", fake_verify)
+
+    async with AsyncClient(app=app, base_url="http://test") as ac:
+        await ac.post("/auth/google", json={"id_token": "fake"})
+        r = await ac.post("/login", json={"username": "bob", "password": "anything"})
+        assert r.status_code == 401

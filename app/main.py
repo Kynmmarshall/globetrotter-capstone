@@ -4,7 +4,7 @@ from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
-from . import ai, crud, stats
+from . import ai, crud, google_auth, stats
 from .schemas import (
     UserCreate,
     Token,
@@ -13,6 +13,7 @@ from .schemas import (
     ItineraryCreate,
     UserProfile,
     InterestsUpdate,
+    GoogleAuthRequest,
     ChatRequest,
     ChatResponse,
 )
@@ -46,6 +47,17 @@ def login(u: UserCreate):
     user = crud.authenticate_user(u.username, u.password)
     if not user:
         raise HTTPException(status_code=401, detail="Invalid credentials")
+    token = create_access_token(user["username"])
+    return {"access_token": token}
+
+
+@app.post("/auth/google", response_model=Token)
+async def auth_google(payload: GoogleAuthRequest):
+    try:
+        claims = await google_auth.verify_id_token(payload.id_token)
+    except google_auth.GoogleTokenError as exc:
+        raise HTTPException(status_code=401, detail=str(exc))
+    user = crud.get_or_create_google_user(claims.get("sub"), claims.get("email"), claims.get("name"))
     token = create_access_token(user["username"])
     return {"access_token": token}
 

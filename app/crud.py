@@ -18,7 +18,9 @@ def register_user(username: str, password: str, email: str | None = None, intere
 def authenticate_user(username: str, password: str):
     data = read_data()
     for u in data.get("users", []):
-        if u["username"] == username and verify_password(password, u["password"]):
+        # Google-only accounts have no "password" key - guard against that
+        # rather than letting verify_password blow up on a missing hash.
+        if u["username"] == username and u.get("password") and verify_password(password, u["password"]):
             return u
     return None
 
@@ -28,6 +30,33 @@ def get_user(username: str):
         if u["username"] == username:
             return u
     return None
+
+def _unique_username(data: dict, base: str) -> str:
+    base = "".join(ch for ch in base.lower() if ch.isalnum()) or "traveller"
+    existing = {u["username"] for u in data.get("users", [])}
+    if base not in existing:
+        return base
+    i = 2
+    while f"{base}{i}" in existing:
+        i += 1
+    return f"{base}{i}"
+
+def get_or_create_google_user(google_sub: str, email: str | None, name: str | None):
+    data = read_data()
+    for u in data.get("users", []):
+        if u.get("google_sub") == google_sub:
+            return u
+    base = (email.split("@")[0] if email else None) or name or "traveller"
+    user = {
+        "id": str(uuid.uuid4()),
+        "username": _unique_username(data, base),
+        "google_sub": google_sub,
+    }
+    if email:
+        user["email"] = email
+    data.setdefault("users", []).append(user)
+    write_data(data)
+    return user
 
 def update_user_interests(username: str, interests: list[str]):
     data = read_data()

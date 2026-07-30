@@ -60,6 +60,9 @@ class ItineraryCreate(BaseModel):
     start_date: Optional[str] = None
     end_date: Optional[str] = None
 
+class GoogleAuthRequest(BaseModel):
+    id_token: str
+
 class ChatMessage(BaseModel):
     role: str  # "user" | "assistant"
     content: str
