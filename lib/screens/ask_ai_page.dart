@@ -23,10 +23,23 @@ class _AskAiPageState extends State<AskAiPage> {
   String? _error;
 
   @override
+  void initState() {
+    super.initState();
+    _loadHistory();
+  }
+
+  @override
   void dispose() {
     _controller.dispose();
     _scrollController.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadHistory() async {
+    final history = await widget.session.loadChatHistory();
+    if (!mounted || history.isEmpty) return;
+    setState(() => _messages.addAll(history));
+    _scrollToBottom();
   }
 
   Future<void> _send() async {
@@ -45,7 +58,18 @@ class _AskAiPageState extends State<AskAiPage> {
     } catch (e) {
       setState(() => _error = e.toString().replaceFirst('Exception: ', ''));
     } finally {
-      setState(() => _sending = false);
+      // Persisting also caps the history to a rolling window, so the
+      // conversation feels continuous without every reply resending an
+      // ever-growing transcript (and its token cost) to Groq.
+      final trimmed = await widget.session.saveChatHistory(_messages);
+      if (mounted && trimmed.length != _messages.length) {
+        setState(() {
+          _messages
+            ..clear()
+            ..addAll(trimmed);
+        });
+      }
+      if (mounted) setState(() => _sending = false);
       _scrollToBottom();
     }
   }
@@ -94,11 +118,17 @@ class _AskAiPageState extends State<AskAiPage> {
           margin: const EdgeInsets.only(bottom: 10),
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
           decoration: BoxDecoration(
+            // Solid, tinted bubbles instead of near-invisible frosted white -
+            // chat text needs to stay legible over any photo background.
             color: isUser
-                ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.85)
-                : Colors.white.withValues(alpha: 0.14),
+                ? Theme.of(context).colorScheme.primary
+                : const Color(0xFF13253A).withValues(alpha: 0.92),
             borderRadius: BorderRadius.circular(16),
-            border: isUser ? null : Border.all(color: Colors.white.withValues(alpha: 0.2)),
+            border: Border.all(
+              color: isUser
+                  ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.6)
+                  : Theme.of(context).colorScheme.primary.withValues(alpha: 0.4),
+            ),
           ),
           child: Text(
             message.content,

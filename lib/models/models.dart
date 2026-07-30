@@ -99,6 +99,13 @@ class ChatMessage {
   bool get isUser => role == 'user';
 
   Map<String, dynamic> toJson() => {'role': role, 'content': content};
+
+  factory ChatMessage.fromJson(Map<String, dynamic> json) {
+    return ChatMessage(
+      role: (json['role'] ?? '').toString(),
+      content: (json['content'] ?? '').toString(),
+    );
+  }
 }
 
 class UserProfile {

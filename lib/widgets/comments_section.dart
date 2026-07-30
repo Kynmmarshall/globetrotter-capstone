@@ -306,9 +306,12 @@ class _CommentTileState extends State<_CommentTile> {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.08),
+              // A solid, tinted card instead of the near-invisible frosted
+              // white used for structural panels - comment text needs to
+              // stay legible over any photo background, not just blend in.
+              color: const Color(0xFF13253A).withValues(alpha: 0.92),
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.14)),
+              border: Border.all(color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.4)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,

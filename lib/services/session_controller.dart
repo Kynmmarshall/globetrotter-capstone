@@ -19,6 +19,12 @@ class SessionController extends ChangeNotifier {
   static const _localeKey = 'gt_locale';
   static const _interestsKey = 'gt_interests';
   static const _favoriteIdsKey = 'gt_favorite_ids';
+  static const _chatHistoryKey = 'gt_ai_chat_history';
+  // Roughly 8 back-and-forth exchanges - enough for the AI to keep track of
+  // what's already been discussed without every reply resending the user's
+  // entire lifetime chat history to Groq (which is exactly what would
+  // happen if this stayed unbounded).
+  static const _maxChatHistoryMessages = 16;
 
   bool _ready = false;
   bool _loading = false;
@@ -175,12 +181,36 @@ class SessionController extends ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_tokenKey);
     await prefs.remove(_usernameKey);
+    // Chat content is personal - don't leave it behind for the next account
+    // that logs in on this device.
+    await prefs.remove(_chatHistoryKey);
     _token = null;
     _username = null;
     _error = null;
     Analytics.instance.trackEvent('auth', 'logout');
     Analytics.instance.setUser(null);
     notifyListeners();
+  }
+
+  Future<List<ChatMessage>> loadChatHistory() async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString(_chatHistoryKey);
+    if (raw == null || raw.isEmpty) return [];
+    try {
+      final decoded = jsonDecode(raw) as List<dynamic>;
+      return decoded.map((e) => ChatMessage.fromJson(e as Map<String, dynamic>)).toList();
+    } catch (_) {
+      return [];
+    }
+  }
+
+  Future<List<ChatMessage>> saveChatHistory(List<ChatMessage> messages) async {
+    final trimmed = messages.length > _maxChatHistoryMessages
+        ? messages.sublist(messages.length - _maxChatHistoryMessages)
+        : messages;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_chatHistoryKey, jsonEncode(trimmed.map((m) => m.toJson()).toList()));
+    return trimmed;
   }
 
   Future<void> updateInterests(List<String> interests) async {
