@@ -6,6 +6,7 @@ const List<String> interestTags = [
   'architecture',
   'art',
   'culture',
+  'entertainment',
   'events',
   'family',
   'food',
@@ -17,6 +18,7 @@ const List<String> interestTags = [
   'nature',
   'religion',
   'shopping',
+  'sports',
   'viewpoint',
   'wildlife',
 ];

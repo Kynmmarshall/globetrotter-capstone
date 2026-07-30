@@ -61,6 +61,11 @@ pipeline {
         // this repo is private.
         GIT_CREDENTIALS_ID = 'b473f67d-d2a3-42ec-baa3-b38c9b8d6bc6'
         API_BASE_URL = 'https://trip-io.duckdns.org'
+        // Public OAuth client ID (safe to be plaintext here, unlike its
+        // client secret - a client ID is meant to ship inside the app).
+        // Used for both Android (as serverClientId) and Web (as clientId)
+        // Google Sign-In, per lib/screens/auth_screen.dart.
+        GOOGLE_WEB_CLIENT_ID = '923487715536-svoutan0fjnomm8fu3enqio4ou3g6cgj.apps.googleusercontent.com'
         VPS_HOST = '38.242.246.126'
         // VERIFY: the SSH user + absolute path you actually deployed
         // trip_io_backend under on the VPS.
@@ -214,8 +219,8 @@ pipeline {
             }
             steps {
                 sh '''
-                    flutter build apk --release --dart-define=API_BASE_URL=$API_BASE_URL
-                    flutter build web --release --base-href /app/ --dart-define=API_BASE_URL=$API_BASE_URL
+                    flutter build apk --release --dart-define=API_BASE_URL=$API_BASE_URL --dart-define=GOOGLE_WEB_CLIENT_ID=$GOOGLE_WEB_CLIENT_ID
+                    flutter build web --release --base-href /app/ --dart-define=API_BASE_URL=$API_BASE_URL --dart-define=GOOGLE_WEB_CLIENT_ID=$GOOGLE_WEB_CLIENT_ID
                 '''
             }
         }

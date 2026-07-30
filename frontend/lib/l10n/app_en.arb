@@ -27,6 +27,7 @@
   "authCreateAccountButton": "Create account",
   "authToggleToRegister": "No account? Register",
   "authToggleToLogin": "Already have an account? Login",
+  "authOrDivider": "or",
   "authTaglineTitle": "Plan faster. Travel smarter.",
   "authTaglineSubtitle": "Search destinations, create itineraries, and keep your account synced across mobile, web, and Windows.",
   "authFeatureMobile": "Mobile ready",
@@ -35,6 +36,7 @@
 
   "navDestinations": "Destinations",
   "navRecommendations": "Recommendations",
+  "navFavorites": "Favorites",
   "navItineraries": "Itineraries",
   "navAskAi": "Ask AI",
   "navProfile": "Profile",
@@ -51,6 +53,16 @@
   "aiExplainButton": "Ask AI to explain",
   "aiExplainTitle": "AI explanation",
   "aiExplainError": "Couldn't get an explanation right now.",
+
+  "commentsTitle": "Comments",
+  "commentsInputHint": "Add a comment…",
+  "commentsPostButton": "Post",
+  "commentsReplyButton": "Reply",
+  "commentsEmpty": "No comments yet — be the first to share your thoughts.",
+  "commentsLoadError": "Couldn't load comments.\n{error}",
+  "@commentsLoadError": {
+    "placeholders": { "error": { "type": "String" } }
+  },
 
   "destinationsTitle": "Yaoundé Destinations",
   "destinationsSubtitle": "Search Cameroon's capital for landmarks, culture and nature spots.",
@@ -69,6 +81,15 @@
   },
   "recommendationsEmptyTitle": "No recommendations yet",
   "recommendationsEmptySubtitle": "Browse destinations and we'll start suggesting spots for you.",
+
+  "favoritesTitle": "Your favorites",
+  "favoritesSubtitle": "Destinations you've saved for later.",
+  "favoritesErrorMessage": "Could not load favorites.\n{error}",
+  "@favoritesErrorMessage": {
+    "placeholders": { "error": { "type": "String" } }
+  },
+  "favoritesEmptyTitle": "No favorites yet",
+  "favoritesEmptySubtitle": "Tap the heart on any destination to save it here.",
 
   "itinerariesFormMissing": "Add a title and pick at least one destination.",
   "itineraryCreatedSnackbar": "Itinerary created.",

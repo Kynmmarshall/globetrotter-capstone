@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'dart:convert';
+
 import 'package:flutter/foundation.dart' show ChangeNotifier;
 import 'package:flutter/widgets.dart' show Locale;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -10,11 +13,18 @@ class SessionController extends ChangeNotifier {
   static const _tokenKey = 'gt_token';
   static const _usernameKey = 'gt_username';
   static const _emailKey = 'gt_email';
-  static const _avatarPathKey = 'gt_avatar_path';
+  static const _avatarUrlKey = 'gt_avatar_url';
   static const _bioKey = 'gt_bio';
   static const _memberSinceKey = 'gt_member_since';
   static const _localeKey = 'gt_locale';
   static const _interestsKey = 'gt_interests';
+  static const _favoriteIdsKey = 'gt_favorite_ids';
+  static const _chatHistoryKey = 'gt_ai_chat_history';
+  // Roughly 8 back-and-forth exchanges - enough for the AI to keep track of
+  // what's already been discussed without every reply resending the user's
+  // entire lifetime chat history to Groq (which is exactly what would
+  // happen if this stayed unbounded).
+  static const _maxChatHistoryMessages = 16;
 
   bool _ready = false;
   bool _loading = false;
@@ -22,11 +32,12 @@ class SessionController extends ChangeNotifier {
   String? _token;
   String? _username;
   String? _email;
-  String? _avatarPath;
+  String? _avatarUrl;
   String? _bio;
   DateTime? _memberSince;
   Locale? _locale;
   List<String> _interests = [];
+  Set<String> _favoriteIds = {};
 
   bool get ready => _ready;
   bool get isLoading => _loading;
@@ -34,12 +45,13 @@ class SessionController extends ChangeNotifier {
   String? get error => _error;
   String? get username => _username;
   String? get email => _email;
-  String? get avatarPath => _avatarPath;
+  String? get avatarUrl => _avatarUrl;
   String? get bio => _bio;
   DateTime? get memberSince => _memberSince;
   // Null means "follow the device's system language".
   Locale? get locale => _locale;
   List<String> get interests => _interests;
+  bool isFavorite(String destinationId) => _favoriteIds.contains(destinationId);
 
   void clearError() {
     _error = null;
@@ -51,7 +63,7 @@ class SessionController extends ChangeNotifier {
     _token = prefs.getString(_tokenKey);
     _username = prefs.getString(_usernameKey);
     _email = prefs.getString(_emailKey);
-    _avatarPath = prefs.getString(_avatarPathKey);
+    _avatarUrl = prefs.getString(_avatarUrlKey);
     _bio = prefs.getString(_bioKey);
     final memberSinceRaw = prefs.getString(_memberSinceKey);
     _memberSince = memberSinceRaw != null
@@ -60,11 +72,54 @@ class SessionController extends ChangeNotifier {
     final localeCode = prefs.getString(_localeKey);
     _locale = localeCode != null ? Locale(localeCode) : null;
     _interests = prefs.getStringList(_interestsKey) ?? [];
+    _favoriteIds = (prefs.getStringList(_favoriteIdsKey) ?? []).toSet();
+    // A token that expired while the app was closed (JWTs are valid for a
+    // week - see auth.py) should never make it to a "logged in" screen -
+    // clear it here rather than letting the first API call surface it as
+    // an error.
+    if (_token != null && _isTokenExpired(_token!)) {
+      await prefs.remove(_tokenKey);
+      await prefs.remove(_usernameKey);
+      _token = null;
+      _username = null;
+    }
     if ((_username ?? '').isNotEmpty) {
       Analytics.instance.setUser(_username);
     }
     _ready = true;
     notifyListeners();
+  }
+
+  // Decodes the JWT payload to read `exp` without verifying the signature -
+  // that's the server's job. This only ever drives a *local* logout, so the
+  // worst case for a malformed/unreadable token is a missed early logout,
+  // not a security decision made on unverified data.
+  bool _isTokenExpired(String token) {
+    try {
+      final parts = token.split('.');
+      if (parts.length != 3) return false;
+      final normalized = base64Url.normalize(parts[1]);
+      final payload = jsonDecode(utf8.decode(base64Url.decode(normalized))) as Map<String, dynamic>;
+      final exp = payload['exp'];
+      if (exp is! int) return false;
+      return DateTime.now().toUtc().isAfter(DateTime.fromMillisecondsSinceEpoch(exp * 1000, isUtc: true));
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// Returns the current token if present and not expired, otherwise clears
+  /// the session (so the UI reactively falls back to AuthScreen) and throws.
+  String _requireToken() {
+    final token = _token;
+    if (token == null || token.isEmpty) {
+      throw Exception('Not authenticated.');
+    }
+    if (_isTokenExpired(token)) {
+      unawaited(logout());
+      throw Exception('Your session expired. Please sign in again.');
+    }
+    return token;
   }
 
   Future<void> setLocale(Locale? locale) async {
@@ -110,10 +165,25 @@ class SessionController extends ChangeNotifier {
     });
   }
 
+  Future<void> loginWithGoogle(String idToken) async {
+    await _runGuarded(() async {
+      final token = await ApiClient().googleAuth(idToken);
+      // The backend assigns the username for Google accounts (derived from
+      // the Google email/name), so unlike register()/login() we don't know
+      // it up front - fetch the profile it just created/matched instead.
+      final profile = await ApiClient().getProfile(token);
+      await _saveAuth(token, profile.username, email: profile.email);
+      await _applyProfile(profile);
+    });
+  }
+
   Future<void> logout() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_tokenKey);
     await prefs.remove(_usernameKey);
+    // Chat content is personal - don't leave it behind for the next account
+    // that logs in on this device.
+    await prefs.remove(_chatHistoryKey);
     _token = null;
     _username = null;
     _error = null;
@@ -122,11 +192,29 @@ class SessionController extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> updateInterests(List<String> interests) async {
-    final token = _token;
-    if (token == null || token.isEmpty) {
-      throw Exception('Not authenticated.');
+  Future<List<ChatMessage>> loadChatHistory() async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString(_chatHistoryKey);
+    if (raw == null || raw.isEmpty) return [];
+    try {
+      final decoded = jsonDecode(raw) as List<dynamic>;
+      return decoded.map((e) => ChatMessage.fromJson(e as Map<String, dynamic>)).toList();
+    } catch (_) {
+      return [];
     }
+  }
+
+  Future<List<ChatMessage>> saveChatHistory(List<ChatMessage> messages) async {
+    final trimmed = messages.length > _maxChatHistoryMessages
+        ? messages.sublist(messages.length - _maxChatHistoryMessages)
+        : messages;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_chatHistoryKey, jsonEncode(trimmed.map((m) => m.toJson()).toList()));
+    return trimmed;
+  }
+
+  Future<void> updateInterests(List<String> interests) async {
+    final token = _requireToken();
     final profile = await ApiClient().updateInterests(token, interests);
     await _applyProfile(profile);
     Analytics.instance.trackEvent('profile', 'interests_updated');
@@ -140,6 +228,12 @@ class SessionController extends ChangeNotifier {
       await prefs.setString(_emailKey, profile.email!);
       _email = profile.email;
     }
+    if ((profile.avatarUrl ?? '').isNotEmpty) {
+      await prefs.setString(_avatarUrlKey, profile.avatarUrl!);
+      _avatarUrl = profile.avatarUrl;
+    }
+    await prefs.setStringList(_favoriteIdsKey, profile.favoriteIds);
+    _favoriteIds = profile.favoriteIds.toSet();
     notifyListeners();
   }
 
@@ -150,11 +244,14 @@ class SessionController extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> updateAvatarPath(String path) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_avatarPathKey, path);
-    _avatarPath = path;
-    notifyListeners();
+  /// Uploads [bytes] (an image picked via image_picker) to the backend,
+  /// which stores it under static/avatars/ on the VPS and returns the
+  /// resulting URL - replacing the previous local-only, per-device path.
+  Future<void> updateAvatar(List<int> bytes, String filename) async {
+    final token = _requireToken();
+    final profile = await ApiClient().uploadAvatar(token, bytes, filename);
+    await _applyProfile(profile);
+    Analytics.instance.trackEvent('profile', 'avatar_updated');
   }
 
   Future<List<Destination>> destinations({String? query}) {
@@ -162,11 +259,27 @@ class SessionController extends ChangeNotifier {
   }
 
   Future<List<Destination>> recommendations() async {
-    final token = _token;
-    if (token == null || token.isEmpty) {
-      throw Exception('Not authenticated.');
-    }
+    final token = _requireToken();
     return ApiClient().getRecommendations(token);
+  }
+
+  Future<List<Destination>> favorites() async {
+    final token = _requireToken();
+    return ApiClient().getFavorites(token);
+  }
+
+  Future<void> toggleFavorite(String destinationId) async {
+    final token = _requireToken();
+    final alreadyFavorite = _favoriteIds.contains(destinationId);
+    final profile = alreadyFavorite
+        ? await ApiClient().removeFavorite(token, destinationId)
+        : await ApiClient().addFavorite(token, destinationId);
+    await _applyProfile(profile);
+    Analytics.instance.trackEvent(
+      'destination',
+      alreadyFavorite ? 'unfavorited' : 'favorited',
+      name: destinationId,
+    );
   }
 
   Future<Itinerary> createItinerary(
@@ -176,10 +289,7 @@ class SessionController extends ChangeNotifier {
     DateTime? startDate,
     DateTime? endDate,
   }) async {
-    final token = _token;
-    if (token == null || token.isEmpty) {
-      throw Exception('Not authenticated.');
-    }
+    final token = _requireToken();
     final itinerary = await ApiClient().createItinerary(
       token,
       title,
@@ -197,31 +307,41 @@ class SessionController extends ChangeNotifier {
   }
 
   Future<List<Itinerary>> itineraries() async {
-    final token = _token;
-    if (token == null || token.isEmpty) {
-      throw Exception('Not authenticated.');
-    }
+    final token = _requireToken();
     return ApiClient().getItineraries(token);
   }
 
   Future<String> aiChat(List<ChatMessage> messages) async {
-    final token = _token;
-    if (token == null || token.isEmpty) {
-      throw Exception('Not authenticated.');
-    }
+    final token = _requireToken();
     final reply = await ApiClient().aiChat(token, messages);
     Analytics.instance.trackEvent('ai', 'chat_message');
     return reply;
   }
 
   Future<String> aiExplain(String destinationId) async {
-    final token = _token;
-    if (token == null || token.isEmpty) {
-      throw Exception('Not authenticated.');
-    }
+    final token = _requireToken();
     final reply = await ApiClient().aiExplain(token, destinationId);
     Analytics.instance.trackEvent('ai', 'explain_destination', name: destinationId);
     return reply;
+  }
+
+  Future<List<Comment>> comments(String destinationId) async {
+    final token = _requireToken();
+    return ApiClient().getComments(token, destinationId);
+  }
+
+  Future<Comment> postComment(String destinationId, String text, {String? parentId}) async {
+    final token = _requireToken();
+    final comment = await ApiClient().postComment(token, destinationId, text, parentId: parentId);
+    Analytics.instance.trackEvent('comment', parentId == null ? 'posted' : 'replied', name: destinationId);
+    return comment;
+  }
+
+  Future<Comment> voteComment(String commentId, String direction) async {
+    final token = _requireToken();
+    final comment = await ApiClient().voteComment(token, commentId, direction);
+    Analytics.instance.trackEvent('comment', 'voted_$direction');
+    return comment;
   }
 
   Future<void> _saveAuth(

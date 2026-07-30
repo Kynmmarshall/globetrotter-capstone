@@ -5,6 +5,8 @@ import 'package:trip_io/l10n/gen/app_localizations.dart';
 import 'package:trip_io/models/models.dart';
 import 'package:trip_io/services/api_client.dart';
 import 'package:trip_io/services/session_controller.dart';
+import 'package:trip_io/widgets/comments_section.dart';
+import 'package:trip_io/widgets/favorite_toggle_button.dart';
 
 class DestinationDetailPage extends StatefulWidget {
   const DestinationDetailPage({
@@ -376,13 +378,25 @@ class _DestinationDetailPageState extends State<DestinationDetailPage> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(
-                                    destination.name,
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.w800,
-                                      fontSize: 22,
-                                    ),
+                                  Row(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          destination.name,
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.w800,
+                                            fontSize: 22,
+                                          ),
+                                        ),
+                                      ),
+                                      FavoriteToggleButton(
+                                        session: widget.session,
+                                        destinationId: destination.id,
+                                        size: 24,
+                                      ),
+                                    ],
                                   ),
                                   const SizedBox(height: 8),
                                   Row(
@@ -500,6 +514,8 @@ class _DestinationDetailPageState extends State<DestinationDetailPage> {
                               const SizedBox(height: 12),
                               ...destination.nearby.map((place) => _buildNearbyCard(context, place)),
                             ],
+                            const SizedBox(height: 22),
+                            CommentsSection(session: widget.session, destinationId: destination.id),
                           ],
                         ),
                       ),

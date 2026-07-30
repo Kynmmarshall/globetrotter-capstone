@@ -87,6 +87,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get authToggleToLogin => 'Déjà un compte ? Connectez-vous';
 
   @override
+  String get authOrDivider => 'ou';
+
+  @override
   String get authTaglineTitle =>
       'Planifiez plus vite. Voyagez plus intelligemment.';
 
@@ -108,6 +111,9 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get navRecommendations => 'Recommandations';
+
+  @override
+  String get navFavorites => 'Favoris';
 
   @override
   String get navItineraries => 'Itinéraires';
@@ -151,6 +157,27 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get aiExplainError =>
       'Impossible d\'obtenir une explication pour le moment.';
+
+  @override
+  String get commentsTitle => 'Commentaires';
+
+  @override
+  String get commentsInputHint => 'Ajouter un commentaire…';
+
+  @override
+  String get commentsPostButton => 'Publier';
+
+  @override
+  String get commentsReplyButton => 'Répondre';
+
+  @override
+  String get commentsEmpty =>
+      'Aucun commentaire pour l\'instant — soyez le premier à partager votre avis.';
+
+  @override
+  String commentsLoadError(String error) {
+    return 'Impossible de charger les commentaires.\n$error';
+  }
 
   @override
   String get destinationsTitle => 'Destinations à Yaoundé';
@@ -198,6 +225,24 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get recommendationsEmptySubtitle =>
       'Explorez les destinations et nous vous suggérerons des lieux.';
+
+  @override
+  String get favoritesTitle => 'Vos favoris';
+
+  @override
+  String get favoritesSubtitle => 'Destinations que vous avez enregistrées.';
+
+  @override
+  String favoritesErrorMessage(String error) {
+    return 'Impossible de charger les favoris.\n$error';
+  }
+
+  @override
+  String get favoritesEmptyTitle => 'Aucun favori pour l\'instant';
+
+  @override
+  String get favoritesEmptySubtitle =>
+      'Appuyez sur le cœur d\'une destination pour l\'enregistrer ici.';
 
   @override
   String get itinerariesFormMissing =>

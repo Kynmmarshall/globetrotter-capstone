@@ -7,6 +7,7 @@ import 'package:trip_io/services/analytics.dart';
 import 'package:trip_io/services/session_controller.dart';
 import 'package:trip_io/screens/ask_ai_page.dart';
 import 'package:trip_io/screens/destinations_page.dart';
+import 'package:trip_io/screens/favorites_page.dart';
 import 'package:trip_io/screens/itineraries_page.dart';
 import 'package:trip_io/screens/profile_page.dart';
 import 'package:trip_io/screens/recommendations_page.dart';
@@ -26,6 +27,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   static const _icons = <IconData>[
     Icons.public,
     Icons.star,
+    Icons.favorite,
     Icons.map,
     Icons.smart_toy,
     Icons.person,
@@ -36,6 +38,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   static const _screenNames = <String>[
     'destinations',
     'recommendations',
+    'favorites',
     'itineraries',
     'ask_ai',
     'profile',
@@ -66,6 +69,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return [
       l10n.navDestinations,
       l10n.navRecommendations,
+      l10n.navFavorites,
       l10n.navItineraries,
       l10n.navAskAi,
       l10n.navProfile,
@@ -139,6 +143,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final pages = [
       DestinationsPage(session: widget.session),
       RecommendationsPage(session: widget.session),
+      FavoritesPage(session: widget.session),
       ItinerariesPage(session: widget.session),
       AskAiPage(session: widget.session),
       ProfilePage(session: widget.session),

@@ -26,6 +26,7 @@
   "authCreateAccountButton": "Créer un compte",
   "authToggleToRegister": "Pas de compte ? Inscrivez-vous",
   "authToggleToLogin": "Déjà un compte ? Connectez-vous",
+  "authOrDivider": "ou",
   "authTaglineTitle": "Planifiez plus vite. Voyagez plus intelligemment.",
   "authTaglineSubtitle": "Recherchez des destinations, créez des itinéraires et gardez votre compte synchronisé sur mobile, web et Windows.",
   "authFeatureMobile": "Compatible mobile",
@@ -34,6 +35,7 @@
 
   "navDestinations": "Destinations",
   "navRecommendations": "Recommandations",
+  "navFavorites": "Favoris",
   "navItineraries": "Itinéraires",
   "navAskAi": "IA",
   "navProfile": "Profil",
@@ -47,6 +49,13 @@
   "aiExplainButton": "Demander une explication à l'IA",
   "aiExplainTitle": "Explication de l'IA",
   "aiExplainError": "Impossible d'obtenir une explication pour le moment.",
+
+  "commentsTitle": "Commentaires",
+  "commentsInputHint": "Ajouter un commentaire…",
+  "commentsPostButton": "Publier",
+  "commentsReplyButton": "Répondre",
+  "commentsEmpty": "Aucun commentaire pour l'instant — soyez le premier à partager votre avis.",
+  "commentsLoadError": "Impossible de charger les commentaires.\n{error}",
 
   "destinationsTitle": "Destinations à Yaoundé",
   "destinationsSubtitle": "Explorez les monuments, la culture et la nature de la capitale du Cameroun.",
@@ -62,6 +71,12 @@
   "recommendationsErrorMessage": "Impossible de charger les recommandations.\n{error}",
   "recommendationsEmptyTitle": "Aucune recommandation pour l'instant",
   "recommendationsEmptySubtitle": "Explorez les destinations et nous vous suggérerons des lieux.",
+
+  "favoritesTitle": "Vos favoris",
+  "favoritesSubtitle": "Destinations que vous avez enregistrées.",
+  "favoritesErrorMessage": "Impossible de charger les favoris.\n{error}",
+  "favoritesEmptyTitle": "Aucun favori pour l'instant",
+  "favoritesEmptySubtitle": "Appuyez sur le cœur d'une destination pour l'enregistrer ici.",
 
   "itinerariesFormMissing": "Ajoutez un titre et choisissez au moins une destination.",
   "itineraryCreatedSnackbar": "Itinéraire créé.",

@@ -85,6 +85,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get authToggleToLogin => 'Already have an account? Login';
 
   @override
+  String get authOrDivider => 'or';
+
+  @override
   String get authTaglineTitle => 'Plan faster. Travel smarter.';
 
   @override
@@ -105,6 +108,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get navRecommendations => 'Recommendations';
+
+  @override
+  String get navFavorites => 'Favorites';
 
   @override
   String get navItineraries => 'Itineraries';
@@ -146,6 +152,27 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get aiExplainError => 'Couldn\'t get an explanation right now.';
+
+  @override
+  String get commentsTitle => 'Comments';
+
+  @override
+  String get commentsInputHint => 'Add a comment…';
+
+  @override
+  String get commentsPostButton => 'Post';
+
+  @override
+  String get commentsReplyButton => 'Reply';
+
+  @override
+  String get commentsEmpty =>
+      'No comments yet — be the first to share your thoughts.';
+
+  @override
+  String commentsLoadError(String error) {
+    return 'Couldn\'t load comments.\n$error';
+  }
 
   @override
   String get destinationsTitle => 'Yaoundé Destinations';
@@ -191,6 +218,24 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get recommendationsEmptySubtitle =>
       'Browse destinations and we\'ll start suggesting spots for you.';
+
+  @override
+  String get favoritesTitle => 'Your favorites';
+
+  @override
+  String get favoritesSubtitle => 'Destinations you\'ve saved for later.';
+
+  @override
+  String favoritesErrorMessage(String error) {
+    return 'Could not load favorites.\n$error';
+  }
+
+  @override
+  String get favoritesEmptyTitle => 'No favorites yet';
+
+  @override
+  String get favoritesEmptySubtitle =>
+      'Tap the heart on any destination to save it here.';
 
   @override
   String get itinerariesFormMissing =>

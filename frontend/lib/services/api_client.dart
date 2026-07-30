@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
 import 'package:trip_io/models/models.dart';
 
 class ApiClient {
@@ -79,11 +80,47 @@ class ApiClient {
     return _extractToken(response);
   }
 
+  Future<String> googleAuth(String idToken) async {
+    final response = await _client.post(
+      _uri('/auth/google'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'id_token': idToken}),
+    );
+    return _extractToken(response);
+  }
+
   Future<UserProfile> getProfile(String token) async {
     final response = await _client.get(
       _uri('/me'),
       headers: {'Authorization': 'Bearer $token'},
     );
+    _throwIfNotOk(response);
+    return UserProfile.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
+  }
+
+  // The backend keys off the multipart part's actual Content-Type header
+  // (not the filename) to decide whether to accept the image, so this has
+  // to be inferred and set explicitly - MultipartFile.fromBytes defaults to
+  // application/octet-stream, which the backend would reject outright.
+  static MediaType _imageMediaType(String filename) {
+    final lower = filename.toLowerCase();
+    if (lower.endsWith('.png')) return MediaType('image', 'png');
+    if (lower.endsWith('.webp')) return MediaType('image', 'webp');
+    if (lower.endsWith('.gif')) return MediaType('image', 'gif');
+    return MediaType('image', 'jpeg');
+  }
+
+  Future<UserProfile> uploadAvatar(String token, List<int> bytes, String filename) async {
+    final request = http.MultipartRequest('POST', _uri('/me/avatar'))
+      ..headers['Authorization'] = 'Bearer $token'
+      ..files.add(http.MultipartFile.fromBytes(
+        'file',
+        bytes,
+        filename: filename,
+        contentType: _imageMediaType(filename),
+      ));
+    final streamed = await _client.send(request);
+    final response = await http.Response.fromStream(streamed);
     _throwIfNotOk(response);
     return UserProfile.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
   }
@@ -96,6 +133,34 @@ class ApiClient {
         'Authorization': 'Bearer $token',
       },
       body: jsonEncode({'interests': interests}),
+    );
+    _throwIfNotOk(response);
+    return UserProfile.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
+  }
+
+  Future<List<Destination>> getFavorites(String token) async {
+    final response = await _client.get(
+      _uri('/me/favorites'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+    _throwIfNotOk(response);
+    final decoded = jsonDecode(response.body) as List<dynamic>;
+    return decoded.map((e) => Destination.fromJson(e as Map<String, dynamic>)).toList();
+  }
+
+  Future<UserProfile> addFavorite(String token, String destinationId) async {
+    final response = await _client.post(
+      _uri('/me/favorites/$destinationId'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+    _throwIfNotOk(response);
+    return UserProfile.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
+  }
+
+  Future<UserProfile> removeFavorite(String token, String destinationId) async {
+    final response = await _client.delete(
+      _uri('/me/favorites/$destinationId'),
+      headers: {'Authorization': 'Bearer $token'},
     );
     _throwIfNotOk(response);
     return UserProfile.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
@@ -167,6 +232,51 @@ class ApiClient {
     return decoded
         .map((e) => Itinerary.fromJson(e as Map<String, dynamic>))
         .toList();
+  }
+
+  Future<List<Comment>> getComments(String token, String destinationId) async {
+    final response = await _client.get(
+      _uri('/destinations/$destinationId/comments'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+    _throwIfNotOk(response);
+    final decoded = jsonDecode(response.body) as List<dynamic>;
+    return decoded.map((e) => Comment.fromJson(e as Map<String, dynamic>)).toList();
+  }
+
+  Future<Comment> postComment(
+    String token,
+    String destinationId,
+    String text, {
+    String? parentId,
+  }) async {
+    final response = await _client.post(
+      _uri('/destinations/$destinationId/comments'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({
+        'text': text,
+        'parent_id': ?parentId,
+      }),
+    );
+    _throwIfNotOk(response);
+    return Comment.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
+  }
+
+  /// [direction] is "up", "down", or "none" (removes the vote).
+  Future<Comment> voteComment(String token, String commentId, String direction) async {
+    final response = await _client.post(
+      _uri('/comments/$commentId/vote'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({'direction': direction}),
+    );
+    _throwIfNotOk(response);
+    return Comment.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
   }
 
   Future<String> aiChat(String token, List<ChatMessage> messages) async {

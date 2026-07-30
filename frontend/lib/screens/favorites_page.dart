@@ -11,22 +11,22 @@ import 'package:trip_io/widgets/favorite_toggle_button.dart';
 import 'package:trip_io/widgets/feature_pill.dart';
 import 'package:trip_io/widgets/session_expired_card.dart';
 
-class RecommendationsPage extends StatefulWidget {
-  const RecommendationsPage({super.key, required this.session});
+class FavoritesPage extends StatefulWidget {
+  const FavoritesPage({super.key, required this.session});
 
   final SessionController session;
 
   @override
-  State<RecommendationsPage> createState() => _RecommendationsPageState();
+  State<FavoritesPage> createState() => _FavoritesPageState();
 }
 
-class _RecommendationsPageState extends State<RecommendationsPage> {
+class _FavoritesPageState extends State<FavoritesPage> {
   late Future<List<Destination>> _future;
 
   @override
   void initState() {
     super.initState();
-    _future = widget.session.recommendations();
+    _future = widget.session.favorites();
   }
 
   Widget _glassPanel({
@@ -52,11 +52,7 @@ class _RecommendationsPageState extends State<RecommendationsPage> {
     );
   }
 
-  Widget _buildThumbnail(
-    BuildContext context,
-    Destination item,
-    String heroTag,
-  ) {
+  Widget _buildThumbnail(BuildContext context, Destination item, String heroTag) {
     final imageUrl = ApiClient.resolveAssetUrl(item.imageUrl);
     return ClipRRect(
       borderRadius: BorderRadius.circular(14),
@@ -74,15 +70,11 @@ class _RecommendationsPageState extends State<RecommendationsPage> {
                     return const ColoredBox(
                       color: Colors.white10,
                       child: Center(
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white70,
-                        ),
+                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white70),
                       ),
                     );
                   },
-                  errorBuilder: (context, error, stackTrace) =>
-                      _fallbackThumb(context),
+                  errorBuilder: (context, error, stackTrace) => _fallbackThumb(context),
                 )
               : _fallbackThumb(context),
         ),
@@ -94,15 +86,10 @@ class _RecommendationsPageState extends State<RecommendationsPage> {
     return DecoratedBox(
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [
-            Theme.of(context).colorScheme.primary,
-            Theme.of(context).colorScheme.tertiary,
-          ],
+          colors: [Theme.of(context).colorScheme.primary, Theme.of(context).colorScheme.tertiary],
         ),
       ),
-      child: const Center(
-        child: Icon(Icons.star, color: Colors.white, size: 26),
-      ),
+      child: const Center(child: Icon(Icons.favorite, color: Colors.white, size: 26)),
     );
   }
 
@@ -137,11 +124,7 @@ class _RecommendationsPageState extends State<RecommendationsPage> {
                       Expanded(
                         child: Text(
                           item.name,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w700,
-                            fontSize: 15,
-                          ),
+                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 15),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -152,19 +135,12 @@ class _RecommendationsPageState extends State<RecommendationsPage> {
                   const SizedBox(height: 2),
                   Row(
                     children: [
-                      const Icon(
-                        Icons.location_on,
-                        size: 13,
-                        color: Colors.white70,
-                      ),
+                      const Icon(Icons.location_on, size: 13, color: Colors.white70),
                       const SizedBox(width: 3),
                       Expanded(
                         child: Text(
                           item.location ?? item.country,
-                          style: const TextStyle(
-                            color: Colors.white70,
-                            fontSize: 12,
-                          ),
+                          style: const TextStyle(color: Colors.white70, fontSize: 12),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -175,11 +151,7 @@ class _RecommendationsPageState extends State<RecommendationsPage> {
                     const SizedBox(height: 6),
                     Text(
                       item.description!,
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.85),
-                        fontSize: 12.5,
-                        height: 1.3,
-                      ),
+                      style: TextStyle(color: Colors.white.withValues(alpha: 0.85), fontSize: 12.5, height: 1.3),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -189,9 +161,7 @@ class _RecommendationsPageState extends State<RecommendationsPage> {
                     Wrap(
                       spacing: 6,
                       runSpacing: 6,
-                      children: item.tags
-                          .map((t) => FeaturePill(icon: Icons.sell, label: t))
-                          .toList(),
+                      children: item.tags.map((t) => FeaturePill(icon: Icons.sell, label: t)).toList(),
                     ),
                   ],
                 ],
@@ -219,17 +189,10 @@ class _RecommendationsPageState extends State<RecommendationsPage> {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   gradient: LinearGradient(
-                    colors: [
-                      Theme.of(context).colorScheme.primary,
-                      Theme.of(context).colorScheme.tertiary,
-                    ],
+                    colors: [Theme.of(context).colorScheme.primary, Theme.of(context).colorScheme.tertiary],
                   ),
                 ),
-                child: const Icon(
-                  Icons.auto_awesome,
-                  color: Colors.white,
-                  size: 20,
-                ),
+                child: const Icon(Icons.favorite, color: Colors.white, size: 20),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -237,17 +200,14 @@ class _RecommendationsPageState extends State<RecommendationsPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      l10n.recommendationsTitle,
+                      l10n.favoritesTitle,
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
                         color: Colors.white,
                         fontWeight: FontWeight.w800,
                       ),
                     ),
                     const SizedBox(height: 2),
-                    Text(
-                      l10n.recommendationsSubtitle,
-                      style: const TextStyle(color: Colors.white70),
-                    ),
+                    Text(l10n.favoritesSubtitle, style: const TextStyle(color: Colors.white70)),
                   ],
                 ),
               ),
@@ -268,17 +228,15 @@ class _RecommendationsPageState extends State<RecommendationsPage> {
                   return SessionExpiredCard(session: widget.session);
                 }
                 return ErrorStateCard(
-                  message: l10n.recommendationsErrorMessage(
-                    snapshot.error.toString(),
-                  ),
+                  message: l10n.favoritesErrorMessage(snapshot.error.toString()),
                 );
               }
               final items = snapshot.data ?? <Destination>[];
               if (items.isEmpty) {
                 return EmptyStateCard(
-                  icon: Icons.explore_off,
-                  title: l10n.recommendationsEmptyTitle,
-                  subtitle: l10n.recommendationsEmptySubtitle,
+                  icon: Icons.favorite_border,
+                  title: l10n.favoritesEmptyTitle,
+                  subtitle: l10n.favoritesEmptySubtitle,
                 );
               }
               return Column(

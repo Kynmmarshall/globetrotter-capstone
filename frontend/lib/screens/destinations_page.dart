@@ -8,6 +8,7 @@ import 'package:trip_io/screens/destination_detail_page.dart';
 import 'package:trip_io/services/analytics.dart';
 import 'package:trip_io/services/api_client.dart';
 import 'package:trip_io/services/session_controller.dart';
+import 'package:trip_io/widgets/favorite_toggle_button.dart';
 import 'package:trip_io/widgets/session_expired_card.dart';
 
 class DestinationsPage extends StatefulWidget {
@@ -184,23 +185,38 @@ class _DestinationsPageState extends State<DestinationsPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            AspectRatio(
-              aspectRatio: 4 / 3,
-              child: Hero(
-                tag: heroTag,
-                child: imageUrl != null
-                    ? _buildDestinationImage(imageUrl)
-                    : const ColoredBox(
-                        color: Colors.white10,
-                        child: Center(
-                          child: Icon(
-                            Icons.place,
-                            color: Colors.white38,
-                            size: 32,
+            Stack(
+              children: [
+                AspectRatio(
+                  aspectRatio: 4 / 3,
+                  child: Hero(
+                    tag: heroTag,
+                    child: imageUrl != null
+                        ? _buildDestinationImage(imageUrl)
+                        : const ColoredBox(
+                            color: Colors.white10,
+                            child: Center(
+                              child: Icon(
+                                Icons.place,
+                                color: Colors.white38,
+                                size: 32,
+                              ),
+                            ),
                           ),
-                        ),
-                      ),
-              ),
+                  ),
+                ),
+                Positioned(
+                  top: 8,
+                  right: 8,
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.35),
+                      shape: BoxShape.circle,
+                    ),
+                    child: FavoriteToggleButton(session: widget.session, destinationId: d.id),
+                  ),
+                ),
+              ],
             ),
             Padding(
               padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
