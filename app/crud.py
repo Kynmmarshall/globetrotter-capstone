@@ -1,5 +1,6 @@
 from .data import read_data, write_data
 from .auth import hash_password, verify_password
+from datetime import datetime, timezone
 import uuid
 
 def register_user(username: str, password: str, email: str | None = None, interests: list[str] | None = None):
@@ -105,6 +106,88 @@ def search_destinations(q: str = None):
         tags = [t or "" for t in d.get("tags", [])]
         return ql in name or any(ql in t.lower() for t in tags)
     return [d for d in dests if match(d)]
+
+def _comment_score(c: dict) -> int:
+    return len(c.get("upvotes", [])) - len(c.get("downvotes", []))
+
+def _serialize_comment(c: dict, viewer: str | None, replies: list[dict]) -> dict:
+    vote = None
+    if viewer:
+        if viewer in c.get("upvotes", []):
+            vote = "up"
+        elif viewer in c.get("downvotes", []):
+            vote = "down"
+    return {
+        "id": c["id"],
+        "destination_id": c["destination_id"],
+        "parent_id": c.get("parent_id"),
+        "username": c["username"],
+        "text": c["text"],
+        "created_at": c["created_at"],
+        "score": _comment_score(c),
+        "user_vote": vote,
+        "replies": replies,
+    }
+
+def create_comment(destination_id: str, username: str, text: str, parent_id: str | None = None):
+    data = read_data()
+    if parent_id is not None:
+        parent = next(
+            (c for c in data.get("comments", []) if c["id"] == parent_id and c.get("destination_id") == destination_id),
+            None,
+        )
+        if not parent:
+            return None
+    comment = {
+        "id": str(uuid.uuid4()),
+        "destination_id": destination_id,
+        "parent_id": parent_id,
+        "username": username,
+        "text": text,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "upvotes": [],
+        "downvotes": [],
+    }
+    data.setdefault("comments", []).append(comment)
+    write_data(data)
+    return _serialize_comment(comment, username, [])
+
+def vote_comment(comment_id: str, username: str, direction: str):
+    data = read_data()
+    for c in data.get("comments", []):
+        if c["id"] == comment_id:
+            upvotes = set(c.get("upvotes", []))
+            downvotes = set(c.get("downvotes", []))
+            upvotes.discard(username)
+            downvotes.discard(username)
+            if direction == "up":
+                upvotes.add(username)
+            elif direction == "down":
+                downvotes.add(username)
+            c["upvotes"] = list(upvotes)
+            c["downvotes"] = list(downvotes)
+            write_data(data)
+            return _serialize_comment(c, username, [])
+    return None
+
+def get_comments_for_destination(destination_id: str, viewer: str | None = None) -> list[dict]:
+    data = read_data()
+    all_comments = [c for c in data.get("comments", []) if c.get("destination_id") == destination_id]
+    by_parent: dict[str | None, list[dict]] = {}
+    for c in all_comments:
+        by_parent.setdefault(c.get("parent_id"), []).append(c)
+
+    def build(parent_id: str | None) -> list[dict]:
+        nodes = by_parent.get(parent_id, [])
+        if parent_id is None:
+            # Top-level: highest score first, newest breaking ties.
+            nodes = sorted(nodes, key=lambda c: (_comment_score(c), c["created_at"]), reverse=True)
+        else:
+            # Replies read top-to-bottom as a conversation, oldest first.
+            nodes = sorted(nodes, key=lambda c: c["created_at"])
+        return [_serialize_comment(c, viewer, build(c["id"])) for c in nodes]
+
+    return build(None)
 
 def recommendations_for(user: str):
     data = read_data()

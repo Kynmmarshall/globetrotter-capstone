@@ -16,6 +16,9 @@ from .schemas import (
     GoogleAuthRequest,
     ChatRequest,
     ChatResponse,
+    Comment,
+    CommentCreate,
+    VoteRequest,
 )
 from .auth import create_access_token, get_current_user
 
@@ -135,6 +138,41 @@ async def upload_avatar(file: UploadFile = File(...), user: str = Depends(get_cu
 @app.get("/destinations", response_model=list[Destination])
 def destinations(q: str = None):
     return crud.search_destinations(q)
+
+
+_COMMENT_MAX_CHARS = 2000
+
+
+@app.get("/destinations/{destination_id}/comments", response_model=list[Comment])
+def get_comments(destination_id: str, user: str = Depends(get_current_user)):
+    if not crud.get_destination(destination_id):
+        raise HTTPException(status_code=404, detail="Destination not found")
+    return crud.get_comments_for_destination(destination_id, viewer=user)
+
+
+@app.post("/destinations/{destination_id}/comments", response_model=Comment)
+def post_comment(destination_id: str, payload: CommentCreate, user: str = Depends(get_current_user)):
+    if not crud.get_destination(destination_id):
+        raise HTTPException(status_code=404, detail="Destination not found")
+    text = payload.text.strip()
+    if not text:
+        raise HTTPException(status_code=400, detail="Comment text is required")
+    if len(text) > _COMMENT_MAX_CHARS:
+        raise HTTPException(status_code=400, detail=f"Comment must be under {_COMMENT_MAX_CHARS} characters")
+    comment = crud.create_comment(destination_id, user, text, payload.parent_id)
+    if comment is None:
+        raise HTTPException(status_code=400, detail="Parent comment not found")
+    return comment
+
+
+@app.post("/comments/{comment_id}/vote", response_model=Comment)
+def vote_comment(comment_id: str, payload: VoteRequest, user: str = Depends(get_current_user)):
+    if payload.direction not in ("up", "down", "none"):
+        raise HTTPException(status_code=400, detail="direction must be 'up', 'down' or 'none'")
+    comment = crud.vote_comment(comment_id, user, payload.direction)
+    if comment is None:
+        raise HTTPException(status_code=404, detail="Comment not found")
+    return comment
 
 
 @app.get("/recommendations", response_model=list[Destination])

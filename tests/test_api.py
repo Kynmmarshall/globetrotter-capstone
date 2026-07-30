@@ -232,3 +232,115 @@ async def test_avatar_upload_rejects_bad_type(tmp_path, monkeypatch):
         )
         assert r2.status_code == 400
         assert not list(avatars_dir.iterdir())
+
+
+def _comments_fixture(tmp_path):
+    import json
+    data_file = tmp_path / "data.json"
+    data_file.write_text(json.dumps({
+        "users": [],
+        "itineraries": [],
+        "destinations": [{"id": "d1", "name": "Test Spot", "country": "Cameroon", "tags": []}],
+    }))
+    import os
+    os.environ["GLOBETROTTER_DATA_PATH"] = str(data_file)
+
+
+@pytest.mark.asyncio
+async def test_comments_missing_destination_404(tmp_path):
+    _comments_fixture(tmp_path)
+    async with AsyncClient(app=app, base_url="http://test") as ac:
+        r = await ac.post("/register", json={"username": "alice", "password": "secret"})
+        headers = {"Authorization": f"Bearer {r.json()['access_token']}"}
+        r2 = await ac.get("/destinations/does-not-exist/comments", headers=headers)
+        assert r2.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_post_comment_reply_and_nesting(tmp_path):
+    _comments_fixture(tmp_path)
+    async with AsyncClient(app=app, base_url="http://test") as ac:
+        r = await ac.post("/register", json={"username": "alice", "password": "secret"})
+        headers_a = {"Authorization": f"Bearer {r.json()['access_token']}"}
+        r = await ac.post("/register", json={"username": "bob", "password": "secret"})
+        headers_b = {"Authorization": f"Bearer {r.json()['access_token']}"}
+
+        # empty text rejected
+        r_empty = await ac.post("/destinations/d1/comments", json={"text": "   "}, headers=headers_a)
+        assert r_empty.status_code == 400
+
+        r1 = await ac.post("/destinations/d1/comments", json={"text": "Great spot!"}, headers=headers_a)
+        assert r1.status_code == 200
+        top = r1.json()
+        assert top["username"] == "alice"
+        assert top["score"] == 0
+        assert top["replies"] == []
+
+        r2 = await ac.post(
+            "/destinations/d1/comments",
+            json={"text": "Agreed!", "parent_id": top["id"]},
+            headers=headers_b,
+        )
+        assert r2.status_code == 200
+        reply = r2.json()
+        assert reply["parent_id"] == top["id"]
+
+        r3 = await ac.post(
+            "/destinations/d1/comments",
+            json={"text": "Nested reply", "parent_id": reply["id"]},
+            headers=headers_a,
+        )
+        assert r3.status_code == 200
+
+        # a reply to a nonexistent comment 400s
+        r4 = await ac.post(
+            "/destinations/d1/comments",
+            json={"text": "orphan", "parent_id": "does-not-exist"},
+            headers=headers_a,
+        )
+        assert r4.status_code == 400
+
+        listed = await ac.get("/destinations/d1/comments", headers=headers_a)
+        tree = listed.json()
+        assert len(tree) == 1
+        assert tree[0]["text"] == "Great spot!"
+        assert len(tree[0]["replies"]) == 1
+        assert tree[0]["replies"][0]["text"] == "Agreed!"
+        assert len(tree[0]["replies"][0]["replies"]) == 1
+        assert tree[0]["replies"][0]["replies"][0]["text"] == "Nested reply"
+
+
+@pytest.mark.asyncio
+async def test_vote_comment_toggle_and_score(tmp_path):
+    _comments_fixture(tmp_path)
+    async with AsyncClient(app=app, base_url="http://test") as ac:
+        r = await ac.post("/register", json={"username": "alice", "password": "secret"})
+        headers_a = {"Authorization": f"Bearer {r.json()['access_token']}"}
+        r = await ac.post("/register", json={"username": "bob", "password": "secret"})
+        headers_b = {"Authorization": f"Bearer {r.json()['access_token']}"}
+
+        r1 = await ac.post("/destinations/d1/comments", json={"text": "Great spot!"}, headers=headers_a)
+        comment_id = r1.json()["id"]
+
+        rv = await ac.post(f"/comments/{comment_id}/vote", json={"direction": "up"}, headers=headers_a)
+        assert rv.status_code == 200
+        assert rv.json()["score"] == 1
+        assert rv.json()["user_vote"] == "up"
+
+        rv2 = await ac.post(f"/comments/{comment_id}/vote", json={"direction": "down"}, headers=headers_b)
+        assert rv2.json()["score"] == 0
+
+        # bob viewing shows his own vote as "down", not alice's "up"
+        listed = await ac.get("/destinations/d1/comments", headers=headers_b)
+        assert listed.json()[0]["user_vote"] == "down"
+        assert listed.json()[0]["score"] == 0
+
+        # alice removing her vote
+        rv3 = await ac.post(f"/comments/{comment_id}/vote", json={"direction": "none"}, headers=headers_a)
+        assert rv3.json()["score"] == -1
+
+        rv_bad = await ac.post(f"/comments/{comment_id}/vote", json={"direction": "sideways"}, headers=headers_a)
+        assert rv_bad.status_code == 400
+
+        rv_missing = await ac.post("/comments/does-not-exist/vote", json={"direction": "up"}, headers=headers_a)
+        assert rv_missing.status_code == 404
