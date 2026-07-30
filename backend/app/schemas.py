@@ -15,6 +15,8 @@ class UserProfile(BaseModel):
     username: str
     email: Optional[str] = None
     interests: Optional[List[str]] = []
+    avatar_url: Optional[str] = None
+    favorite_ids: Optional[List[str]] = []
 
 class InterestsUpdate(BaseModel):
     interests: List[str]
@@ -60,6 +62,9 @@ class ItineraryCreate(BaseModel):
     start_date: Optional[str] = None
     end_date: Optional[str] = None
 
+class GoogleAuthRequest(BaseModel):
+    id_token: str
+
 class ChatMessage(BaseModel):
     role: str  # "user" | "assistant"
     content: str
@@ -69,3 +74,25 @@ class ChatRequest(BaseModel):
 
 class ChatResponse(BaseModel):
     reply: str
+
+class CommentCreate(BaseModel):
+    text: str
+    parent_id: Optional[str] = None
+
+class VoteRequest(BaseModel):
+    direction: str  # "up" | "down" | "none"
+
+class Comment(BaseModel):
+    id: str
+    destination_id: str
+    parent_id: Optional[str] = None
+    username: str
+    text: str
+    created_at: str
+    score: int
+    # The requesting viewer's own vote on this comment - "up", "down", or
+    # null. Computed per-request, not stored verbatim on the comment.
+    user_vote: Optional[str] = None
+    replies: List["Comment"] = []
+
+Comment.model_rebuild()
