@@ -188,3 +188,64 @@ class Itinerary {
     );
   }
 }
+
+/// A comment (or reply, via [parentId]) on a destination. [replies] nests
+/// arbitrarily deep, matching the backend's unlimited-depth thread tree.
+class Comment {
+  Comment({
+    required this.id,
+    required this.destinationId,
+    this.parentId,
+    required this.username,
+    required this.text,
+    required this.createdAt,
+    required this.score,
+    this.userVote,
+    this.replies = const [],
+  });
+
+  final String id;
+  final String destinationId;
+  final String? parentId;
+  final String username;
+  final String text;
+  final DateTime? createdAt;
+  final int score;
+  final String? userVote; // "up" | "down" | null
+
+  /// Mutable so the UI can splice in an updated node (new score/vote, a
+  /// freshly posted reply) without refetching and rebuilding the whole tree.
+  List<Comment> replies;
+
+  factory Comment.fromJson(Map<String, dynamic> json) {
+    return Comment(
+      id: (json['id'] ?? '').toString(),
+      destinationId: (json['destination_id'] ?? '').toString(),
+      parentId: json['parent_id']?.toString(),
+      username: (json['username'] ?? '').toString(),
+      text: (json['text'] ?? '').toString(),
+      createdAt: DateTime.tryParse((json['created_at'] ?? '').toString()),
+      score: (json['score'] as num?)?.toInt() ?? 0,
+      userVote: json['user_vote']?.toString(),
+      replies: (json['replies'] as List<dynamic>? ?? <dynamic>[])
+          .map((e) => Comment.fromJson(e as Map<String, dynamic>))
+          .toList(),
+    );
+  }
+
+  /// Returns a copy of this comment with vote fields replaced - used after
+  /// voting, to update just the affected node in-place in a local tree.
+  Comment withVote({required int score, required String? userVote}) {
+    return Comment(
+      id: id,
+      destinationId: destinationId,
+      parentId: parentId,
+      username: username,
+      text: text,
+      createdAt: createdAt,
+      score: score,
+      userVote: userVote,
+      replies: replies,
+    );
+  }
+}

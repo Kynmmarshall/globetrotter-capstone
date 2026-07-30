@@ -362,6 +362,42 @@ abstract class AppLocalizations {
   /// **'Couldn\'t get an explanation right now.'**
   String get aiExplainError;
 
+  /// No description provided for @commentsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Comments'**
+  String get commentsTitle;
+
+  /// No description provided for @commentsInputHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a comment…'**
+  String get commentsInputHint;
+
+  /// No description provided for @commentsPostButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Post'**
+  String get commentsPostButton;
+
+  /// No description provided for @commentsReplyButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Reply'**
+  String get commentsReplyButton;
+
+  /// No description provided for @commentsEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No comments yet — be the first to share your thoughts.'**
+  String get commentsEmpty;
+
+  /// No description provided for @commentsLoadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t load comments.\n{error}'**
+  String commentsLoadError(String error);
+
   /// No description provided for @destinationsTitle.
   ///
   /// In en, this message translates to:

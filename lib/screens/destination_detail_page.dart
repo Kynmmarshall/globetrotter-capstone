@@ -5,6 +5,7 @@ import 'package:trip_io/l10n/gen/app_localizations.dart';
 import 'package:trip_io/models/models.dart';
 import 'package:trip_io/services/api_client.dart';
 import 'package:trip_io/services/session_controller.dart';
+import 'package:trip_io/widgets/comments_section.dart';
 
 class DestinationDetailPage extends StatefulWidget {
   const DestinationDetailPage({
@@ -500,6 +501,8 @@ class _DestinationDetailPageState extends State<DestinationDetailPage> {
                               const SizedBox(height: 12),
                               ...destination.nearby.map((place) => _buildNearbyCard(context, place)),
                             ],
+                            const SizedBox(height: 22),
+                            CommentsSection(session: widget.session, destinationId: destination.id),
                           ],
                         ),
                       ),

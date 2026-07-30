@@ -156,6 +156,27 @@ class AppLocalizationsFr extends AppLocalizations {
       'Impossible d\'obtenir une explication pour le moment.';
 
   @override
+  String get commentsTitle => 'Commentaires';
+
+  @override
+  String get commentsInputHint => 'Ajouter un commentaire…';
+
+  @override
+  String get commentsPostButton => 'Publier';
+
+  @override
+  String get commentsReplyButton => 'Répondre';
+
+  @override
+  String get commentsEmpty =>
+      'Aucun commentaire pour l\'instant — soyez le premier à partager votre avis.';
+
+  @override
+  String commentsLoadError(String error) {
+    return 'Impossible de charger les commentaires.\n$error';
+  }
+
+  @override
   String get destinationsTitle => 'Destinations à Yaoundé';
 
   @override

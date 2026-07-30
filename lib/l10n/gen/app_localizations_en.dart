@@ -151,6 +151,27 @@ class AppLocalizationsEn extends AppLocalizations {
   String get aiExplainError => 'Couldn\'t get an explanation right now.';
 
   @override
+  String get commentsTitle => 'Comments';
+
+  @override
+  String get commentsInputHint => 'Add a comment…';
+
+  @override
+  String get commentsPostButton => 'Post';
+
+  @override
+  String get commentsReplyButton => 'Reply';
+
+  @override
+  String get commentsEmpty =>
+      'No comments yet — be the first to share your thoughts.';
+
+  @override
+  String commentsLoadError(String error) {
+    return 'Couldn\'t load comments.\n$error';
+  }
+
+  @override
   String get destinationsTitle => 'Yaoundé Destinations';
 
   @override

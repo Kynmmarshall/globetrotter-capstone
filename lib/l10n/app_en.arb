@@ -53,6 +53,16 @@
   "aiExplainTitle": "AI explanation",
   "aiExplainError": "Couldn't get an explanation right now.",
 
+  "commentsTitle": "Comments",
+  "commentsInputHint": "Add a comment…",
+  "commentsPostButton": "Post",
+  "commentsReplyButton": "Reply",
+  "commentsEmpty": "No comments yet — be the first to share your thoughts.",
+  "commentsLoadError": "Couldn't load comments.\n{error}",
+  "@commentsLoadError": {
+    "placeholders": { "error": { "type": "String" } }
+  },
+
   "destinationsTitle": "Yaoundé Destinations",
   "destinationsSubtitle": "Search Cameroon's capital for landmarks, culture and nature spots.",
   "destinationsSearchHint": "Search destinations by name or tag",

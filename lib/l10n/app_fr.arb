@@ -49,6 +49,13 @@
   "aiExplainTitle": "Explication de l'IA",
   "aiExplainError": "Impossible d'obtenir une explication pour le moment.",
 
+  "commentsTitle": "Commentaires",
+  "commentsInputHint": "Ajouter un commentaire…",
+  "commentsPostButton": "Publier",
+  "commentsReplyButton": "Répondre",
+  "commentsEmpty": "Aucun commentaire pour l'instant — soyez le premier à partager votre avis.",
+  "commentsLoadError": "Impossible de charger les commentaires.\n{error}",
+
   "destinationsTitle": "Destinations à Yaoundé",
   "destinationsSubtitle": "Explorez les monuments, la culture et la nature de la capitale du Cameroun.",
   "destinationsSearchHint": "Rechercher une destination par nom ou mot-clé",

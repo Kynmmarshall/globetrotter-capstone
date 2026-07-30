@@ -206,6 +206,51 @@ class ApiClient {
         .toList();
   }
 
+  Future<List<Comment>> getComments(String token, String destinationId) async {
+    final response = await _client.get(
+      _uri('/destinations/$destinationId/comments'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+    _throwIfNotOk(response);
+    final decoded = jsonDecode(response.body) as List<dynamic>;
+    return decoded.map((e) => Comment.fromJson(e as Map<String, dynamic>)).toList();
+  }
+
+  Future<Comment> postComment(
+    String token,
+    String destinationId,
+    String text, {
+    String? parentId,
+  }) async {
+    final response = await _client.post(
+      _uri('/destinations/$destinationId/comments'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({
+        'text': text,
+        'parent_id': ?parentId,
+      }),
+    );
+    _throwIfNotOk(response);
+    return Comment.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
+  }
+
+  /// [direction] is "up", "down", or "none" (removes the vote).
+  Future<Comment> voteComment(String token, String commentId, String direction) async {
+    final response = await _client.post(
+      _uri('/comments/$commentId/vote'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({'direction': direction}),
+    );
+    _throwIfNotOk(response);
+    return Comment.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
+  }
+
   Future<String> aiChat(String token, List<ChatMessage> messages) async {
     final response = await _client.post(
       _uri('/ai/chat'),

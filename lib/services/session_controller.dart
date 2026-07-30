@@ -270,6 +270,25 @@ class SessionController extends ChangeNotifier {
     return reply;
   }
 
+  Future<List<Comment>> comments(String destinationId) async {
+    final token = _requireToken();
+    return ApiClient().getComments(token, destinationId);
+  }
+
+  Future<Comment> postComment(String destinationId, String text, {String? parentId}) async {
+    final token = _requireToken();
+    final comment = await ApiClient().postComment(token, destinationId, text, parentId: parentId);
+    Analytics.instance.trackEvent('comment', parentId == null ? 'posted' : 'replied', name: destinationId);
+    return comment;
+  }
+
+  Future<Comment> voteComment(String commentId, String direction) async {
+    final token = _requireToken();
+    final comment = await ApiClient().voteComment(token, commentId, direction);
+    Analytics.instance.trackEvent('comment', 'voted_$direction');
+    return comment;
+  }
+
   Future<void> _saveAuth(
     String token,
     String username, {
