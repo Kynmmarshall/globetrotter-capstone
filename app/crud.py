@@ -77,6 +77,37 @@ def update_user_avatar(username: str, avatar_url: str):
             return u
     return None
 
+def add_favorite(username: str, destination_id: str):
+    data = read_data()
+    for u in data.get("users", []):
+        if u["username"] == username:
+            favs = u.setdefault("favorite_ids", [])
+            if destination_id not in favs:
+                # Newest-first, so the Favorites tab shows what was just
+                # saved at the top rather than buried at the bottom.
+                favs.insert(0, destination_id)
+            write_data(data)
+            return u
+    return None
+
+def remove_favorite(username: str, destination_id: str):
+    data = read_data()
+    for u in data.get("users", []):
+        if u["username"] == username:
+            favs = u.setdefault("favorite_ids", [])
+            if destination_id in favs:
+                favs.remove(destination_id)
+            write_data(data)
+            return u
+    return None
+
+def get_favorites_for(username: str):
+    data = read_data()
+    profile = get_user(username)
+    fav_ids = (profile or {}).get("favorite_ids") or []
+    dests_by_id = {d["id"]: d for d in data.get("destinations", [])}
+    return [dests_by_id[i] for i in fav_ids if i in dests_by_id]
+
 def create_itinerary(itin: dict):
     data = read_data()
     itin["id"] = str(uuid.uuid4())

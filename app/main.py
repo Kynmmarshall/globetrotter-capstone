@@ -135,6 +135,29 @@ async def upload_avatar(file: UploadFile = File(...), user: str = Depends(get_cu
     return updated
 
 
+@app.get("/me/favorites", response_model=list[Destination])
+def get_favorites(user: str = Depends(get_current_user)):
+    return crud.get_favorites_for(user)
+
+
+@app.post("/me/favorites/{destination_id}", response_model=UserProfile)
+def add_favorite(destination_id: str, user: str = Depends(get_current_user)):
+    if not crud.get_destination(destination_id):
+        raise HTTPException(status_code=404, detail="Destination not found")
+    profile = crud.add_favorite(user, destination_id)
+    if not profile:
+        raise HTTPException(status_code=404, detail="User not found")
+    return profile
+
+
+@app.delete("/me/favorites/{destination_id}", response_model=UserProfile)
+def remove_favorite(destination_id: str, user: str = Depends(get_current_user)):
+    profile = crud.remove_favorite(user, destination_id)
+    if not profile:
+        raise HTTPException(status_code=404, detail="User not found")
+    return profile
+
+
 @app.get("/destinations", response_model=list[Destination])
 def destinations(q: str = None):
     return crud.search_destinations(q)

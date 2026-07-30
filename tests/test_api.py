@@ -344,3 +344,51 @@ async def test_vote_comment_toggle_and_score(tmp_path):
 
         rv_missing = await ac.post("/comments/does-not-exist/vote", json={"direction": "up"}, headers=headers_a)
         assert rv_missing.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_favorites_add_remove_list(tmp_path):
+    import json
+    data_file = tmp_path / "data.json"
+    data_file.write_text(json.dumps({
+        "users": [],
+        "itineraries": [],
+        "destinations": [
+            {"id": "d1", "name": "Spot One", "country": "Cameroon", "tags": []},
+            {"id": "d2", "name": "Spot Two", "country": "Cameroon", "tags": []},
+        ],
+    }))
+    import os
+    os.environ["GLOBETROTTER_DATA_PATH"] = str(data_file)
+
+    async with AsyncClient(app=app, base_url="http://test") as ac:
+        r = await ac.post("/register", json={"username": "alice", "password": "secret"})
+        headers = {"Authorization": f"Bearer {r.json()['access_token']}"}
+
+        # unknown destination 404s
+        r0 = await ac.post("/me/favorites/does-not-exist", headers=headers)
+        assert r0.status_code == 404
+
+        r1 = await ac.post("/me/favorites/d1", headers=headers)
+        assert r1.status_code == 200
+        assert r1.json()["favorite_ids"] == ["d1"]
+
+        # adding twice is idempotent, not duplicated
+        r1b = await ac.post("/me/favorites/d1", headers=headers)
+        assert r1b.json()["favorite_ids"] == ["d1"]
+
+        r2 = await ac.post("/me/favorites/d2", headers=headers)
+        # most-recently-favorited first
+        assert r2.json()["favorite_ids"] == ["d2", "d1"]
+
+        listed = await ac.get("/me/favorites", headers=headers)
+        assert listed.status_code == 200
+        assert [d["id"] for d in listed.json()] == ["d2", "d1"]
+
+        r3 = await ac.delete("/me/favorites/d2", headers=headers)
+        assert r3.status_code == 200
+        assert r3.json()["favorite_ids"] == ["d1"]
+
+        # /me reflects the same favorite_ids
+        me = await ac.get("/me", headers=headers)
+        assert me.json()["favorite_ids"] == ["d1"]
