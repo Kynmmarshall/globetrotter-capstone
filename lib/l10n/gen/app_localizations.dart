@@ -242,6 +242,12 @@ abstract class AppLocalizations {
   /// **'Already have an account? Login'**
   String get authToggleToLogin;
 
+  /// No description provided for @authOrDivider.
+  ///
+  /// In en, this message translates to:
+  /// **'or'**
+  String get authOrDivider;
+
   /// No description provided for @authTaglineTitle.
   ///
   /// In en, this message translates to:

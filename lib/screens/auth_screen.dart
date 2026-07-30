@@ -1,10 +1,21 @@
+import 'dart:async';
 import 'dart:ui';
 
+import 'package:flutter/foundation.dart' show kIsWeb, defaultTargetPlatform;
 import 'package:flutter/material.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:trip_io/l10n/gen/app_localizations.dart';
 import 'package:trip_io/models/interest_tags.dart';
 import 'package:trip_io/services/session_controller.dart';
 import 'package:trip_io/widgets/feature_pill.dart';
+import 'package:trip_io/widgets/google_signin_button.dart';
+
+// Set at build time with:
+//   --dart-define=GOOGLE_WEB_CLIENT_ID=your-client-id.apps.googleusercontent.com
+// The same client ID is used for both web (as `clientId`) and Android (as
+// `serverClientId`) so every platform's idToken shares one `aud`, matching
+// the single GOOGLE_OAUTH_CLIENT_ID the backend validates against.
+const _googleClientId = String.fromEnvironment('GOOGLE_WEB_CLIENT_ID', defaultValue: '');
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key, required this.session});
@@ -26,6 +37,11 @@ class _AuthScreenState extends State<AuthScreen> {
   bool _showConfirmPassword = false;
   final Set<String> _selectedInterests = {};
 
+  GoogleSignIn? _googleSignIn;
+  StreamSubscription<GoogleSignInAccount?>? _googleSub;
+  bool _googleBusy = false;
+  String? _googleError;
+
   // Breakpoints: a phone gets the tall portrait background + a bottom
   // sheet-style card; tablets and desktop/web get the wide landscape
   // background. Desktop/web additionally get a two-column layout with
@@ -33,13 +49,58 @@ class _AuthScreenState extends State<AuthScreen> {
   static const double _tabletBreakpoint = 700;
   static const double _desktopBreakpoint = 1080;
 
+  // google_sign_in has no Windows implementation - same constraint as
+  // google_maps_flutter. Windows keeps username/password only. Also
+  // requires a client ID to be configured at build time; without one,
+  // there's nothing to sign in against, so the button stays hidden.
+  bool get _supportsGoogleSignIn =>
+      _googleClientId.isNotEmpty &&
+      (kIsWeb || defaultTargetPlatform == TargetPlatform.android);
+
+  @override
+  void initState() {
+    super.initState();
+    if (_supportsGoogleSignIn) {
+      final signIn = GoogleSignIn(
+        scopes: const ['email'],
+        clientId: kIsWeb ? _googleClientId : null,
+        serverClientId: kIsWeb ? null : _googleClientId,
+      );
+      _googleSignIn = signIn;
+      _googleSub = signIn.onCurrentUserChanged.listen(_onGoogleAccount);
+    }
+  }
+
   @override
   void dispose() {
     _emailController.dispose();
     _usernameController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
+    _googleSub?.cancel();
     super.dispose();
+  }
+
+  Future<void> _onGoogleAccount(GoogleSignInAccount? account) async {
+    if (account == null || _googleBusy) return;
+    setState(() {
+      _googleBusy = true;
+      _googleError = null;
+    });
+    try {
+      final auth = await account.authentication;
+      final idToken = auth.idToken;
+      if (idToken == null) {
+        throw Exception('Google did not return an ID token.');
+      }
+      await widget.session.loginWithGoogle(idToken);
+    } catch (e) {
+      if (mounted) {
+        setState(() => _googleError = e.toString().replaceFirst('Exception: ', ''));
+      }
+    } finally {
+      if (mounted) setState(() => _googleBusy = false);
+    }
   }
 
   Future<void> _submit() async {
@@ -268,6 +329,43 @@ class _AuthScreenState extends State<AuthScreen> {
             onPressed: widget.session.isLoading ? null : _toggleMode,
             child: Text(_loginMode ? l10n.authToggleToRegister : l10n.authToggleToLogin),
           ),
+          if (_supportsGoogleSignIn) ...[
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(child: Divider(color: colorScheme.outlineVariant)),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                  child: Text(
+                    l10n.authOrDivider,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
+                  ),
+                ),
+                Expanded(child: Divider(color: colorScheme.outlineVariant)),
+              ],
+            ),
+            const SizedBox(height: 14),
+            if (_googleError != null) ...[
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: colorScheme.errorContainer,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(_googleError!, style: TextStyle(color: colorScheme.onErrorContainer)),
+              ),
+              const SizedBox(height: 10),
+            ],
+            if (_googleBusy)
+              const Center(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(vertical: 8),
+                  child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)),
+                ),
+              )
+            else if (_googleSignIn != null)
+              buildGoogleSignInButton(_googleSignIn!),
+          ],
         ],
       ),
     );

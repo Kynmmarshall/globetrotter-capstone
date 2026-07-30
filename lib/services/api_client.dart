@@ -79,6 +79,15 @@ class ApiClient {
     return _extractToken(response);
   }
 
+  Future<String> googleAuth(String idToken) async {
+    final response = await _client.post(
+      _uri('/auth/google'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'id_token': idToken}),
+    );
+    return _extractToken(response);
+  }
+
   Future<UserProfile> getProfile(String token) async {
     final response = await _client.get(
       _uri('/me'),

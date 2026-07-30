@@ -27,6 +27,7 @@
   "authCreateAccountButton": "Create account",
   "authToggleToRegister": "No account? Register",
   "authToggleToLogin": "Already have an account? Login",
+  "authOrDivider": "or",
   "authTaglineTitle": "Plan faster. Travel smarter.",
   "authTaglineSubtitle": "Search destinations, create itineraries, and keep your account synced across mobile, web, and Windows.",
   "authFeatureMobile": "Mobile ready",

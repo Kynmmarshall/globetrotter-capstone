@@ -110,6 +110,18 @@ class SessionController extends ChangeNotifier {
     });
   }
 
+  Future<void> loginWithGoogle(String idToken) async {
+    await _runGuarded(() async {
+      final token = await ApiClient().googleAuth(idToken);
+      // The backend assigns the username for Google accounts (derived from
+      // the Google email/name), so unlike register()/login() we don't know
+      // it up front - fetch the profile it just created/matched instead.
+      final profile = await ApiClient().getProfile(token);
+      await _saveAuth(token, profile.username, email: profile.email);
+      await _applyProfile(profile);
+    });
+  }
+
   Future<void> logout() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_tokenKey);

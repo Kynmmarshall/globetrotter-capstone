@@ -87,6 +87,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get authToggleToLogin => 'Déjà un compte ? Connectez-vous';
 
   @override
+  String get authOrDivider => 'ou';
+
+  @override
   String get authTaglineTitle =>
       'Planifiez plus vite. Voyagez plus intelligemment.';
 

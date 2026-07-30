@@ -26,6 +26,7 @@
   "authCreateAccountButton": "Créer un compte",
   "authToggleToRegister": "Pas de compte ? Inscrivez-vous",
   "authToggleToLogin": "Déjà un compte ? Connectez-vous",
+  "authOrDivider": "ou",
   "authTaglineTitle": "Planifiez plus vite. Voyagez plus intelligemment.",
   "authTaglineSubtitle": "Recherchez des destinations, créez des itinéraires et gardez votre compte synchronisé sur mobile, web et Windows.",
   "authFeatureMobile": "Compatible mobile",
