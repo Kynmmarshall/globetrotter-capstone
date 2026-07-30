@@ -89,6 +89,50 @@ async def test_ai_chat_and_explain(tmp_path, monkeypatch):
         assert r3.status_code == 200
         assert r3.json()["reply"]
 
+
+@pytest.mark.asyncio
+async def test_ai_explain_is_cached(tmp_path, monkeypatch):
+    data_file = tmp_path / "data.json"
+    data_file.write_text(
+        '{"users": [], "itineraries": [], "destinations": '
+        '[{"id": "d1", "name": "Monument de la R\\u00e9union", "country": "Cameroon", '
+        '"tags": ["history"], "location": "Yaound\\u00e9"}]}'
+    )
+    import os
+    os.environ["GLOBETROTTER_DATA_PATH"] = str(data_file)
+    monkeypatch.setattr(ai, "GROQ_API_KEY", "fake-key")
+
+    call_count = 0
+
+    async def fake_explain(destination):
+        nonlocal call_count
+        call_count += 1
+        return f"Explanation number {call_count}"
+
+    monkeypatch.setattr(ai, "explain_destination", fake_explain)
+
+    async with AsyncClient(app=app, base_url="http://test") as ac:
+        r = await ac.post("/register", json={"username": "dave", "password": "secret"})
+        headers = {"Authorization": f"Bearer {r.json()['access_token']}"}
+
+        r1 = await ac.post("/ai/explain/d1", headers=headers)
+        assert r1.status_code == 200
+        assert r1.json()["reply"] == "Explanation number 1"
+
+        # Second call (even from a different user) must reuse the cached
+        # explanation rather than hitting Groq again.
+        r_bob = await ac.post("/register", json={"username": "bob2", "password": "secret"})
+        headers_bob = {"Authorization": f"Bearer {r_bob.json()['access_token']}"}
+        r2 = await ac.post("/ai/explain/d1", headers=headers_bob)
+        assert r2.status_code == 200
+        assert r2.json()["reply"] == "Explanation number 1"
+        assert call_count == 1
+
+        # The cache is actually persisted on the destination record.
+        import json
+        data = json.loads(data_file.read_text())
+        assert data["destinations"][0]["ai_explanation"] == "Explanation number 1"
+
         r4 = await ac.post("/ai/explain/does-not-exist", headers=headers)
         assert r4.status_code == 404
 

@@ -126,6 +126,19 @@ def get_destination(destination_id: str):
             return d
     return None
 
+def set_destination_ai_explanation(destination_id: str, text: str):
+    # Explanations are generated from a destination's own (static) fields,
+    # so the same destination always produces the same answer - caching it
+    # here means every user after the first gets it for free, with zero
+    # Groq quota spent.
+    data = read_data()
+    for d in data.get("destinations", []):
+        if d.get("id") == destination_id:
+            d["ai_explanation"] = text
+            write_data(data)
+            return d
+    return None
+
 def search_destinations(q: str = None):
     data = read_data()
     dests = data.get("destinations", [])

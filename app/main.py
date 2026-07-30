@@ -239,10 +239,16 @@ async def ai_explain(destination_id: str, user: str = Depends(get_current_user))
     dest = crud.get_destination(destination_id)
     if not dest:
         raise HTTPException(status_code=404, detail="Destination not found")
+
+    cached = dest.get("ai_explanation")
+    if cached:
+        return {"reply": cached}
+
     try:
         reply = await ai.explain_destination(dest)
     except (ai.AiNotConfiguredError, ai.AiRequestError) as exc:
         raise _ai_error_response(exc)
+    crud.set_destination_ai_explanation(destination_id, reply)
     return {"reply": reply}
 
 
