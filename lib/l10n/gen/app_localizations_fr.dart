@@ -113,6 +113,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get navRecommendations => 'Recommandations';
 
   @override
+  String get navFavorites => 'Favoris';
+
+  @override
   String get navItineraries => 'Itinéraires';
 
   @override
@@ -222,6 +225,24 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get recommendationsEmptySubtitle =>
       'Explorez les destinations et nous vous suggérerons des lieux.';
+
+  @override
+  String get favoritesTitle => 'Vos favoris';
+
+  @override
+  String get favoritesSubtitle => 'Destinations que vous avez enregistrées.';
+
+  @override
+  String favoritesErrorMessage(String error) {
+    return 'Impossible de charger les favoris.\n$error';
+  }
+
+  @override
+  String get favoritesEmptyTitle => 'Aucun favori pour l\'instant';
+
+  @override
+  String get favoritesEmptySubtitle =>
+      'Appuyez sur le cœur d\'une destination pour l\'enregistrer ici.';
 
   @override
   String get itinerariesFormMissing =>

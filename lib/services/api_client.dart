@@ -138,6 +138,34 @@ class ApiClient {
     return UserProfile.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
   }
 
+  Future<List<Destination>> getFavorites(String token) async {
+    final response = await _client.get(
+      _uri('/me/favorites'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+    _throwIfNotOk(response);
+    final decoded = jsonDecode(response.body) as List<dynamic>;
+    return decoded.map((e) => Destination.fromJson(e as Map<String, dynamic>)).toList();
+  }
+
+  Future<UserProfile> addFavorite(String token, String destinationId) async {
+    final response = await _client.post(
+      _uri('/me/favorites/$destinationId'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+    _throwIfNotOk(response);
+    return UserProfile.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
+  }
+
+  Future<UserProfile> removeFavorite(String token, String destinationId) async {
+    final response = await _client.delete(
+      _uri('/me/favorites/$destinationId'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+    _throwIfNotOk(response);
+    return UserProfile.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
+  }
+
   Future<List<Destination>> getDestinations({String? query}) async {
     final response = await _client.get(
       _uri(

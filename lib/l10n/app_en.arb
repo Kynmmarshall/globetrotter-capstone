@@ -36,6 +36,7 @@
 
   "navDestinations": "Destinations",
   "navRecommendations": "Recommendations",
+  "navFavorites": "Favorites",
   "navItineraries": "Itineraries",
   "navAskAi": "Ask AI",
   "navProfile": "Profile",
@@ -80,6 +81,15 @@
   },
   "recommendationsEmptyTitle": "No recommendations yet",
   "recommendationsEmptySubtitle": "Browse destinations and we'll start suggesting spots for you.",
+
+  "favoritesTitle": "Your favorites",
+  "favoritesSubtitle": "Destinations you've saved for later.",
+  "favoritesErrorMessage": "Could not load favorites.\n{error}",
+  "@favoritesErrorMessage": {
+    "placeholders": { "error": { "type": "String" } }
+  },
+  "favoritesEmptyTitle": "No favorites yet",
+  "favoritesEmptySubtitle": "Tap the heart on any destination to save it here.",
 
   "itinerariesFormMissing": "Add a title and pick at least one destination.",
   "itineraryCreatedSnackbar": "Itinerary created.",

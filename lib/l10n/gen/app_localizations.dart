@@ -290,6 +290,12 @@ abstract class AppLocalizations {
   /// **'Recommendations'**
   String get navRecommendations;
 
+  /// No description provided for @navFavorites.
+  ///
+  /// In en, this message translates to:
+  /// **'Favorites'**
+  String get navFavorites;
+
   /// No description provided for @navItineraries.
   ///
   /// In en, this message translates to:
@@ -475,6 +481,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Browse destinations and we\'ll start suggesting spots for you.'**
   String get recommendationsEmptySubtitle;
+
+  /// No description provided for @favoritesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your favorites'**
+  String get favoritesTitle;
+
+  /// No description provided for @favoritesSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Destinations you\'ve saved for later.'**
+  String get favoritesSubtitle;
+
+  /// No description provided for @favoritesErrorMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load favorites.\n{error}'**
+  String favoritesErrorMessage(String error);
+
+  /// No description provided for @favoritesEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No favorites yet'**
+  String get favoritesEmptyTitle;
+
+  /// No description provided for @favoritesEmptySubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap the heart on any destination to save it here.'**
+  String get favoritesEmptySubtitle;
 
   /// No description provided for @itinerariesFormMissing.
   ///

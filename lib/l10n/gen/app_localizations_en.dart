@@ -110,6 +110,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get navRecommendations => 'Recommendations';
 
   @override
+  String get navFavorites => 'Favorites';
+
+  @override
   String get navItineraries => 'Itineraries';
 
   @override
@@ -215,6 +218,24 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get recommendationsEmptySubtitle =>
       'Browse destinations and we\'ll start suggesting spots for you.';
+
+  @override
+  String get favoritesTitle => 'Your favorites';
+
+  @override
+  String get favoritesSubtitle => 'Destinations you\'ve saved for later.';
+
+  @override
+  String favoritesErrorMessage(String error) {
+    return 'Could not load favorites.\n$error';
+  }
+
+  @override
+  String get favoritesEmptyTitle => 'No favorites yet';
+
+  @override
+  String get favoritesEmptySubtitle =>
+      'Tap the heart on any destination to save it here.';
 
   @override
   String get itinerariesFormMissing =>

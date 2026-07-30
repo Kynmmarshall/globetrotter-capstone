@@ -18,6 +18,7 @@ class SessionController extends ChangeNotifier {
   static const _memberSinceKey = 'gt_member_since';
   static const _localeKey = 'gt_locale';
   static const _interestsKey = 'gt_interests';
+  static const _favoriteIdsKey = 'gt_favorite_ids';
 
   bool _ready = false;
   bool _loading = false;
@@ -30,6 +31,7 @@ class SessionController extends ChangeNotifier {
   DateTime? _memberSince;
   Locale? _locale;
   List<String> _interests = [];
+  Set<String> _favoriteIds = {};
 
   bool get ready => _ready;
   bool get isLoading => _loading;
@@ -43,6 +45,7 @@ class SessionController extends ChangeNotifier {
   // Null means "follow the device's system language".
   Locale? get locale => _locale;
   List<String> get interests => _interests;
+  bool isFavorite(String destinationId) => _favoriteIds.contains(destinationId);
 
   void clearError() {
     _error = null;
@@ -63,6 +66,7 @@ class SessionController extends ChangeNotifier {
     final localeCode = prefs.getString(_localeKey);
     _locale = localeCode != null ? Locale(localeCode) : null;
     _interests = prefs.getStringList(_interestsKey) ?? [];
+    _favoriteIds = (prefs.getStringList(_favoriteIdsKey) ?? []).toSet();
     // A token that expired while the app was closed (JWTs are valid for a
     // week - see auth.py) should never make it to a "logged in" screen -
     // clear it here rather than letting the first API call surface it as
@@ -198,6 +202,8 @@ class SessionController extends ChangeNotifier {
       await prefs.setString(_avatarUrlKey, profile.avatarUrl!);
       _avatarUrl = profile.avatarUrl;
     }
+    await prefs.setStringList(_favoriteIdsKey, profile.favoriteIds);
+    _favoriteIds = profile.favoriteIds.toSet();
     notifyListeners();
   }
 
@@ -225,6 +231,25 @@ class SessionController extends ChangeNotifier {
   Future<List<Destination>> recommendations() async {
     final token = _requireToken();
     return ApiClient().getRecommendations(token);
+  }
+
+  Future<List<Destination>> favorites() async {
+    final token = _requireToken();
+    return ApiClient().getFavorites(token);
+  }
+
+  Future<void> toggleFavorite(String destinationId) async {
+    final token = _requireToken();
+    final alreadyFavorite = _favoriteIds.contains(destinationId);
+    final profile = alreadyFavorite
+        ? await ApiClient().removeFavorite(token, destinationId)
+        : await ApiClient().addFavorite(token, destinationId);
+    await _applyProfile(profile);
+    Analytics.instance.trackEvent(
+      'destination',
+      alreadyFavorite ? 'unfavorited' : 'favorited',
+      name: destinationId,
+    );
   }
 
   Future<Itinerary> createItinerary(

@@ -35,6 +35,7 @@
 
   "navDestinations": "Destinations",
   "navRecommendations": "Recommandations",
+  "navFavorites": "Favoris",
   "navItineraries": "Itinéraires",
   "navAskAi": "IA",
   "navProfile": "Profil",
@@ -70,6 +71,12 @@
   "recommendationsErrorMessage": "Impossible de charger les recommandations.\n{error}",
   "recommendationsEmptyTitle": "Aucune recommandation pour l'instant",
   "recommendationsEmptySubtitle": "Explorez les destinations et nous vous suggérerons des lieux.",
+
+  "favoritesTitle": "Vos favoris",
+  "favoritesSubtitle": "Destinations que vous avez enregistrées.",
+  "favoritesErrorMessage": "Impossible de charger les favoris.\n{error}",
+  "favoritesEmptyTitle": "Aucun favori pour l'instant",
+  "favoritesEmptySubtitle": "Appuyez sur le cœur d'une destination pour l'enregistrer ici.",
 
   "itinerariesFormMissing": "Ajoutez un titre et choisissez au moins une destination.",
   "itineraryCreatedSnackbar": "Itinéraire créé.",
