@@ -67,6 +67,15 @@ def update_user_interests(username: str, interests: list[str]):
             return u
     return None
 
+def update_user_avatar(username: str, avatar_url: str):
+    data = read_data()
+    for u in data.get("users", []):
+        if u["username"] == username:
+            u["avatar_url"] = avatar_url
+            write_data(data)
+            return u
+    return None
+
 def create_itinerary(itin: dict):
     data = read_data()
     itin["id"] = str(uuid.uuid4())

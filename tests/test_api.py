@@ -1,7 +1,8 @@
 import pytest
 from httpx import AsyncClient
+from app import main
 from app.main import app
-from app import ai, google_auth
+from app import ai, auth, google_auth
 
 
 @pytest.mark.asyncio
@@ -169,3 +170,65 @@ async def test_google_only_account_rejects_password_login(tmp_path, monkeypatch)
         await ac.post("/auth/google", json={"id_token": "fake"})
         r = await ac.post("/login", json={"username": "bob", "password": "anything"})
         assert r.status_code == 401
+
+
+def test_access_token_defaults_to_one_week():
+    token = auth.create_access_token("alice")
+    payload = auth.decode_token(token)
+    assert payload["exp"] - payload["iat"] == 7 * 24 * 3600
+
+
+@pytest.mark.asyncio
+async def test_avatar_upload_and_serving(tmp_path, monkeypatch):
+    data_file = tmp_path / "data.json"
+    data_file.write_text('{"users": [], "itineraries": [], "destinations": []}')
+    import os
+    os.environ["GLOBETROTTER_DATA_PATH"] = str(data_file)
+
+    avatars_dir = tmp_path / "avatars"
+    avatars_dir.mkdir()
+    monkeypatch.setattr(main, "_avatars_dir", avatars_dir)
+
+    async with AsyncClient(app=app, base_url="http://test") as ac:
+        r = await ac.post("/register", json={"username": "eve", "password": "secret"})
+        token = r.json()["access_token"]
+        headers = {"Authorization": f"Bearer {token}"}
+
+        r2 = await ac.post(
+            "/me/avatar",
+            headers=headers,
+            files={"file": ("avatar.png", b"\x89PNG\r\n fake bytes", "image/png")},
+        )
+        assert r2.status_code == 200
+        avatar_url = r2.json()["avatar_url"]
+        assert avatar_url.startswith("/static/avatars/")
+        saved_files = list(avatars_dir.iterdir())
+        assert len(saved_files) == 1
+
+        r3 = await ac.get("/me", headers=headers)
+        assert r3.json()["avatar_url"] == avatar_url
+
+
+@pytest.mark.asyncio
+async def test_avatar_upload_rejects_bad_type(tmp_path, monkeypatch):
+    data_file = tmp_path / "data.json"
+    data_file.write_text('{"users": [], "itineraries": [], "destinations": []}')
+    import os
+    os.environ["GLOBETROTTER_DATA_PATH"] = str(data_file)
+
+    avatars_dir = tmp_path / "avatars"
+    avatars_dir.mkdir()
+    monkeypatch.setattr(main, "_avatars_dir", avatars_dir)
+
+    async with AsyncClient(app=app, base_url="http://test") as ac:
+        r = await ac.post("/register", json={"username": "frank", "password": "secret"})
+        token = r.json()["access_token"]
+        headers = {"Authorization": f"Bearer {token}"}
+
+        r2 = await ac.post(
+            "/me/avatar",
+            headers=headers,
+            files={"file": ("notes.txt", b"hello", "text/plain")},
+        )
+        assert r2.status_code == 400
+        assert not list(avatars_dir.iterdir())

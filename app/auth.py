@@ -25,7 +25,9 @@ def verify_password(plain: str, hashed: str) -> bool:
     safe = _truncate_password(plain)
     return pwd_context.verify(safe, hashed)
 
-def create_access_token(sub: str, expires: int = 3600) -> str:
+_ONE_WEEK_SECONDS = 7 * 24 * 3600
+
+def create_access_token(sub: str, expires: int = _ONE_WEEK_SECONDS) -> str:
     now = int(time.time())
     payload = {"sub": sub, "iat": now, "exp": now + expires}
     return jwt.encode(payload, _secret, algorithm=_algo)

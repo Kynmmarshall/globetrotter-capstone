@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import FastAPI, File, HTTPException, Depends, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
@@ -31,6 +31,22 @@ app.add_middleware(
 _static_dir = Path(__file__).resolve().parents[1] / "static"
 _static_dir.mkdir(parents=True, exist_ok=True)
 app.mount("/static", StaticFiles(directory=_static_dir), name="static")
+
+# Profile pictures live on the VPS filesystem under static/, same durable
+# location destination images already use (survives restarts/redeploys -
+# it's part of the app dir, not a temp path). Never keyed by username: that
+# comes straight from the client on /register and isn't sanitized, so using
+# it in a filesystem path would be a traversal risk. The server-generated
+# user id is always a safe uuid.
+_avatars_dir = _static_dir / "avatars"
+_avatars_dir.mkdir(parents=True, exist_ok=True)
+_AVATAR_MAX_BYTES = 5 * 1024 * 1024
+_AVATAR_EXTENSIONS = {
+    "image/jpeg": ".jpg",
+    "image/png": ".png",
+    "image/webp": ".webp",
+    "image/gif": ".gif",
+}
 
 
 @app.post("/register", response_model=Token)
@@ -86,6 +102,34 @@ def update_interests(payload: InterestsUpdate, user: str = Depends(get_current_u
     if not profile:
         raise HTTPException(status_code=404, detail="User not found")
     return profile
+
+
+@app.post("/me/avatar", response_model=UserProfile)
+async def upload_avatar(file: UploadFile = File(...), user: str = Depends(get_current_user)):
+    profile = crud.get_user(user)
+    if not profile:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    ext = _AVATAR_EXTENSIONS.get((file.content_type or "").lower())
+    if not ext:
+        raise HTTPException(status_code=400, detail="Unsupported image type - use JPEG, PNG, WEBP or GIF")
+
+    body = await file.read()
+    if not body:
+        raise HTTPException(status_code=400, detail="Empty file")
+    if len(body) > _AVATAR_MAX_BYTES:
+        raise HTTPException(status_code=400, detail="Image is larger than 5MB")
+
+    # Clear out any previous avatar for this user first, in case an earlier
+    # upload used a different extension - otherwise stale files pile up.
+    for existing in _avatars_dir.glob(f"{profile['id']}.*"):
+        existing.unlink(missing_ok=True)
+
+    dest = _avatars_dir / f"{profile['id']}{ext}"
+    dest.write_bytes(body)
+
+    updated = crud.update_user_avatar(user, f"/static/avatars/{dest.name}")
+    return updated
 
 
 @app.get("/destinations", response_model=list[Destination])

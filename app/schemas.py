@@ -15,6 +15,7 @@ class UserProfile(BaseModel):
     username: str
     email: Optional[str] = None
     interests: Optional[List[str]] = []
+    avatar_url: Optional[str] = None
 
 class InterestsUpdate(BaseModel):
     interests: List[str]
