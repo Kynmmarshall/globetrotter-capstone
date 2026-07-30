@@ -4,8 +4,18 @@ from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
-from . import crud, stats
-from .schemas import UserCreate, Token, Itinerary, Destination, ItineraryCreate, UserProfile, InterestsUpdate
+from . import ai, crud, stats
+from .schemas import (
+    UserCreate,
+    Token,
+    Itinerary,
+    Destination,
+    ItineraryCreate,
+    UserProfile,
+    InterestsUpdate,
+    ChatRequest,
+    ChatResponse,
+)
 from .auth import create_access_token, get_current_user
 
 app = FastAPI(title="GlobeTrotter Phase1")
@@ -86,6 +96,37 @@ def create_itinerary(itin: ItineraryCreate, user: str = Depends(get_current_user
 @app.get("/itineraries", response_model=list[Itinerary])
 def list_itineraries(user: str = Depends(get_current_user)):
     return crud.get_itineraries_for(user)
+
+
+def _ai_error_response(exc: Exception):
+    if isinstance(exc, ai.AiNotConfiguredError):
+        return HTTPException(status_code=503, detail="AI assistant is not configured")
+    return HTTPException(status_code=502, detail="AI assistant is temporarily unavailable")
+
+
+@app.post("/ai/chat", response_model=ChatResponse)
+async def ai_chat(payload: ChatRequest, user: str = Depends(get_current_user)):
+    if not payload.messages:
+        raise HTTPException(status_code=400, detail="messages must not be empty")
+    profile = crud.get_user(user)
+    interests = (profile or {}).get("interests") or []
+    try:
+        reply = await ai.chat([m.dict() for m in payload.messages], interests=interests)
+    except (ai.AiNotConfiguredError, ai.AiRequestError) as exc:
+        raise _ai_error_response(exc)
+    return {"reply": reply}
+
+
+@app.post("/ai/explain/{destination_id}", response_model=ChatResponse)
+async def ai_explain(destination_id: str, user: str = Depends(get_current_user)):
+    dest = crud.get_destination(destination_id)
+    if not dest:
+        raise HTTPException(status_code=404, detail="Destination not found")
+    try:
+        reply = await ai.explain_destination(dest)
+    except (ai.AiNotConfiguredError, ai.AiRequestError) as exc:
+        raise _ai_error_response(exc)
+    return {"reply": reply}
 
 
 # Mounted last (and most-specific-first) so none of these can shadow the

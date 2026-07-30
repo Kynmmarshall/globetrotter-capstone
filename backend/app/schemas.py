@@ -59,3 +59,13 @@ class ItineraryCreate(BaseModel):
     schedule: Optional[List[ScheduleItem]] = None
     start_date: Optional[str] = None
     end_date: Optional[str] = None
+
+class ChatMessage(BaseModel):
+    role: str  # "user" | "assistant"
+    content: str
+
+class ChatRequest(BaseModel):
+    messages: List[ChatMessage]
+
+class ChatResponse(BaseModel):
+    reply: str

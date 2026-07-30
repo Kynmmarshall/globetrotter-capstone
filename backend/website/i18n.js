@@ -13,6 +13,7 @@
       navApi: 'API',
       navCommunity: 'Community',
 
+      heroBadge: 'Built for Yaoundé, made for real trips',
       heroTagline:
         'Plan faster. Travel smarter. Discover the landmarks, culture and nature of Yaoundé, Cameroon — with an itinerary planner that builds your day for you.',
       heroGetApp: 'Get the app',
@@ -91,6 +92,7 @@
       navApi: 'API',
       navCommunity: 'Communauté',
 
+      heroBadge: 'Conçu pour Yaoundé, pensé pour de vrais voyages',
       heroTagline:
         'Planifiez plus vite. Voyagez plus intelligemment. Découvrez les monuments, la culture et la nature de Yaoundé, Cameroun — avec un planificateur qui organise votre journée pour vous.',
       heroGetApp: "Télécharger l'app",
