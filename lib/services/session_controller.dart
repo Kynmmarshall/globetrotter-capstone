@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'dart:convert';
+
 import 'package:flutter/foundation.dart' show ChangeNotifier;
 import 'package:flutter/widgets.dart' show Locale;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -10,7 +13,7 @@ class SessionController extends ChangeNotifier {
   static const _tokenKey = 'gt_token';
   static const _usernameKey = 'gt_username';
   static const _emailKey = 'gt_email';
-  static const _avatarPathKey = 'gt_avatar_path';
+  static const _avatarUrlKey = 'gt_avatar_url';
   static const _bioKey = 'gt_bio';
   static const _memberSinceKey = 'gt_member_since';
   static const _localeKey = 'gt_locale';
@@ -22,7 +25,7 @@ class SessionController extends ChangeNotifier {
   String? _token;
   String? _username;
   String? _email;
-  String? _avatarPath;
+  String? _avatarUrl;
   String? _bio;
   DateTime? _memberSince;
   Locale? _locale;
@@ -34,7 +37,7 @@ class SessionController extends ChangeNotifier {
   String? get error => _error;
   String? get username => _username;
   String? get email => _email;
-  String? get avatarPath => _avatarPath;
+  String? get avatarUrl => _avatarUrl;
   String? get bio => _bio;
   DateTime? get memberSince => _memberSince;
   // Null means "follow the device's system language".
@@ -51,7 +54,7 @@ class SessionController extends ChangeNotifier {
     _token = prefs.getString(_tokenKey);
     _username = prefs.getString(_usernameKey);
     _email = prefs.getString(_emailKey);
-    _avatarPath = prefs.getString(_avatarPathKey);
+    _avatarUrl = prefs.getString(_avatarUrlKey);
     _bio = prefs.getString(_bioKey);
     final memberSinceRaw = prefs.getString(_memberSinceKey);
     _memberSince = memberSinceRaw != null
@@ -60,11 +63,53 @@ class SessionController extends ChangeNotifier {
     final localeCode = prefs.getString(_localeKey);
     _locale = localeCode != null ? Locale(localeCode) : null;
     _interests = prefs.getStringList(_interestsKey) ?? [];
+    // A token that expired while the app was closed (JWTs are valid for a
+    // week - see auth.py) should never make it to a "logged in" screen -
+    // clear it here rather than letting the first API call surface it as
+    // an error.
+    if (_token != null && _isTokenExpired(_token!)) {
+      await prefs.remove(_tokenKey);
+      await prefs.remove(_usernameKey);
+      _token = null;
+      _username = null;
+    }
     if ((_username ?? '').isNotEmpty) {
       Analytics.instance.setUser(_username);
     }
     _ready = true;
     notifyListeners();
+  }
+
+  // Decodes the JWT payload to read `exp` without verifying the signature -
+  // that's the server's job. This only ever drives a *local* logout, so the
+  // worst case for a malformed/unreadable token is a missed early logout,
+  // not a security decision made on unverified data.
+  bool _isTokenExpired(String token) {
+    try {
+      final parts = token.split('.');
+      if (parts.length != 3) return false;
+      final normalized = base64Url.normalize(parts[1]);
+      final payload = jsonDecode(utf8.decode(base64Url.decode(normalized))) as Map<String, dynamic>;
+      final exp = payload['exp'];
+      if (exp is! int) return false;
+      return DateTime.now().toUtc().isAfter(DateTime.fromMillisecondsSinceEpoch(exp * 1000, isUtc: true));
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// Returns the current token if present and not expired, otherwise clears
+  /// the session (so the UI reactively falls back to AuthScreen) and throws.
+  String _requireToken() {
+    final token = _token;
+    if (token == null || token.isEmpty) {
+      throw Exception('Not authenticated.');
+    }
+    if (_isTokenExpired(token)) {
+      unawaited(logout());
+      throw Exception('Your session expired. Please sign in again.');
+    }
+    return token;
   }
 
   Future<void> setLocale(Locale? locale) async {
@@ -135,10 +180,7 @@ class SessionController extends ChangeNotifier {
   }
 
   Future<void> updateInterests(List<String> interests) async {
-    final token = _token;
-    if (token == null || token.isEmpty) {
-      throw Exception('Not authenticated.');
-    }
+    final token = _requireToken();
     final profile = await ApiClient().updateInterests(token, interests);
     await _applyProfile(profile);
     Analytics.instance.trackEvent('profile', 'interests_updated');
@@ -152,6 +194,10 @@ class SessionController extends ChangeNotifier {
       await prefs.setString(_emailKey, profile.email!);
       _email = profile.email;
     }
+    if ((profile.avatarUrl ?? '').isNotEmpty) {
+      await prefs.setString(_avatarUrlKey, profile.avatarUrl!);
+      _avatarUrl = profile.avatarUrl;
+    }
     notifyListeners();
   }
 
@@ -162,11 +208,14 @@ class SessionController extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> updateAvatarPath(String path) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_avatarPathKey, path);
-    _avatarPath = path;
-    notifyListeners();
+  /// Uploads [bytes] (an image picked via image_picker) to the backend,
+  /// which stores it under static/avatars/ on the VPS and returns the
+  /// resulting URL - replacing the previous local-only, per-device path.
+  Future<void> updateAvatar(List<int> bytes, String filename) async {
+    final token = _requireToken();
+    final profile = await ApiClient().uploadAvatar(token, bytes, filename);
+    await _applyProfile(profile);
+    Analytics.instance.trackEvent('profile', 'avatar_updated');
   }
 
   Future<List<Destination>> destinations({String? query}) {
@@ -174,10 +223,7 @@ class SessionController extends ChangeNotifier {
   }
 
   Future<List<Destination>> recommendations() async {
-    final token = _token;
-    if (token == null || token.isEmpty) {
-      throw Exception('Not authenticated.');
-    }
+    final token = _requireToken();
     return ApiClient().getRecommendations(token);
   }
 
@@ -188,10 +234,7 @@ class SessionController extends ChangeNotifier {
     DateTime? startDate,
     DateTime? endDate,
   }) async {
-    final token = _token;
-    if (token == null || token.isEmpty) {
-      throw Exception('Not authenticated.');
-    }
+    final token = _requireToken();
     final itinerary = await ApiClient().createItinerary(
       token,
       title,
@@ -209,28 +252,19 @@ class SessionController extends ChangeNotifier {
   }
 
   Future<List<Itinerary>> itineraries() async {
-    final token = _token;
-    if (token == null || token.isEmpty) {
-      throw Exception('Not authenticated.');
-    }
+    final token = _requireToken();
     return ApiClient().getItineraries(token);
   }
 
   Future<String> aiChat(List<ChatMessage> messages) async {
-    final token = _token;
-    if (token == null || token.isEmpty) {
-      throw Exception('Not authenticated.');
-    }
+    final token = _requireToken();
     final reply = await ApiClient().aiChat(token, messages);
     Analytics.instance.trackEvent('ai', 'chat_message');
     return reply;
   }
 
   Future<String> aiExplain(String destinationId) async {
-    final token = _token;
-    if (token == null || token.isEmpty) {
-      throw Exception('Not authenticated.');
-    }
+    final token = _requireToken();
     final reply = await ApiClient().aiExplain(token, destinationId);
     Analytics.instance.trackEvent('ai', 'explain_destination', name: destinationId);
     return reply;

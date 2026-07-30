@@ -102,17 +102,19 @@ class ChatMessage {
 }
 
 class UserProfile {
-  UserProfile({required this.username, this.email, this.interests = const []});
+  UserProfile({required this.username, this.email, this.interests = const [], this.avatarUrl});
 
   final String username;
   final String? email;
   final List<String> interests;
+  final String? avatarUrl;
 
   factory UserProfile.fromJson(Map<String, dynamic> json) {
     return UserProfile(
       username: (json['username'] ?? '').toString(),
       email: json['email']?.toString(),
       interests: (json['interests'] as List<dynamic>? ?? <dynamic>[]).map((e) => e.toString()).toList(),
+      avatarUrl: json['avatar_url']?.toString(),
     );
   }
 }

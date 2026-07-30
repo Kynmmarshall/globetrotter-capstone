@@ -1,13 +1,12 @@
-import 'dart:io' show File;
 import 'dart:ui';
 
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:trip_io/l10n/gen/app_localizations.dart';
 import 'package:trip_io/models/interest_tags.dart';
 import 'package:trip_io/models/models.dart';
+import 'package:trip_io/services/api_client.dart';
 import 'package:trip_io/services/session_controller.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -67,7 +66,8 @@ class _ProfilePageState extends State<ProfilePage> {
     try {
       final picked = await ImagePicker().pickImage(source: ImageSource.gallery, maxWidth: 900, imageQuality: 85);
       if (picked != null) {
-        await widget.session.updateAvatarPath(picked.path);
+        final bytes = await picked.readAsBytes();
+        await widget.session.updateAvatar(bytes, picked.name);
       }
     } catch (e) {
       if (!mounted) return;
@@ -130,8 +130,8 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Widget _buildAvatarImage() {
-    final path = widget.session.avatarPath;
-    if (path == null || path.isEmpty) {
+    final url = ApiClient.resolveAssetUrl(widget.session.avatarUrl);
+    if (url == null || url.isEmpty) {
       return Center(
         child: Text(
           _initials(),
@@ -139,10 +139,16 @@ class _ProfilePageState extends State<ProfilePage> {
         ),
       );
     }
-    if (kIsWeb) {
-      return Image.network(path, fit: BoxFit.cover);
-    }
-    return Image.file(File(path), fit: BoxFit.cover);
+    return Image.network(
+      url,
+      fit: BoxFit.cover,
+      errorBuilder: (context, error, stackTrace) => Center(
+        child: Text(
+          _initials(),
+          style: const TextStyle(fontSize: 30, color: Colors.white, fontWeight: FontWeight.w800),
+        ),
+      ),
+    );
   }
 
   Widget _buildAvatar(BuildContext context) {
