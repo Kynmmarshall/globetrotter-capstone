@@ -10,6 +10,7 @@ import 'package:trip_io/services/session_controller.dart';
 import 'package:trip_io/widgets/favorite_toggle_button.dart';
 import 'package:trip_io/widgets/feature_pill.dart';
 import 'package:trip_io/widgets/session_expired_card.dart';
+import 'package:trip_io/widgets/star_rating.dart';
 
 class RecommendationsPage extends StatefulWidget {
   const RecommendationsPage({super.key, required this.session});
@@ -149,6 +150,10 @@ class _RecommendationsPageState extends State<RecommendationsPage> {
                       FavoriteToggleButton(session: widget.session, destinationId: item.id, size: 18),
                     ],
                   ),
+                  if (item.hasRatings) ...[
+                    const SizedBox(height: 2),
+                    StarRating(average: item.ratingAverage, count: item.ratingCount, size: 12.5),
+                  ],
                   const SizedBox(height: 2),
                   Row(
                     children: [

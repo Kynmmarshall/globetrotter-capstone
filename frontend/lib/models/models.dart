@@ -41,6 +41,11 @@ class Destination {
     this.openingHours,
     this.entryFee,
     this.tips,
+    this.status = 'approved',
+    this.submittedBy,
+    this.ratingAverage,
+    this.ratingCount = 0,
+    this.userRating,
   });
 
   final String id;
@@ -54,10 +59,17 @@ class Destination {
   final String? openingHours;
   final String? entryFee;
   final String? tips;
+  final String status; // "approved" | "pending" | "rejected"
+  final String? submittedBy;
+  final double? ratingAverage;
+  final int ratingCount;
+  final int? userRating; // 1-5, this viewer's own rating if any
 
   /// Whether the backend supplied enough content to show this as a
   /// featured, photo-led card rather than a plain search result.
   bool get isFeatured => (imageUrl ?? '').isNotEmpty;
+
+  bool get hasRatings => ratingCount > 0 && ratingAverage != null;
 
   factory Destination.fromJson(Map<String, dynamic> json) {
     final rawTags = (json['tags'] as List<dynamic>? ?? <dynamic>[])
@@ -84,6 +96,34 @@ class Destination {
       openingHours: optionalString('opening_hours'),
       entryFee: optionalString('entry_fee'),
       tips: optionalString('tips'),
+      status: (json['status'] ?? 'approved').toString(),
+      submittedBy: optionalString('submitted_by'),
+      ratingAverage: (json['rating_average'] as num?)?.toDouble(),
+      ratingCount: (json['rating_count'] as num?)?.toInt() ?? 0,
+      userRating: (json['user_rating'] as num?)?.toInt(),
+    );
+  }
+
+  /// Returns a copy with just the rating fields replaced - used after
+  /// rating/un-rating to update a single card in place.
+  Destination withRating({double? ratingAverage, required int ratingCount, int? userRating}) {
+    return Destination(
+      id: id,
+      name: name,
+      country: country,
+      tags: tags,
+      imageUrl: imageUrl,
+      description: description,
+      location: location,
+      nearby: nearby,
+      openingHours: openingHours,
+      entryFee: entryFee,
+      tips: tips,
+      status: status,
+      submittedBy: submittedBy,
+      ratingAverage: ratingAverage,
+      ratingCount: ratingCount,
+      userRating: userRating,
     );
   }
 }
@@ -115,6 +155,7 @@ class UserProfile {
     this.interests = const [],
     this.avatarUrl,
     this.favoriteIds = const [],
+    this.role,
   });
 
   final String username;
@@ -122,6 +163,7 @@ class UserProfile {
   final List<String> interests;
   final String? avatarUrl;
   final List<String> favoriteIds;
+  final String? role; // "user" | "admin"
 
   factory UserProfile.fromJson(Map<String, dynamic> json) {
     return UserProfile(
@@ -130,6 +172,7 @@ class UserProfile {
       interests: (json['interests'] as List<dynamic>? ?? <dynamic>[]).map((e) => e.toString()).toList(),
       avatarUrl: json['avatar_url']?.toString(),
       favoriteIds: (json['favorite_ids'] as List<dynamic>? ?? <dynamic>[]).map((e) => e.toString()).toList(),
+      role: json['role']?.toString(),
     );
   }
 }

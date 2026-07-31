@@ -302,12 +302,6 @@ abstract class AppLocalizations {
   /// **'Itineraries'**
   String get navItineraries;
 
-  /// No description provided for @navAskAi.
-  ///
-  /// In en, this message translates to:
-  /// **'Ask AI'**
-  String get navAskAi;
-
   /// No description provided for @navProfile.
   ///
   /// In en, this message translates to:
@@ -392,6 +386,12 @@ abstract class AppLocalizations {
   /// **'Reply'**
   String get commentsReplyButton;
 
+  /// No description provided for @commentsButtonLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'View comments'**
+  String get commentsButtonLabel;
+
   /// No description provided for @commentsEmpty.
   ///
   /// In en, this message translates to:
@@ -451,6 +451,84 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No destinations match the selected filters.'**
   String get destinationsFilterEmpty;
+
+  /// No description provided for @suggestDestinationButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Suggest a destination'**
+  String get suggestDestinationButton;
+
+  /// No description provided for @submitDestinationTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Suggest a destination'**
+  String get submitDestinationTitle;
+
+  /// No description provided for @submitDestinationSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Know a real spot in Yaoundé that\'s missing? Suggest it here - an admin reviews every submission before it goes live.'**
+  String get submitDestinationSubtitle;
+
+  /// No description provided for @submitDestinationNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Destination name'**
+  String get submitDestinationNameLabel;
+
+  /// No description provided for @submitDestinationNameRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Name is required'**
+  String get submitDestinationNameRequired;
+
+  /// No description provided for @submitDestinationLocationLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Location'**
+  String get submitDestinationLocationLabel;
+
+  /// No description provided for @submitDestinationLocationHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. Bastos, Yaoundé'**
+  String get submitDestinationLocationHint;
+
+  /// No description provided for @submitDestinationDescriptionLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Description'**
+  String get submitDestinationDescriptionLabel;
+
+  /// No description provided for @submitDestinationReviewNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'Your suggestion won\'t appear in the app until an admin approves it.'**
+  String get submitDestinationReviewNotice;
+
+  /// No description provided for @submitDestinationButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Submit for review'**
+  String get submitDestinationButton;
+
+  /// No description provided for @submitDestinationSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Thanks! Your suggestion was submitted for review.'**
+  String get submitDestinationSuccess;
+
+  /// No description provided for @submitDestinationSuccessImageFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Your suggestion was submitted, but the photo failed to upload: {error}'**
+  String submitDestinationSuccessImageFailed(String error);
+
+  /// No description provided for @submitDestinationAddPhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a photo (optional)'**
+  String get submitDestinationAddPhoto;
 
   /// No description provided for @recommendationsTitle.
   ///
@@ -524,6 +602,36 @@ abstract class AppLocalizations {
   /// **'Itinerary created.'**
   String get itineraryCreatedSnackbar;
 
+  /// No description provided for @itineraryDeletedSnackbar.
+  ///
+  /// In en, this message translates to:
+  /// **'Itinerary deleted.'**
+  String get itineraryDeletedSnackbar;
+
+  /// No description provided for @deleteItineraryButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get deleteItineraryButton;
+
+  /// No description provided for @deleteItineraryConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this itinerary?'**
+  String get deleteItineraryConfirmTitle;
+
+  /// No description provided for @deleteItineraryConfirmMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'\"{title}\" will be permanently deleted. This can\'t be undone.'**
+  String deleteItineraryConfirmMessage(String title);
+
+  /// No description provided for @cancelButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get cancelButton;
+
   /// No description provided for @itinerariesPlanTitle.
   ///
   /// In en, this message translates to:
@@ -553,6 +661,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No destinations available yet.'**
   String get noDestinationsAvailable;
+
+  /// No description provided for @itineraryDestinationSearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search destinations to add…'**
+  String get itineraryDestinationSearchHint;
+
+  /// No description provided for @itineraryShowAllDestinations.
+  ///
+  /// In en, this message translates to:
+  /// **'Show all {count} destinations'**
+  String itineraryShowAllDestinations(int count);
+
+  /// No description provided for @itineraryHideAllDestinations.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide full list'**
+  String get itineraryHideAllDestinations;
+
+  /// No description provided for @itineraryDestinationSearchPrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Search by name, or tap \"show all\" to browse every destination.'**
+  String get itineraryDestinationSearchPrompt;
+
+  /// No description provided for @itineraryDestinationSearchNoMatches.
+  ///
+  /// In en, this message translates to:
+  /// **'No destinations match \"{query}\".'**
+  String itineraryDestinationSearchNoMatches(String query);
+
+  /// No description provided for @itineraryAllDestinationsAdded.
+  ///
+  /// In en, this message translates to:
+  /// **'All destinations have been added.'**
+  String get itineraryAllDestinationsAdded;
 
   /// No description provided for @createItineraryButton.
   ///

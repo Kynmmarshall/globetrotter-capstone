@@ -116,9 +116,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get navItineraries => 'Itineraries';
 
   @override
-  String get navAskAi => 'Ask AI';
-
-  @override
   String get navProfile => 'Profile';
 
   @override
@@ -166,6 +163,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get commentsReplyButton => 'Reply';
 
   @override
+  String get commentsButtonLabel => 'View comments';
+
+  @override
   String get commentsEmpty =>
       'No comments yet — be the first to share your thoughts.';
 
@@ -199,6 +199,50 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get destinationsFilterEmpty =>
       'No destinations match the selected filters.';
+
+  @override
+  String get suggestDestinationButton => 'Suggest a destination';
+
+  @override
+  String get submitDestinationTitle => 'Suggest a destination';
+
+  @override
+  String get submitDestinationSubtitle =>
+      'Know a real spot in Yaoundé that\'s missing? Suggest it here - an admin reviews every submission before it goes live.';
+
+  @override
+  String get submitDestinationNameLabel => 'Destination name';
+
+  @override
+  String get submitDestinationNameRequired => 'Name is required';
+
+  @override
+  String get submitDestinationLocationLabel => 'Location';
+
+  @override
+  String get submitDestinationLocationHint => 'e.g. Bastos, Yaoundé';
+
+  @override
+  String get submitDestinationDescriptionLabel => 'Description';
+
+  @override
+  String get submitDestinationReviewNotice =>
+      'Your suggestion won\'t appear in the app until an admin approves it.';
+
+  @override
+  String get submitDestinationButton => 'Submit for review';
+
+  @override
+  String get submitDestinationSuccess =>
+      'Thanks! Your suggestion was submitted for review.';
+
+  @override
+  String submitDestinationSuccessImageFailed(String error) {
+    return 'Your suggestion was submitted, but the photo failed to upload: $error';
+  }
+
+  @override
+  String get submitDestinationAddPhoto => 'Add a photo (optional)';
 
   @override
   String get recommendationsTitle => 'Picked for you';
@@ -245,6 +289,23 @@ class AppLocalizationsEn extends AppLocalizations {
   String get itineraryCreatedSnackbar => 'Itinerary created.';
 
   @override
+  String get itineraryDeletedSnackbar => 'Itinerary deleted.';
+
+  @override
+  String get deleteItineraryButton => 'Delete';
+
+  @override
+  String get deleteItineraryConfirmTitle => 'Delete this itinerary?';
+
+  @override
+  String deleteItineraryConfirmMessage(String title) {
+    return '\"$title\" will be permanently deleted. This can\'t be undone.';
+  }
+
+  @override
+  String get cancelButton => 'Cancel';
+
+  @override
   String get itinerariesPlanTitle => 'Plan a new itinerary';
 
   @override
@@ -258,6 +319,30 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get noDestinationsAvailable => 'No destinations available yet.';
+
+  @override
+  String get itineraryDestinationSearchHint => 'Search destinations to add…';
+
+  @override
+  String itineraryShowAllDestinations(int count) {
+    return 'Show all $count destinations';
+  }
+
+  @override
+  String get itineraryHideAllDestinations => 'Hide full list';
+
+  @override
+  String get itineraryDestinationSearchPrompt =>
+      'Search by name, or tap \"show all\" to browse every destination.';
+
+  @override
+  String itineraryDestinationSearchNoMatches(String query) {
+    return 'No destinations match \"$query\".';
+  }
+
+  @override
+  String get itineraryAllDestinationsAdded =>
+      'All destinations have been added.';
 
   @override
   String get createItineraryButton => 'Create Itinerary';

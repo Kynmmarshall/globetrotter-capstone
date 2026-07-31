@@ -119,9 +119,6 @@ class AppLocalizationsFr extends AppLocalizations {
   String get navItineraries => 'Itinéraires';
 
   @override
-  String get navAskAi => 'IA';
-
-  @override
   String get navProfile => 'Profil';
 
   @override
@@ -171,6 +168,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get commentsReplyButton => 'Répondre';
 
   @override
+  String get commentsButtonLabel => 'Voir les commentaires';
+
+  @override
   String get commentsEmpty =>
       'Aucun commentaire pour l\'instant — soyez le premier à partager votre avis.';
 
@@ -205,6 +205,50 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get destinationsFilterEmpty =>
       'Aucune destination ne correspond aux filtres sélectionnés.';
+
+  @override
+  String get suggestDestinationButton => 'Suggérer une destination';
+
+  @override
+  String get submitDestinationTitle => 'Suggérer une destination';
+
+  @override
+  String get submitDestinationSubtitle =>
+      'Vous connaissez un vrai lieu à Yaoundé qui manque ? Suggérez-le ici - un administrateur examine chaque suggestion avant sa mise en ligne.';
+
+  @override
+  String get submitDestinationNameLabel => 'Nom de la destination';
+
+  @override
+  String get submitDestinationNameRequired => 'Le nom est requis';
+
+  @override
+  String get submitDestinationLocationLabel => 'Lieu';
+
+  @override
+  String get submitDestinationLocationHint => 'ex. Bastos, Yaoundé';
+
+  @override
+  String get submitDestinationDescriptionLabel => 'Description';
+
+  @override
+  String get submitDestinationReviewNotice =>
+      'Votre suggestion n\'apparaîtra pas dans l\'application tant qu\'un administrateur ne l\'aura pas approuvée.';
+
+  @override
+  String get submitDestinationButton => 'Envoyer pour examen';
+
+  @override
+  String get submitDestinationSuccess =>
+      'Merci ! Votre suggestion a été envoyée pour examen.';
+
+  @override
+  String submitDestinationSuccessImageFailed(String error) {
+    return 'Votre suggestion a été envoyée, mais l\'envoi de la photo a échoué : $error';
+  }
+
+  @override
+  String get submitDestinationAddPhoto => 'Ajouter une photo (facultatif)';
 
   @override
   String get recommendationsTitle => 'Sélectionné pour vous';
@@ -252,6 +296,23 @@ class AppLocalizationsFr extends AppLocalizations {
   String get itineraryCreatedSnackbar => 'Itinéraire créé.';
 
   @override
+  String get itineraryDeletedSnackbar => 'Itinéraire supprimé.';
+
+  @override
+  String get deleteItineraryButton => 'Supprimer';
+
+  @override
+  String get deleteItineraryConfirmTitle => 'Supprimer cet itinéraire ?';
+
+  @override
+  String deleteItineraryConfirmMessage(String title) {
+    return '« $title » sera définitivement supprimé. Cette action est irréversible.';
+  }
+
+  @override
+  String get cancelButton => 'Annuler';
+
+  @override
   String get itinerariesPlanTitle => 'Planifier un nouvel itinéraire';
 
   @override
@@ -266,6 +327,31 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get noDestinationsAvailable =>
       'Aucune destination disponible pour l\'instant.';
+
+  @override
+  String get itineraryDestinationSearchHint =>
+      'Rechercher des destinations à ajouter…';
+
+  @override
+  String itineraryShowAllDestinations(int count) {
+    return 'Afficher les $count destinations';
+  }
+
+  @override
+  String get itineraryHideAllDestinations => 'Masquer la liste complète';
+
+  @override
+  String get itineraryDestinationSearchPrompt =>
+      'Recherchez par nom, ou appuyez sur « afficher tout » pour parcourir toutes les destinations.';
+
+  @override
+  String itineraryDestinationSearchNoMatches(String query) {
+    return 'Aucune destination ne correspond à « $query ».';
+  }
+
+  @override
+  String get itineraryAllDestinationsAdded =>
+      'Toutes les destinations ont été ajoutées.';
 
   @override
   String get createItineraryButton => 'Créer l\'itinéraire';

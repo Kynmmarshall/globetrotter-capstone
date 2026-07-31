@@ -7,6 +7,7 @@ import 'package:trip_io/services/api_client.dart';
 import 'package:trip_io/services/session_controller.dart';
 import 'package:trip_io/widgets/comments_section.dart';
 import 'package:trip_io/widgets/favorite_toggle_button.dart';
+import 'package:trip_io/widgets/star_rating.dart';
 
 class DestinationDetailPage extends StatefulWidget {
   const DestinationDetailPage({
@@ -27,12 +28,48 @@ class DestinationDetailPage extends StatefulWidget {
 class _DestinationDetailPageState extends State<DestinationDetailPage> {
   static const double _backgroundBreakpoint = 700;
 
+  late Destination _destination;
   bool _explaining = false;
   String? _explanation;
   String? _explainError;
+  bool _rating = false;
 
-  Destination get destination => widget.destination;
+  Destination get destination => _destination;
   String get heroTag => widget.heroTag;
+
+  @override
+  void initState() {
+    super.initState();
+    _destination = widget.destination;
+  }
+
+  Future<void> _rate(int stars) async {
+    if (_rating) return;
+    setState(() => _rating = true);
+    try {
+      // Tapping the star that's already the user's current rating clears
+      // it instead of re-submitting the same value - lets someone take
+      // back a rating without a separate control for it.
+      final updated = destination.userRating == stars
+          ? await widget.session.clearRating(destination.id)
+          : await widget.session.rateDestination(destination.id, stars);
+      setState(() {
+        _destination = _destination.withRating(
+          ratingAverage: updated.ratingAverage,
+          ratingCount: updated.ratingCount,
+          userRating: updated.userRating,
+        );
+      });
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _rating = false);
+    }
+  }
 
   Future<void> _askAi() async {
     setState(() {
@@ -268,6 +305,34 @@ class _DestinationDetailPageState extends State<DestinationDetailPage> {
     );
   }
 
+  Widget _buildCommentsButton(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(22),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () => showCommentsSheet(context, session: widget.session, destinationId: destination.id),
+        child: _glassPanel(
+          borderRadius: BorderRadius.circular(22),
+          child: Row(
+            children: [
+              const Icon(Icons.forum_outlined, color: Colors.white, size: 20),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  l10n.commentsButtonLabel,
+                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 15),
+                ),
+              ),
+              const Icon(Icons.keyboard_arrow_up, color: Colors.white70),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildHeroImage(BuildContext context, String? imageUrl) {
     return Hero(
       tag: heroTag,
@@ -399,6 +464,21 @@ class _DestinationDetailPageState extends State<DestinationDetailPage> {
                                     ],
                                   ),
                                   const SizedBox(height: 8),
+                                  Opacity(
+                                    opacity: _rating ? 0.5 : 1,
+                                    child: IgnorePointer(
+                                      ignoring: _rating,
+                                      child: StarRating(
+                                        average: destination.ratingAverage,
+                                        count: destination.ratingCount,
+                                        userRating: destination.userRating,
+                                        interactive: true,
+                                        size: 22,
+                                        onRate: _rate,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
                                   Row(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
@@ -496,6 +576,8 @@ class _DestinationDetailPageState extends State<DestinationDetailPage> {
                                 ),
                               ),
                             ],
+                            const SizedBox(height: 22),
+                            _buildCommentsButton(context),
                             if (destination.nearby.isNotEmpty) ...[
                               const SizedBox(height: 22),
                               Text(
@@ -514,8 +596,6 @@ class _DestinationDetailPageState extends State<DestinationDetailPage> {
                               const SizedBox(height: 12),
                               ...destination.nearby.map((place) => _buildNearbyCard(context, place)),
                             ],
-                            const SizedBox(height: 22),
-                            CommentsSection(session: widget.session, destinationId: destination.id),
                           ],
                         ),
                       ),

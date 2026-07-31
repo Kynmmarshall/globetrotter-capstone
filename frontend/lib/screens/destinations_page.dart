@@ -5,11 +5,13 @@ import 'package:trip_io/l10n/gen/app_localizations.dart';
 import 'package:trip_io/models/interest_tags.dart';
 import 'package:trip_io/models/models.dart';
 import 'package:trip_io/screens/destination_detail_page.dart';
+import 'package:trip_io/screens/submit_destination_page.dart';
 import 'package:trip_io/services/analytics.dart';
 import 'package:trip_io/services/api_client.dart';
 import 'package:trip_io/services/session_controller.dart';
 import 'package:trip_io/widgets/favorite_toggle_button.dart';
 import 'package:trip_io/widgets/session_expired_card.dart';
+import 'package:trip_io/widgets/star_rating.dart';
 
 class DestinationsPage extends StatefulWidget {
   const DestinationsPage({super.key, required this.session});
@@ -233,6 +235,10 @@ class _DestinationsPageState extends State<DestinationsPage> {
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
+                  if (d.hasRatings) ...[
+                    const SizedBox(height: 4),
+                    StarRating(average: d.ratingAverage, count: d.ratingCount, size: 13),
+                  ],
                   const SizedBox(height: 6),
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -394,10 +400,33 @@ class _DestinationsPageState extends State<DestinationsPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _sectionTitle(
-                context,
-                l10n.destinationsTitle,
-                subtitle: l10n.destinationsSubtitle,
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: _sectionTitle(
+                      context,
+                      l10n.destinationsTitle,
+                      subtitle: l10n.destinationsSubtitle,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  OutlinedButton.icon(
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => SubmitDestinationPage(session: widget.session),
+                        ),
+                      );
+                    },
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.white,
+                      side: BorderSide(color: Colors.white.withValues(alpha: 0.4)),
+                    ),
+                    icon: const Icon(Icons.add_location_alt, size: 18),
+                    label: Text(l10n.suggestDestinationButton),
+                  ),
+                ],
               ),
               const SizedBox(height: 14),
               _buildSearchBar(l10n),

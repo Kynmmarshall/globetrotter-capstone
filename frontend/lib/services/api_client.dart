@@ -166,18 +166,103 @@ class ApiClient {
     return UserProfile.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
   }
 
-  Future<List<Destination>> getDestinations({String? query}) async {
+  Future<List<Destination>> getDestinations({String? query, String? token}) async {
     final response = await _client.get(
       _uri(
         '/destinations',
         query != null && query.isNotEmpty ? {'q': query} : null,
       ),
+      // Optional: /destinations works for anonymous callers too, but a
+      // token lets the backend attach each destination's user_rating.
+      headers: token != null ? {'Authorization': 'Bearer $token'} : null,
     );
     _throwIfNotOk(response);
     final decoded = jsonDecode(response.body) as List<dynamic>;
     return decoded
         .map((e) => Destination.fromJson(e as Map<String, dynamic>))
         .toList();
+  }
+
+  Future<Destination> rateDestination(String token, String destinationId, int stars) async {
+    final response = await _client.put(
+      _uri('/destinations/$destinationId/rating'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({'stars': stars}),
+    );
+    _throwIfNotOk(response);
+    return _destinationFromRatingSummary(response.body);
+  }
+
+  Future<Destination> clearRating(String token, String destinationId) async {
+    final response = await _client.delete(
+      _uri('/destinations/$destinationId/rating'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+    _throwIfNotOk(response);
+    return _destinationFromRatingSummary(response.body);
+  }
+
+  // The rating endpoints return a small RatingSummary, not a full
+  // Destination - Destination.fromJson tolerates the missing fields fine
+  // since everything but id/name/country/tags is optional, and the caller
+  // only actually reads the rating fields off the result anyway.
+  Destination _destinationFromRatingSummary(String body) {
+    final decoded = jsonDecode(body) as Map<String, dynamic>;
+    return Destination.fromJson({
+      'id': decoded['destination_id'],
+      'name': '',
+      'country': '',
+      'tags': const [],
+      'rating_average': decoded['rating_average'],
+      'rating_count': decoded['rating_count'],
+      'user_rating': decoded['user_rating'],
+    });
+  }
+
+  Future<Destination> submitDestination(String token, Map<String, dynamic> payload) async {
+    final response = await _client.post(
+      _uri('/destinations/submit'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode(payload),
+    );
+    _throwIfNotOk(response);
+    return Destination.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
+  }
+
+  Future<List<Destination>> getMySubmissions(String token) async {
+    final response = await _client.get(
+      _uri('/me/submissions'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+    _throwIfNotOk(response);
+    final decoded = jsonDecode(response.body) as List<dynamic>;
+    return decoded.map((e) => Destination.fromJson(e as Map<String, dynamic>)).toList();
+  }
+
+  Future<Destination> uploadDestinationImage(
+    String token,
+    String destinationId,
+    List<int> bytes,
+    String filename,
+  ) async {
+    final request = http.MultipartRequest('POST', _uri('/destinations/$destinationId/image'))
+      ..headers['Authorization'] = 'Bearer $token'
+      ..files.add(http.MultipartFile.fromBytes(
+        'file',
+        bytes,
+        filename: filename,
+        contentType: _imageMediaType(filename),
+      ));
+    final streamed = await _client.send(request);
+    final response = await http.Response.fromStream(streamed);
+    _throwIfNotOk(response);
+    return Destination.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
   }
 
   Future<List<Destination>> getRecommendations(String token) async {
@@ -232,6 +317,14 @@ class ApiClient {
     return decoded
         .map((e) => Itinerary.fromJson(e as Map<String, dynamic>))
         .toList();
+  }
+
+  Future<void> deleteItinerary(String token, String itineraryId) async {
+    final response = await _client.delete(
+      _uri('/itineraries/$itineraryId'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+    _throwIfNotOk(response);
   }
 
   Future<List<Comment>> getComments(String token, String destinationId) async {

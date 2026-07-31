@@ -5,12 +5,13 @@ import 'package:flutter/material.dart';
 import 'package:trip_io/l10n/gen/app_localizations.dart';
 import 'package:trip_io/services/analytics.dart';
 import 'package:trip_io/services/session_controller.dart';
-import 'package:trip_io/screens/ask_ai_page.dart';
 import 'package:trip_io/screens/destinations_page.dart';
 import 'package:trip_io/screens/favorites_page.dart';
 import 'package:trip_io/screens/itineraries_page.dart';
 import 'package:trip_io/screens/profile_page.dart';
 import 'package:trip_io/screens/recommendations_page.dart';
+import 'package:trip_io/widgets/ai_chat_sheet.dart';
+import 'package:trip_io/widgets/ai_fab_button.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key, required this.session});
@@ -29,7 +30,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
     Icons.star,
     Icons.favorite,
     Icons.map,
-    Icons.smart_toy,
     Icons.person,
   ];
   static const double _backgroundBreakpoint = 700;
@@ -40,7 +40,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
     'recommendations',
     'favorites',
     'itineraries',
-    'ask_ai',
     'profile',
   ];
 
@@ -71,9 +70,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
       l10n.navRecommendations,
       l10n.navFavorites,
       l10n.navItineraries,
-      l10n.navAskAi,
       l10n.navProfile,
     ];
+  }
+
+  // A fixed (non-draggable) shortcut into the AI chat, available from every
+  // dashboard tab as an overlay sheet rather than a nav item - asking the
+  // AI something no longer means navigating away from what you're browsing.
+  Widget _aiFab(BuildContext context) {
+    return AiFabButton(onTap: () => showAiChatSheet(context, session: widget.session));
   }
 
   Widget _frostedSurface({required Widget child, double blur = 18, double alpha = 0.16}) {
@@ -145,7 +150,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
       RecommendationsPage(session: widget.session),
       FavoritesPage(session: widget.session),
       ItinerariesPage(session: widget.session),
-      AskAiPage(session: widget.session),
       ProfilePage(session: widget.session),
     ];
 
@@ -226,6 +230,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             appBar: appBar,
             drawer: _navDrawer(labels),
             body: pages[_index],
+            floatingActionButton: _aiFab(context),
           );
         } else {
           final body = wide || medium
@@ -242,6 +247,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             appBar: appBar,
             body: body,
             bottomNavigationBar: (!wide && !medium) ? bottomNav() : null,
+            floatingActionButton: _aiFab(context),
           );
         }
 

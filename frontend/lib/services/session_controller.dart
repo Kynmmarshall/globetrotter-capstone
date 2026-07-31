@@ -19,6 +19,7 @@ class SessionController extends ChangeNotifier {
   static const _localeKey = 'gt_locale';
   static const _interestsKey = 'gt_interests';
   static const _favoriteIdsKey = 'gt_favorite_ids';
+  static const _roleKey = 'gt_role';
   static const _chatHistoryKey = 'gt_ai_chat_history';
   // Roughly 8 back-and-forth exchanges - enough for the AI to keep track of
   // what's already been discussed without every reply resending the user's
@@ -38,6 +39,7 @@ class SessionController extends ChangeNotifier {
   Locale? _locale;
   List<String> _interests = [];
   Set<String> _favoriteIds = {};
+  String? _role;
 
   bool get ready => _ready;
   bool get isLoading => _loading;
@@ -52,6 +54,7 @@ class SessionController extends ChangeNotifier {
   Locale? get locale => _locale;
   List<String> get interests => _interests;
   bool isFavorite(String destinationId) => _favoriteIds.contains(destinationId);
+  bool get isAdmin => _role == 'admin';
 
   void clearError() {
     _error = null;
@@ -73,6 +76,7 @@ class SessionController extends ChangeNotifier {
     _locale = localeCode != null ? Locale(localeCode) : null;
     _interests = prefs.getStringList(_interestsKey) ?? [];
     _favoriteIds = (prefs.getStringList(_favoriteIdsKey) ?? []).toSet();
+    _role = prefs.getString(_roleKey);
     // A token that expired while the app was closed (JWTs are valid for a
     // week - see auth.py) should never make it to a "logged in" screen -
     // clear it here rather than letting the first API call surface it as
@@ -234,6 +238,10 @@ class SessionController extends ChangeNotifier {
     }
     await prefs.setStringList(_favoriteIdsKey, profile.favoriteIds);
     _favoriteIds = profile.favoriteIds.toSet();
+    if ((profile.role ?? '').isNotEmpty) {
+      await prefs.setString(_roleKey, profile.role!);
+      _role = profile.role;
+    }
     notifyListeners();
   }
 
@@ -255,7 +263,53 @@ class SessionController extends ChangeNotifier {
   }
 
   Future<List<Destination>> destinations({String? query}) {
-    return ApiClient().getDestinations(query: query);
+    // Not gated behind _requireToken(): /destinations works for anonymous
+    // callers too. A token is passed along if we have one so the response
+    // includes this viewer's own rating on each destination, but its
+    // absence (logged out, or an expired token) isn't an error here.
+    final token = (_token != null && !_isTokenExpired(_token!)) ? _token : null;
+    return ApiClient().getDestinations(query: query, token: token);
+  }
+
+  Future<Destination> rateDestination(String destinationId, int stars) async {
+    final token = _requireToken();
+    final result = await ApiClient().rateDestination(token, destinationId, stars);
+    Analytics.instance.trackEvent('destination', 'rated', name: destinationId);
+    return result;
+  }
+
+  Future<Destination> clearRating(String destinationId) async {
+    final token = _requireToken();
+    return ApiClient().clearRating(token, destinationId);
+  }
+
+  Future<Destination> submitDestination({
+    required String name,
+    String? description,
+    String? location,
+    List<String>? tags,
+  }) async {
+    final token = _requireToken();
+    final result = await ApiClient().submitDestination(token, {
+      'name': name,
+      'description': description,
+      'location': location,
+      'tags': tags ?? const [],
+    });
+    Analytics.instance.trackEvent('destination', 'submitted', name: result.id);
+    return result;
+  }
+
+  Future<List<Destination>> mySubmissions() async {
+    final token = _requireToken();
+    return ApiClient().getMySubmissions(token);
+  }
+
+  Future<Destination> uploadDestinationImage(String destinationId, List<int> bytes, String filename) async {
+    final token = _requireToken();
+    final result = await ApiClient().uploadDestinationImage(token, destinationId, bytes, filename);
+    Analytics.instance.trackEvent('destination', 'image_uploaded', name: destinationId);
+    return result;
   }
 
   Future<List<Destination>> recommendations() async {
@@ -309,6 +363,12 @@ class SessionController extends ChangeNotifier {
   Future<List<Itinerary>> itineraries() async {
     final token = _requireToken();
     return ApiClient().getItineraries(token);
+  }
+
+  Future<void> deleteItinerary(String itineraryId) async {
+    final token = _requireToken();
+    await ApiClient().deleteItinerary(token, itineraryId);
+    Analytics.instance.trackEvent('itinerary', 'deleted', name: itineraryId);
   }
 
   Future<String> aiChat(List<ChatMessage> messages) async {

@@ -38,7 +38,6 @@
   "navRecommendations": "Recommendations",
   "navFavorites": "Favorites",
   "navItineraries": "Itineraries",
-  "navAskAi": "Ask AI",
   "navProfile": "Profile",
 
   "aiChatTitle": "Ask AI",
@@ -58,6 +57,7 @@
   "commentsInputHint": "Add a comment…",
   "commentsPostButton": "Post",
   "commentsReplyButton": "Reply",
+  "commentsButtonLabel": "View comments",
   "commentsEmpty": "No comments yet — be the first to share your thoughts.",
   "commentsLoadError": "Couldn't load comments.\n{error}",
   "@commentsLoadError": {
@@ -72,6 +72,22 @@
   "destinationsFilterLabel": "Filter by interest",
   "destinationsFilterClear": "Clear",
   "destinationsFilterEmpty": "No destinations match the selected filters.",
+  "suggestDestinationButton": "Suggest a destination",
+  "submitDestinationTitle": "Suggest a destination",
+  "submitDestinationSubtitle": "Know a real spot in Yaoundé that's missing? Suggest it here - an admin reviews every submission before it goes live.",
+  "submitDestinationNameLabel": "Destination name",
+  "submitDestinationNameRequired": "Name is required",
+  "submitDestinationLocationLabel": "Location",
+  "submitDestinationLocationHint": "e.g. Bastos, Yaoundé",
+  "submitDestinationDescriptionLabel": "Description",
+  "submitDestinationReviewNotice": "Your suggestion won't appear in the app until an admin approves it.",
+  "submitDestinationButton": "Submit for review",
+  "submitDestinationSuccess": "Thanks! Your suggestion was submitted for review.",
+  "submitDestinationSuccessImageFailed": "Your suggestion was submitted, but the photo failed to upload: {error}",
+  "@submitDestinationSuccessImageFailed": {
+    "placeholders": { "error": { "type": "String" } }
+  },
+  "submitDestinationAddPhoto": "Add a photo (optional)",
 
   "recommendationsTitle": "Picked for you",
   "recommendationsSubtitle": "A quick shortlist of Yaoundé spots worth adding to your itinerary.",
@@ -93,11 +109,31 @@
 
   "itinerariesFormMissing": "Add a title and pick at least one destination.",
   "itineraryCreatedSnackbar": "Itinerary created.",
+  "itineraryDeletedSnackbar": "Itinerary deleted.",
+  "deleteItineraryButton": "Delete",
+  "deleteItineraryConfirmTitle": "Delete this itinerary?",
+  "deleteItineraryConfirmMessage": "\"{title}\" will be permanently deleted. This can't be undone.",
+  "@deleteItineraryConfirmMessage": {
+    "placeholders": { "title": { "type": "String" } }
+  },
+  "cancelButton": "Cancel",
   "itinerariesPlanTitle": "Plan a new itinerary",
   "itineraryTitleLabel": "Itinerary title",
   "itineraryTitleHint": "My Yaoundé weekend",
   "destinationsLabel": "Destinations",
   "noDestinationsAvailable": "No destinations available yet.",
+  "itineraryDestinationSearchHint": "Search destinations to add…",
+  "itineraryShowAllDestinations": "Show all {count} destinations",
+  "@itineraryShowAllDestinations": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "itineraryHideAllDestinations": "Hide full list",
+  "itineraryDestinationSearchPrompt": "Search by name, or tap \"show all\" to browse every destination.",
+  "itineraryDestinationSearchNoMatches": "No destinations match \"{query}\".",
+  "@itineraryDestinationSearchNoMatches": {
+    "placeholders": { "query": { "type": "String" } }
+  },
+  "itineraryAllDestinationsAdded": "All destinations have been added.",
   "createItineraryButton": "Create Itinerary",
   "itinerariesErrorMessage": "Could not load itineraries.\n{error}",
   "@itinerariesErrorMessage": {
