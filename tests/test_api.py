@@ -436,3 +436,257 @@ async def test_favorites_add_remove_list(tmp_path):
         # /me reflects the same favorite_ids
         me = await ac.get("/me", headers=headers)
         assert me.json()["favorite_ids"] == ["d1"]
+
+
+def _moderation_fixture(tmp_path):
+    """Two destinations, and a helper to promote a user to admin."""
+    import json
+    data_file = tmp_path / "data.json"
+    data_file.write_text(json.dumps({
+        "users": [],
+        "itineraries": [],
+        "destinations": [
+            {"id": "d1", "name": "Spot One", "country": "Cameroon", "tags": ["nature"]},
+            {"id": "d2", "name": "Spot Two", "country": "Cameroon", "tags": ["food"]},
+        ],
+    }))
+    import os
+    os.environ["GLOBETROTTER_DATA_PATH"] = str(data_file)
+    return data_file
+
+
+def _promote_to_admin(data_file, username):
+    import json
+    data = json.loads(data_file.read_text(encoding="utf-8"))
+    for u in data["users"]:
+        if u["username"] == username:
+            u["role"] = "admin"
+    data_file.write_text(json.dumps(data), encoding="utf-8")
+
+
+@pytest.mark.asyncio
+async def test_rating_average_and_own_rating(tmp_path):
+    _moderation_fixture(tmp_path)
+    async with AsyncClient(app=app, base_url="http://test") as ac:
+        r = await ac.post("/register", json={"username": "alice", "password": "secret"})
+        headers_a = {"Authorization": f"Bearer {r.json()['access_token']}"}
+        r = await ac.post("/register", json={"username": "bob", "password": "secret"})
+        headers_b = {"Authorization": f"Bearer {r.json()['access_token']}"}
+
+        # out-of-range rejected
+        bad = await ac.put("/destinations/d1/rating", json={"stars": 6}, headers=headers_a)
+        assert bad.status_code == 400
+
+        r1 = await ac.put("/destinations/d1/rating", json={"stars": 5}, headers=headers_a)
+        assert r1.status_code == 200
+        assert r1.json()["rating_average"] == 5.0
+        assert r1.json()["rating_count"] == 1
+        assert r1.json()["user_rating"] == 5
+
+        r2 = await ac.put("/destinations/d1/rating", json={"stars": 3}, headers=headers_b)
+        assert r2.json()["rating_average"] == 4.0
+        assert r2.json()["rating_count"] == 2
+
+        # re-rating replaces rather than stacking
+        r3 = await ac.put("/destinations/d1/rating", json={"stars": 1}, headers=headers_a)
+        assert r3.json()["rating_count"] == 2
+        assert r3.json()["rating_average"] == 2.0
+        assert r3.json()["user_rating"] == 1
+
+        # listing carries the aggregate + the caller's own rating
+        listed = await ac.get("/destinations", headers=headers_b)
+        d1 = next(d for d in listed.json() if d["id"] == "d1")
+        assert d1["rating_average"] == 2.0
+        assert d1["rating_count"] == 2
+        assert d1["user_rating"] == 3  # bob's, not alice's
+
+        # anonymous callers still see the average, but no personal rating
+        anon = await ac.get("/destinations")
+        d1_anon = next(d for d in anon.json() if d["id"] == "d1")
+        assert d1_anon["rating_average"] == 2.0
+        assert d1_anon["user_rating"] is None
+
+        cleared = await ac.delete("/destinations/d1/rating", headers=headers_a)
+        assert cleared.json()["rating_count"] == 1
+        assert cleared.json()["user_rating"] is None
+
+        missing = await ac.put("/destinations/nope/rating", json={"stars": 4}, headers=headers_a)
+        assert missing.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_submission_stays_hidden_until_approved(tmp_path):
+    data_file = _moderation_fixture(tmp_path)
+    async with AsyncClient(app=app, base_url="http://test") as ac:
+        r = await ac.post("/register", json={"username": "alice", "password": "secret"})
+        headers_a = {"Authorization": f"Bearer {r.json()['access_token']}"}
+        r = await ac.post("/register", json={"username": "root", "password": "secret"})
+        headers_admin = {"Authorization": f"Bearer {r.json()['access_token']}"}
+        _promote_to_admin(data_file, "root")
+
+        # blank name rejected
+        blank = await ac.post("/destinations/submit", json={"name": "   "}, headers=headers_a)
+        assert blank.status_code == 400
+
+        sub = await ac.post(
+            "/destinations/submit",
+            json={"name": "Hidden Gem", "description": "A real place", "tags": ["food"]},
+            headers=headers_a,
+        )
+        assert sub.status_code == 200
+        new_id = sub.json()["id"]
+        assert sub.json()["status"] == "pending"
+        assert sub.json()["submitted_by"] == "alice"
+
+        # invisible in the public catalog, and not directly fetchable
+        listed = await ac.get("/destinations")
+        assert new_id not in [d["id"] for d in listed.json()]
+        assert (await ac.get(f"/destinations/{new_id}")).status_code == 404
+
+        # the submitter can still track it
+        mine = await ac.get("/me/submissions", headers=headers_a)
+        assert [d["id"] for d in mine.json()] == [new_id]
+
+        # non-admins are locked out of the queue
+        assert (await ac.get("/admin/destinations", headers=headers_a)).status_code == 403
+        # ...and out of destructive admin actions
+        assert (await ac.delete(f"/admin/destinations/{new_id}", headers=headers_a)).status_code == 403
+
+        pending = await ac.get("/admin/destinations?status=pending", headers=headers_admin)
+        assert pending.status_code == 200
+        assert [d["id"] for d in pending.json()] == [new_id]
+
+        approved = await ac.patch(
+            f"/admin/destinations/{new_id}",
+            json={"status": "approved"},
+            headers=headers_admin,
+        )
+        assert approved.status_code == 200
+        listed = await ac.get("/destinations")
+        assert new_id in [d["id"] for d in listed.json()]
+
+
+@pytest.mark.asyncio
+async def test_admin_edit_create_delete(tmp_path):
+    data_file = _moderation_fixture(tmp_path)
+    async with AsyncClient(app=app, base_url="http://test") as ac:
+        r = await ac.post("/register", json={"username": "root", "password": "secret"})
+        headers_admin = {"Authorization": f"Bearer {r.json()['access_token']}"}
+        _promote_to_admin(data_file, "root")
+        r = await ac.post("/register", json={"username": "alice", "password": "secret"})
+        headers_a = {"Authorization": f"Bearer {r.json()['access_token']}"}
+
+        # /me exposes the role so clients can show/hide admin UI
+        assert (await ac.get("/me", headers=headers_admin)).json()["role"] == "admin"
+        assert (await ac.get("/me", headers=headers_a)).json().get("role") in (None, "user")
+
+        edited = await ac.patch(
+            "/admin/destinations/d1",
+            json={"description": "Updated copy"},
+            headers=headers_admin,
+        )
+        assert edited.status_code == 200
+        assert edited.json()["description"] == "Updated copy"
+        assert edited.json()["name"] == "Spot One"  # untouched fields survive
+
+        bad_status = await ac.patch(
+            "/admin/destinations/d1", json={"status": "sideways"}, headers=headers_admin
+        )
+        assert bad_status.status_code == 400
+
+        # admin-created destinations skip the review queue
+        created = await ac.post(
+            "/admin/destinations",
+            json={"name": "Straight To Live"},
+            headers=headers_admin,
+        )
+        assert created.status_code == 200
+        assert created.json()["status"] == "approved"
+        assert created.json()["id"] in [d["id"] for d in (await ac.get("/destinations")).json()]
+
+        # deleting cleans up dependent records
+        await ac.put("/destinations/d2/rating", json={"stars": 4}, headers=headers_a)
+        await ac.post("/me/favorites/d2", headers=headers_a)
+        await ac.post("/destinations/d2/comments", json={"text": "nice"}, headers=headers_a)
+
+        deleted = await ac.delete("/admin/destinations/d2", headers=headers_admin)
+        assert deleted.status_code == 200
+        assert "d2" not in [d["id"] for d in (await ac.get("/destinations")).json()]
+        assert (await ac.get("/me/favorites", headers=headers_a)).json() == []
+
+        import json
+        data = json.loads(data_file.read_text(encoding="utf-8"))
+        assert [r for r in data.get("ratings", []) if r["destination_id"] == "d2"] == []
+        assert [c for c in data.get("comments", []) if c["destination_id"] == "d2"] == []
+
+        assert (await ac.delete("/admin/destinations/nope", headers=headers_admin)).status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_submission_image_upload_ownership(tmp_path, monkeypatch):
+    data_file = _moderation_fixture(tmp_path)
+
+    images_dir = tmp_path / "destinations_images"
+    images_dir.mkdir()
+    monkeypatch.setattr(main, "_destinations_images_dir", images_dir)
+
+    async with AsyncClient(app=app, base_url="http://test") as ac:
+        r = await ac.post("/register", json={"username": "alice", "password": "secret"})
+        headers_a = {"Authorization": f"Bearer {r.json()['access_token']}"}
+        r = await ac.post("/register", json={"username": "bob", "password": "secret"})
+        headers_b = {"Authorization": f"Bearer {r.json()['access_token']}"}
+        r = await ac.post("/register", json={"username": "root", "password": "secret"})
+        headers_admin = {"Authorization": f"Bearer {r.json()['access_token']}"}
+        _promote_to_admin(data_file, "root")
+
+        sub = await ac.post(
+            "/destinations/submit",
+            json={"name": "Hidden Gem"},
+            headers=headers_a,
+        )
+        new_id = sub.json()["id"]
+
+        # a stranger can't attach an image to someone else's pending submission
+        stolen = await ac.post(
+            f"/destinations/{new_id}/image",
+            headers=headers_b,
+            files={"file": ("photo.png", b"\x89PNG fake bytes", "image/png")},
+        )
+        assert stolen.status_code == 403
+
+        # bad content type rejected
+        bad = await ac.post(
+            f"/destinations/{new_id}/image",
+            headers=headers_a,
+            files={"file": ("notes.txt", b"hello", "text/plain")},
+        )
+        assert bad.status_code == 400
+
+        # the original submitter can attach one
+        uploaded = await ac.post(
+            f"/destinations/{new_id}/image",
+            headers=headers_a,
+            files={"file": ("photo.png", b"\x89PNG fake bytes", "image/png")},
+        )
+        assert uploaded.status_code == 200
+        assert uploaded.json()["image_url"] == f"/static/destinations/{new_id}.png"
+        saved = list(images_dir.iterdir())
+        assert len(saved) == 1
+
+        # an admin can also attach/replace an image on someone else's submission
+        replaced = await ac.post(
+            f"/destinations/{new_id}/image",
+            headers=headers_admin,
+            files={"file": ("photo.jpg", b"\xff\xd8\xff fake jpeg", "image/jpeg")},
+        )
+        assert replaced.status_code == 200
+        assert replaced.json()["image_url"] == f"/static/destinations/{new_id}.jpg"
+        # old .png was cleaned up, not left behind alongside the new .jpg
+        assert [p.name for p in images_dir.iterdir()] == [f"{new_id}.jpg"]
+
+        missing = await ac.post(
+            "/destinations/does-not-exist/image",
+            headers=headers_a,
+            files={"file": ("photo.png", b"\x89PNG fake bytes", "image/png")},
+        )
+        assert missing.status_code == 404

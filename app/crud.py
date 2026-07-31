@@ -105,8 +105,13 @@ def get_favorites_for(username: str):
     data = read_data()
     profile = get_user(username)
     fav_ids = (profile or {}).get("favorite_ids") or []
-    dests_by_id = {d["id"]: d for d in data.get("destinations", [])}
-    return [dests_by_id[i] for i in fav_ids if i in dests_by_id]
+    dests_by_id = {
+        d["id"]: d for d in data.get("destinations", []) if is_approved(d)
+    }
+    favs = [dests_by_id[i] for i in fav_ids if i in dests_by_id]
+    stats = _rating_stats(data)
+    mine = _viewer_ratings(data, username)
+    return [_with_ratings(d, stats, mine) for d in favs]
 
 def create_itinerary(itin: dict):
     data = read_data()
@@ -139,17 +144,167 @@ def set_destination_ai_explanation(destination_id: str, text: str):
             return d
     return None
 
-def search_destinations(q: str = None):
+APPROVED = "approved"
+PENDING = "pending"
+REJECTED = "rejected"
+
+def is_approved(d: dict) -> bool:
+    # Destinations created before moderation existed have no "status" key,
+    # so a missing status means approved rather than hidden.
+    return d.get("status", APPROVED) == APPROVED
+
+def _rating_stats(data: dict) -> dict:
+    """{destination_id: (average, count)} across all stored ratings."""
+    buckets: dict[str, list[int]] = {}
+    for r in data.get("ratings", []):
+        buckets.setdefault(r["destination_id"], []).append(int(r["stars"]))
+    return {
+        did: (round(sum(stars) / len(stars), 2), len(stars))
+        for did, stars in buckets.items()
+        if stars
+    }
+
+def _viewer_ratings(data: dict, viewer: str | None) -> dict:
+    if not viewer:
+        return {}
+    return {
+        r["destination_id"]: int(r["stars"])
+        for r in data.get("ratings", [])
+        if r.get("username") == viewer
+    }
+
+def _with_ratings(dest: dict, stats: dict, mine: dict) -> dict:
+    average, count = stats.get(dest["id"], (None, 0))
+    return {
+        **dest,
+        "rating_average": average,
+        "rating_count": count,
+        "user_rating": mine.get(dest["id"]),
+    }
+
+def enrich_destinations(dests: list[dict], viewer: str | None = None) -> list[dict]:
+    data = read_data()
+    stats = _rating_stats(data)
+    mine = _viewer_ratings(data, viewer)
+    return [_with_ratings(d, stats, mine) for d in dests]
+
+def enrich_destination(dest: dict, viewer: str | None = None) -> dict:
+    return enrich_destinations([dest], viewer)[0]
+
+def search_destinations(q: str = None, viewer: str | None = None):
+    data = read_data()
+    dests = [d for d in data.get("destinations", []) if is_approved(d)]
+    if q:
+        ql = q.lower()
+        def match(d):
+            name = (d.get("name") or "").lower()
+            tags = [t or "" for t in d.get("tags", [])]
+            return ql in name or any(ql in t.lower() for t in tags)
+        dests = [d for d in dests if match(d)]
+    stats = _rating_stats(data)
+    mine = _viewer_ratings(data, viewer)
+    return [_with_ratings(d, stats, mine) for d in dests]
+
+def rate_destination(destination_id: str, username: str, stars: int):
+    """Upserts this user's rating - one per user per destination, so
+    re-rating replaces rather than stacking."""
+    data = read_data()
+    ratings = data.setdefault("ratings", [])
+    for r in ratings:
+        if r["destination_id"] == destination_id and r["username"] == username:
+            r["stars"] = stars
+            r["updated_at"] = datetime.now(timezone.utc).isoformat()
+            break
+    else:
+        ratings.append({
+            "destination_id": destination_id,
+            "username": username,
+            "stars": stars,
+            "created_at": datetime.now(timezone.utc).isoformat(),
+        })
+    write_data(data)
+    return rating_summary(destination_id, username)
+
+def clear_rating(destination_id: str, username: str):
+    data = read_data()
+    ratings = data.setdefault("ratings", [])
+    data["ratings"] = [
+        r for r in ratings
+        if not (r["destination_id"] == destination_id and r["username"] == username)
+    ]
+    write_data(data)
+    return rating_summary(destination_id, username)
+
+def rating_summary(destination_id: str, viewer: str | None = None) -> dict:
+    data = read_data()
+    average, count = _rating_stats(data).get(destination_id, (None, 0))
+    return {
+        "destination_id": destination_id,
+        "rating_average": average,
+        "rating_count": count,
+        "user_rating": _viewer_ratings(data, viewer).get(destination_id),
+    }
+
+def _next_destination_id(data: dict) -> str:
+    highest = 0
+    for d in data.get("destinations", []):
+        raw = str(d.get("id", ""))
+        if raw.startswith("d") and raw[1:].isdigit():
+            highest = max(highest, int(raw[1:]))
+    return f"d{highest + 1}"
+
+def submit_destination(payload: dict, username: str):
+    """A regular user's proposal - lands as PENDING, never live."""
+    data = read_data()
+    dest = {
+        **payload,
+        "id": _next_destination_id(data),
+        "status": PENDING,
+        "submitted_by": username,
+        "submitted_at": datetime.now(timezone.utc).isoformat(),
+    }
+    data.setdefault("destinations", []).append(dest)
+    write_data(data)
+    return dest
+
+def list_destinations_by_status(status: str | None = None):
     data = read_data()
     dests = data.get("destinations", [])
-    if not q:
-        return dests
-    ql = q.lower()
-    def match(d):
-        name = (d.get("name") or "").lower()
-        tags = [t or "" for t in d.get("tags", [])]
-        return ql in name or any(ql in t.lower() for t in tags)
-    return [d for d in dests if match(d)]
+    if status:
+        return [d for d in dests if d.get("status", APPROVED) == status]
+    return dests
+
+def get_submissions_by(username: str):
+    data = read_data()
+    return [d for d in data.get("destinations", []) if d.get("submitted_by") == username]
+
+def update_destination(destination_id: str, changes: dict):
+    data = read_data()
+    for d in data.get("destinations", []):
+        if d.get("id") == destination_id:
+            for key, value in changes.items():
+                if value is not None:
+                    d[key] = value
+            write_data(data)
+            return d
+    return None
+
+def delete_destination(destination_id: str):
+    data = read_data()
+    before = len(data.get("destinations", []))
+    data["destinations"] = [d for d in data.get("destinations", []) if d.get("id") != destination_id]
+    if len(data["destinations"]) == before:
+        return False
+    # Clean up anything that pointed at it, so the app never renders an
+    # orphaned rating or comment against a destination that's gone.
+    data["ratings"] = [r for r in data.get("ratings", []) if r.get("destination_id") != destination_id]
+    data["comments"] = [c for c in data.get("comments", []) if c.get("destination_id") != destination_id]
+    for u in data.get("users", []):
+        favs = u.get("favorite_ids")
+        if favs and destination_id in favs:
+            favs.remove(destination_id)
+    write_data(data)
+    return True
 
 def _comment_score(c: dict) -> int:
     return len(c.get("upvotes", [])) - len(c.get("downvotes", []))
@@ -235,16 +390,21 @@ def get_comments_for_destination(destination_id: str, viewer: str | None = None)
 
 def recommendations_for(user: str):
     data = read_data()
-    dests = data.get("destinations", [])
+    dests = [d for d in data.get("destinations", []) if is_approved(d)]
     profile = get_user(user)
     interests = set((profile or {}).get("interests") or [])
 
+    stats = _rating_stats(data)
+    mine = _viewer_ratings(data, user)
+    def finish(items):
+        return [_with_ratings(d, stats, mine) for d in items]
+
     if not interests:
-        return dests[:3]
+        return finish(dests[:3])
 
     def score(d):
         return len(set(d.get("tags") or []) & interests)
 
     matched = [d for d in dests if score(d) > 0]
     matched.sort(key=score, reverse=True)
-    return matched[:6] if matched else dests[:3]
+    return finish(matched[:6] if matched else dests[:3])
