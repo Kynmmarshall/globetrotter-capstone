@@ -38,7 +38,6 @@
   "navRecommendations": "Recommendations",
   "navFavorites": "Favorites",
   "navItineraries": "Itineraries",
-  "navAskAi": "Ask AI",
   "navProfile": "Profile",
 
   "aiChatTitle": "Ask AI",
@@ -58,6 +57,7 @@
   "commentsInputHint": "Add a comment…",
   "commentsPostButton": "Post",
   "commentsReplyButton": "Reply",
+  "commentsButtonLabel": "View comments",
   "commentsEmpty": "No comments yet — be the first to share your thoughts.",
   "commentsLoadError": "Couldn't load comments.\n{error}",
   "@commentsLoadError": {

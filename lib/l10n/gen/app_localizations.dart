@@ -302,12 +302,6 @@ abstract class AppLocalizations {
   /// **'Itineraries'**
   String get navItineraries;
 
-  /// No description provided for @navAskAi.
-  ///
-  /// In en, this message translates to:
-  /// **'Ask AI'**
-  String get navAskAi;
-
   /// No description provided for @navProfile.
   ///
   /// In en, this message translates to:
@@ -391,6 +385,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Reply'**
   String get commentsReplyButton;
+
+  /// No description provided for @commentsButtonLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'View comments'**
+  String get commentsButtonLabel;
 
   /// No description provided for @commentsEmpty.
   ///

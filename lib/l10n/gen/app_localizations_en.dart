@@ -116,9 +116,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get navItineraries => 'Itineraries';
 
   @override
-  String get navAskAi => 'Ask AI';
-
-  @override
   String get navProfile => 'Profile';
 
   @override
@@ -164,6 +161,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get commentsReplyButton => 'Reply';
+
+  @override
+  String get commentsButtonLabel => 'View comments';
 
   @override
   String get commentsEmpty =>

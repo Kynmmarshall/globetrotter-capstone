@@ -1,15 +1,68 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:trip_io/l10n/gen/app_localizations.dart';
 import 'package:trip_io/models/models.dart';
 import 'package:trip_io/services/session_controller.dart';
 
+/// Opens the comment thread as a draggable sheet that slides up over the
+/// current screen (TikTok/YouTube Shorts style) instead of living inline in
+/// the page. Call this from a "Comments" button.
+Future<void> showCommentsSheet(
+  BuildContext context, {
+  required SessionController session,
+  required String destinationId,
+}) {
+  return showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (context) {
+      return DraggableScrollableSheet(
+        initialChildSize: 0.75,
+        minChildSize: 0.45,
+        maxChildSize: 0.95,
+        expand: false,
+        builder: (context, scrollController) {
+          return ClipRRect(
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: const Color(0xFF0B1A24).withValues(alpha: 0.96),
+                  border: Border(top: BorderSide(color: Colors.white.withValues(alpha: 0.14))),
+                ),
+                child: CommentsSection(
+                  session: session,
+                  destinationId: destinationId,
+                  scrollController: scrollController,
+                ),
+              ),
+            ),
+          );
+        },
+      );
+    },
+  );
+}
+
 /// Reddit-style comment thread for a destination: post, reply at any depth,
-/// upvote/downvote. Lives at the bottom of DestinationDetailPage.
+/// upvote/downvote. Rendered inside the draggable sheet [showCommentsSheet]
+/// opens - [scrollController] is the sheet's own controller, so dragging the
+/// list and dragging the sheet itself are the same gesture, same as
+/// TikTok/YouTube Shorts' comment drawers.
 class CommentsSection extends StatefulWidget {
-  const CommentsSection({super.key, required this.session, required this.destinationId});
+  const CommentsSection({
+    super.key,
+    required this.session,
+    required this.destinationId,
+    required this.scrollController,
+  });
 
   final SessionController session;
   final String destinationId;
+  final ScrollController scrollController;
 
   @override
   State<CommentsSection> createState() => _CommentsSectionState();
@@ -85,6 +138,14 @@ class _CommentsSectionState extends State<CommentsSection> {
     }).toList();
   }
 
+  int _totalCount(List<Comment> nodes) {
+    var total = 0;
+    for (final c in nodes) {
+      total += 1 + _totalCount(c.replies);
+    }
+    return total;
+  }
+
   void _onReplyPosted(String parentId, Comment reply) {
     setState(() {
       _comments = _mapTree(
@@ -126,72 +187,119 @@ class _CommentsSectionState extends State<CommentsSection> {
     final comments = _comments ?? [];
 
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            const Icon(Icons.forum_outlined, color: Colors.white, size: 18),
-            const SizedBox(width: 8),
-            Text(
-              l10n.commentsTitle,
-              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 17),
+        // Drag handle - visually ties the list's own scrolling to the
+        // sheet's drag-to-resize/dismiss gesture.
+        Center(
+          child: Container(
+            margin: const EdgeInsets.only(top: 10, bottom: 6),
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.28),
+              borderRadius: BorderRadius.circular(999),
             ),
-          ],
+          ),
         ),
-        const SizedBox(height: 12),
-        _glassPanel(
-          borderRadius: BorderRadius.circular(18),
-          padding: const EdgeInsets.fromLTRB(14, 6, 6, 6),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 4, 8, 10),
           child: Row(
             children: [
+              const Icon(Icons.forum_outlined, color: Colors.white, size: 18),
+              const SizedBox(width: 8),
               Expanded(
-                child: TextField(
-                  controller: _composerController,
-                  style: const TextStyle(color: Colors.white),
-                  cursorColor: Colors.white,
-                  minLines: 1,
-                  maxLines: 4,
-                  decoration: InputDecoration(
-                    border: InputBorder.none,
-                    hintText: l10n.commentsInputHint,
-                    hintStyle: const TextStyle(color: Colors.white60),
-                  ),
+                child: Text(
+                  comments.isEmpty ? l10n.commentsTitle : '${l10n.commentsTitle} (${_totalCount(comments)})',
+                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 16),
                 ),
               ),
               IconButton(
-                tooltip: l10n.commentsPostButton,
-                onPressed: _posting ? null : _postTopLevel,
-                icon: _posting
-                    ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white70),
-                      )
-                    : const Icon(Icons.send, color: Colors.white),
+                icon: const Icon(Icons.close, color: Colors.white70),
+                onPressed: () => Navigator.of(context).maybePop(),
+                tooltip: MaterialLocalizations.of(context).closeButtonLabel,
               ),
             ],
           ),
         ),
-        const SizedBox(height: 16),
-        if (_loading)
-          const Center(child: Padding(padding: EdgeInsets.symmetric(vertical: 24), child: CircularProgressIndicator()))
-        else if (_error != null)
-          Text(l10n.commentsLoadError(_error!), style: TextStyle(color: Colors.red.shade100))
-        else if (comments.isEmpty)
-          Text(l10n.commentsEmpty, style: const TextStyle(color: Colors.white70))
-        else
-          Column(
-            children: comments
-                .map((c) => _CommentTile(
-                      comment: c,
-                      session: widget.session,
-                      destinationId: widget.destinationId,
-                      depth: 0,
-                      onReplyPosted: _onReplyPosted,
-                      onVoted: _onVoted,
-                    ))
-                .toList(),
+        Divider(color: Colors.white.withValues(alpha: 0.12), height: 1),
+        Expanded(
+          child: _loading
+              ? const Center(child: CircularProgressIndicator())
+              : _error != null
+                  ? Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Text(
+                          l10n.commentsLoadError(_error!),
+                          style: TextStyle(color: Colors.red.shade100),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    )
+                  : comments.isEmpty
+                      ? Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(24),
+                            child: Text(
+                              l10n.commentsEmpty,
+                              style: const TextStyle(color: Colors.white70),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        )
+                      : ListView.builder(
+                          controller: widget.scrollController,
+                          padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+                          itemCount: comments.length,
+                          itemBuilder: (context, index) => _CommentTile(
+                            comment: comments[index],
+                            session: widget.session,
+                            destinationId: widget.destinationId,
+                            depth: 0,
+                            onReplyPosted: _onReplyPosted,
+                            onVoted: _onVoted,
+                          ),
+                        ),
+        ),
+        SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+            child: _glassPanel(
+              borderRadius: BorderRadius.circular(18),
+              padding: const EdgeInsets.fromLTRB(14, 4, 6, 4),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _composerController,
+                      style: const TextStyle(color: Colors.white),
+                      cursorColor: Colors.white,
+                      minLines: 1,
+                      maxLines: 4,
+                      decoration: InputDecoration(
+                        border: InputBorder.none,
+                        hintText: l10n.commentsInputHint,
+                        hintStyle: const TextStyle(color: Colors.white60),
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    tooltip: l10n.commentsPostButton,
+                    onPressed: _posting ? null : _postTopLevel,
+                    icon: _posting
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white70),
+                          )
+                        : const Icon(Icons.send, color: Colors.white),
+                  ),
+                ],
+              ),
+            ),
           ),
+        ),
       ],
     );
   }

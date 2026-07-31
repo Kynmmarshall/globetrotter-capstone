@@ -6,19 +6,54 @@ import 'package:trip_io/models/models.dart';
 import 'package:trip_io/services/session_controller.dart';
 import 'package:trip_io/widgets/session_expired_card.dart';
 
-class AskAiPage extends StatefulWidget {
-  const AskAiPage({super.key, required this.session});
-
-  final SessionController session;
-
-  @override
-  State<AskAiPage> createState() => _AskAiPageState();
+/// Opens the AI chat as a draggable sheet over whatever screen the user is
+/// currently on - same pattern as [showCommentsSheet] - instead of a
+/// dedicated nav tab. That way asking the AI something never means losing
+/// your place in whatever you were browsing.
+Future<void> showAiChatSheet(BuildContext context, {required SessionController session}) {
+  return showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (context) {
+      return DraggableScrollableSheet(
+        initialChildSize: 0.75,
+        minChildSize: 0.45,
+        maxChildSize: 0.95,
+        expand: false,
+        builder: (context, scrollController) {
+          return ClipRRect(
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: const Color(0xFF0B1A24).withValues(alpha: 0.96),
+                  border: Border(top: BorderSide(color: Colors.white.withValues(alpha: 0.14))),
+                ),
+                child: AiChatSheet(session: session, scrollController: scrollController),
+              ),
+            ),
+          );
+        },
+      );
+    },
+  );
 }
 
-class _AskAiPageState extends State<AskAiPage> {
+class AiChatSheet extends StatefulWidget {
+  const AiChatSheet({super.key, required this.session, required this.scrollController});
+
+  final SessionController session;
+  final ScrollController scrollController;
+
+  @override
+  State<AiChatSheet> createState() => _AiChatSheetState();
+}
+
+class _AiChatSheetState extends State<AiChatSheet> {
   final List<ChatMessage> _messages = [];
   final TextEditingController _controller = TextEditingController();
-  final ScrollController _scrollController = ScrollController();
   bool _sending = false;
   String? _error;
 
@@ -31,7 +66,6 @@ class _AskAiPageState extends State<AskAiPage> {
   @override
   void dispose() {
     _controller.dispose();
-    _scrollController.dispose();
     super.dispose();
   }
 
@@ -76,9 +110,9 @@ class _AskAiPageState extends State<AskAiPage> {
 
   void _scrollToBottom() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!_scrollController.hasClients) return;
-      _scrollController.animateTo(
-        _scrollController.position.maxScrollExtent,
+      if (!widget.scrollController.hasClients) return;
+      widget.scrollController.animateTo(
+        widget.scrollController.position.maxScrollExtent,
         duration: const Duration(milliseconds: 250),
         curve: Curves.easeOut,
       );
@@ -146,8 +180,21 @@ class _AskAiPageState extends State<AskAiPage> {
 
     return Column(
       children: [
+        // Drag handle - ties the message list's own scrolling to the
+        // sheet's drag-to-resize/dismiss gesture, same as the comments sheet.
+        Center(
+          child: Container(
+            margin: const EdgeInsets.only(top: 10, bottom: 4),
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.28),
+              borderRadius: BorderRadius.circular(999),
+            ),
+          ),
+        ),
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+          padding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -181,9 +228,15 @@ class _AskAiPageState extends State<AskAiPage> {
                   ],
                 ),
               ),
+              IconButton(
+                icon: const Icon(Icons.close, color: Colors.white70),
+                onPressed: () => Navigator.of(context).maybePop(),
+                tooltip: MaterialLocalizations.of(context).closeButtonLabel,
+              ),
             ],
           ),
         ),
+        Divider(color: Colors.white.withValues(alpha: 0.12), height: 1),
         Expanded(
           child: _messages.isEmpty
               ? Center(
@@ -197,8 +250,8 @@ class _AskAiPageState extends State<AskAiPage> {
                   ),
                 )
               : ListView.builder(
-                  controller: _scrollController,
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                  controller: widget.scrollController,
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
                   itemCount: _messages.length + (_sending ? 1 : 0),
                   itemBuilder: (context, index) {
                     if (index >= _messages.length) {
@@ -235,7 +288,7 @@ class _AskAiPageState extends State<AskAiPage> {
           SafeArea(
             top: false,
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
               child: _glassPanel(
                 padding: const EdgeInsets.fromLTRB(16, 4, 8, 4),
                 child: Row(

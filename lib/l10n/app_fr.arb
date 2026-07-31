@@ -37,7 +37,6 @@
   "navRecommendations": "Recommandations",
   "navFavorites": "Favoris",
   "navItineraries": "Itinéraires",
-  "navAskAi": "IA",
   "navProfile": "Profil",
 
   "aiChatTitle": "Demander à l'IA",
@@ -54,6 +53,7 @@
   "commentsInputHint": "Ajouter un commentaire…",
   "commentsPostButton": "Publier",
   "commentsReplyButton": "Répondre",
+  "commentsButtonLabel": "Voir les commentaires",
   "commentsEmpty": "Aucun commentaire pour l'instant — soyez le premier à partager votre avis.",
   "commentsLoadError": "Impossible de charger les commentaires.\n{error}",
 

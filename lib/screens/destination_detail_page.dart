@@ -305,6 +305,34 @@ class _DestinationDetailPageState extends State<DestinationDetailPage> {
     );
   }
 
+  Widget _buildCommentsButton(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(22),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () => showCommentsSheet(context, session: widget.session, destinationId: destination.id),
+        child: _glassPanel(
+          borderRadius: BorderRadius.circular(22),
+          child: Row(
+            children: [
+              const Icon(Icons.forum_outlined, color: Colors.white, size: 20),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  l10n.commentsButtonLabel,
+                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 15),
+                ),
+              ),
+              const Icon(Icons.keyboard_arrow_up, color: Colors.white70),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildHeroImage(BuildContext context, String? imageUrl) {
     return Hero(
       tag: heroTag,
@@ -548,6 +576,8 @@ class _DestinationDetailPageState extends State<DestinationDetailPage> {
                                 ),
                               ),
                             ],
+                            const SizedBox(height: 22),
+                            _buildCommentsButton(context),
                             if (destination.nearby.isNotEmpty) ...[
                               const SizedBox(height: 22),
                               Text(
@@ -566,8 +596,6 @@ class _DestinationDetailPageState extends State<DestinationDetailPage> {
                               const SizedBox(height: 12),
                               ...destination.nearby.map((place) => _buildNearbyCard(context, place)),
                             ],
-                            const SizedBox(height: 22),
-                            CommentsSection(session: widget.session, destinationId: destination.id),
                           ],
                         ),
                       ),
