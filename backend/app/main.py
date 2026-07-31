@@ -19,8 +19,18 @@ from .schemas import (
     Comment,
     CommentCreate,
     VoteRequest,
+    DestinationSubmit,
+    DestinationUpdate,
+    RatingRequest,
+    RatingSummary,
 )
-from .auth import create_access_token, get_current_user
+from .auth import (
+    create_access_token,
+    get_current_user,
+    get_optional_user,
+    is_admin,
+    require_admin,
+)
 
 app = FastAPI(title="GlobeTrotter Phase1")
 
@@ -43,8 +53,14 @@ app.mount("/static", StaticFiles(directory=_static_dir), name="static")
 # user id is always a safe uuid.
 _avatars_dir = _static_dir / "avatars"
 _avatars_dir.mkdir(parents=True, exist_ok=True)
-_AVATAR_MAX_BYTES = 5 * 1024 * 1024
-_AVATAR_EXTENSIONS = {
+# Same folder the 62 curated destination photos already live in - a user-
+# or admin-uploaded destination image lands right alongside them, keyed by
+# the server-generated destination id (never anything user-supplied) so
+# there's no path-traversal risk in the filename.
+_destinations_images_dir = _static_dir / "destinations"
+_destinations_images_dir.mkdir(parents=True, exist_ok=True)
+_IMAGE_MAX_BYTES = 5 * 1024 * 1024
+_IMAGE_EXTENSIONS = {
     "image/jpeg": ".jpg",
     "image/png": ".png",
     "image/webp": ".webp",
@@ -113,14 +129,14 @@ async def upload_avatar(file: UploadFile = File(...), user: str = Depends(get_cu
     if not profile:
         raise HTTPException(status_code=404, detail="User not found")
 
-    ext = _AVATAR_EXTENSIONS.get((file.content_type or "").lower())
+    ext = _IMAGE_EXTENSIONS.get((file.content_type or "").lower())
     if not ext:
         raise HTTPException(status_code=400, detail="Unsupported image type - use JPEG, PNG, WEBP or GIF")
 
     body = await file.read()
     if not body:
         raise HTTPException(status_code=400, detail="Empty file")
-    if len(body) > _AVATAR_MAX_BYTES:
+    if len(body) > _IMAGE_MAX_BYTES:
         raise HTTPException(status_code=400, detail="Image is larger than 5MB")
 
     # Clear out any previous avatar for this user first, in case an earlier
@@ -159,8 +175,141 @@ def remove_favorite(destination_id: str, user: str = Depends(get_current_user)):
 
 
 @app.get("/destinations", response_model=list[Destination])
-def destinations(q: str = None):
-    return crud.search_destinations(q)
+def destinations(q: str = None, user: str | None = Depends(get_optional_user)):
+    # Anonymous callers (the public website) still get average/count; only
+    # user_rating needs a signed-in viewer.
+    return crud.search_destinations(q, viewer=user)
+
+
+@app.get("/destinations/{destination_id}", response_model=Destination)
+def get_destination(destination_id: str, user: str | None = Depends(get_optional_user)):
+    dest = crud.get_destination(destination_id)
+    if not dest or not crud.is_approved(dest):
+        raise HTTPException(status_code=404, detail="Destination not found")
+    return crud.enrich_destination(dest, viewer=user)
+
+
+# ---------- Ratings ----------
+
+
+@app.put("/destinations/{destination_id}/rating", response_model=RatingSummary)
+def rate_destination(
+    destination_id: str,
+    payload: RatingRequest,
+    user: str = Depends(get_current_user),
+):
+    if payload.stars < 1 or payload.stars > 5:
+        raise HTTPException(status_code=400, detail="stars must be between 1 and 5")
+    dest = crud.get_destination(destination_id)
+    if not dest or not crud.is_approved(dest):
+        raise HTTPException(status_code=404, detail="Destination not found")
+    return crud.rate_destination(destination_id, user, payload.stars)
+
+
+@app.delete("/destinations/{destination_id}/rating", response_model=RatingSummary)
+def clear_rating(destination_id: str, user: str = Depends(get_current_user)):
+    if not crud.get_destination(destination_id):
+        raise HTTPException(status_code=404, detail="Destination not found")
+    return crud.clear_rating(destination_id, user)
+
+
+# ---------- User submissions ----------
+
+
+@app.post("/destinations/submit", response_model=Destination)
+def submit_destination(payload: DestinationSubmit, user: str = Depends(get_current_user)):
+    name = (payload.name or "").strip()
+    if not name:
+        raise HTTPException(status_code=400, detail="Destination name is required")
+    body = payload.dict()
+    body["name"] = name
+    return crud.submit_destination(body, user)
+
+
+@app.get("/me/submissions", response_model=list[Destination])
+def my_submissions(user: str = Depends(get_current_user)):
+    return crud.get_submissions_by(user)
+
+
+@app.post("/destinations/{destination_id}/image", response_model=Destination)
+async def upload_destination_image(
+    destination_id: str,
+    file: UploadFile = File(...),
+    user: str = Depends(get_current_user),
+):
+    dest = crud.get_destination(destination_id)
+    if not dest:
+        raise HTTPException(status_code=404, detail="Destination not found")
+    # Only the person who proposed this destination, or an admin, may
+    # attach/replace its photo - not just anyone with the id.
+    if dest.get("submitted_by") != user and not is_admin(user):
+        raise HTTPException(status_code=403, detail="Not allowed to modify this destination")
+
+    ext = _IMAGE_EXTENSIONS.get((file.content_type or "").lower())
+    if not ext:
+        raise HTTPException(status_code=400, detail="Unsupported image type - use JPEG, PNG, WEBP or GIF")
+
+    body = await file.read()
+    if not body:
+        raise HTTPException(status_code=400, detail="Empty file")
+    if len(body) > _IMAGE_MAX_BYTES:
+        raise HTTPException(status_code=400, detail="Image is larger than 5MB")
+
+    for existing in _destinations_images_dir.glob(f"{destination_id}.*"):
+        existing.unlink(missing_ok=True)
+
+    dest_path = _destinations_images_dir / f"{destination_id}{ext}"
+    dest_path.write_bytes(body)
+
+    updated = crud.update_destination(destination_id, {"image_url": f"/static/destinations/{dest_path.name}"})
+    return crud.enrich_destination(updated, viewer=user)
+
+
+# ---------- Admin ----------
+
+
+@app.get("/admin/destinations", response_model=list[Destination])
+def admin_list_destinations(status: str = None, admin: str = Depends(require_admin)):
+    return crud.list_destinations_by_status(status)
+
+
+@app.patch("/admin/destinations/{destination_id}", response_model=Destination)
+def admin_update_destination(
+    destination_id: str,
+    payload: DestinationUpdate,
+    admin: str = Depends(require_admin),
+):
+    changes = {k: v for k, v in payload.dict().items() if v is not None}
+    if changes.get("status") and changes["status"] not in (
+        crud.APPROVED,
+        crud.PENDING,
+        crud.REJECTED,
+    ):
+        raise HTTPException(status_code=400, detail="Invalid status")
+    updated = crud.update_destination(destination_id, changes)
+    if not updated:
+        raise HTTPException(status_code=404, detail="Destination not found")
+    return updated
+
+
+@app.post("/admin/destinations", response_model=Destination)
+def admin_create_destination(payload: DestinationSubmit, admin: str = Depends(require_admin)):
+    name = (payload.name or "").strip()
+    if not name:
+        raise HTTPException(status_code=400, detail="Destination name is required")
+    body = payload.dict()
+    body["name"] = name
+    created = crud.submit_destination(body, admin)
+    # Anything an admin adds directly is live immediately - it doesn't need
+    # to sit in the same review queue they're the reviewer for.
+    return crud.update_destination(created["id"], {"status": crud.APPROVED})
+
+
+@app.delete("/admin/destinations/{destination_id}")
+def admin_delete_destination(destination_id: str, admin: str = Depends(require_admin)):
+    if not crud.delete_destination(destination_id):
+        raise HTTPException(status_code=404, detail="Destination not found")
+    return {"deleted": destination_id}
 
 
 _COMMENT_MAX_CHARS = 2000
@@ -213,6 +362,13 @@ def create_itinerary(itin: ItineraryCreate, user: str = Depends(get_current_user
 @app.get("/itineraries", response_model=list[Itinerary])
 def list_itineraries(user: str = Depends(get_current_user)):
     return crud.get_itineraries_for(user)
+
+
+@app.delete("/itineraries/{itinerary_id}")
+def delete_itinerary(itinerary_id: str, user: str = Depends(get_current_user)):
+    if not crud.delete_itinerary(itinerary_id, user):
+        raise HTTPException(status_code=404, detail="Itinerary not found")
+    return {"deleted": itinerary_id}
 
 
 def _ai_error_response(exc: Exception):

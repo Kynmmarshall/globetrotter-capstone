@@ -4,6 +4,44 @@ if (window.AOS) {
   AOS.init({ duration: 700, once: true, offset: 60, easing: 'ease-out-cubic' });
 }
 
+// Hero background slideshow: cycles through real Yaoundé destination photos
+// (rather than one static hero image forever), picking both the next image
+// and its entrance animation at random each time so the rotation doesn't
+// just repeat the same fade - see the .anim-* keyframes in style.css.
+(function initHeroSlideshow() {
+  const slides = document.querySelectorAll('.hero-bg-slide');
+  if (slides.length < 2) return;
+  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+  const animations = ['anim-zoom', 'anim-slide-left', 'anim-slide-right', 'anim-blur', 'anim-rotate', 'anim-drop', 'anim-flip'];
+  let current = 0;
+
+  function pickNextIndex() {
+    let next = Math.floor(Math.random() * slides.length);
+    while (next === current) {
+      next = Math.floor(Math.random() * slides.length);
+    }
+    return next;
+  }
+
+  function showSlide(index) {
+    const outgoing = slides[current];
+    const incoming = slides[index];
+    const animation = animations[Math.floor(Math.random() * animations.length)];
+
+    outgoing.classList.remove('is-active');
+    incoming.classList.remove(...animations);
+    // Forces a reflow so the animation replays even if this slide happened
+    // to get the same animation class as last time it was shown.
+    void incoming.offsetWidth;
+    incoming.classList.add(animation, 'is-active');
+
+    current = index;
+  }
+
+  setInterval(() => showSlide(pickNextIndex()), 3200);
+})();
+
 // Counts a stat value up from 0 to its target once it scrolls into view,
 // rather than just appearing - reads the target from data-count-to so the
 // destinations count (set async below, from the live API) animates too.

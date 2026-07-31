@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>trip_io — Admin</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="icon" href="assets/logo.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <div class="ambient-blobs" aria-hidden="true"><span></span><span></span><span></span></div>
+
+  <nav class="nav">
+    <a href="/" class="nav-brand">
+      <img src="assets/logo.png" alt="trip_io logo" />
+      <span><span class="trip">trip</span><span class="io">_io</span></span>
+    </a>
+    <div class="nav-right">
+      <div class="nav-links">
+        <a href="/">Site</a>
+        <a href="/stats.html">Stats</a>
+        <a href="/docs">API</a>
+      </div>
+      <button type="button" class="btn btn-ghost" id="logout-btn" hidden>Sign out</button>
+    </div>
+  </nav>
+
+  <main>
+    <div class="container admin-page">
+      <h1>Admin dashboard</h1>
+      <p class="admin-sub">Review submissions, edit the catalog, and manage destinations.</p>
+
+      <!-- Sign-in -->
+      <section class="glass admin-card" id="login-section">
+        <h2>Sign in</h2>
+        <p class="admin-hint">Use your trip_io account. Admin access only.</p>
+        <form id="login-form" class="admin-form" autocomplete="on">
+          <label>
+            <span>Username</span>
+            <input type="text" id="login-username" name="username" autocomplete="username" required />
+          </label>
+          <label>
+            <span>Password</span>
+            <input type="password" id="login-password" name="current-password" autocomplete="current-password" required />
+          </label>
+          <button type="submit" class="btn btn-primary">Sign in</button>
+        </form>
+        <p class="admin-error" id="login-error" hidden></p>
+      </section>
+
+      <!-- Dashboard -->
+      <div id="dashboard" hidden>
+        <div class="admin-toolbar">
+          <div class="admin-tabs" role="tablist">
+            <button type="button" class="admin-tab is-active" data-status="pending">Pending <span class="admin-count" id="count-pending">0</span></button>
+            <button type="button" class="admin-tab" data-status="approved">Approved <span class="admin-count" id="count-approved">0</span></button>
+            <button type="button" class="admin-tab" data-status="rejected">Rejected <span class="admin-count" id="count-rejected">0</span></button>
+          </div>
+          <button type="button" class="btn btn-primary" id="new-btn">+ New destination</button>
+        </div>
+
+        <p class="admin-error" id="dash-error" hidden></p>
+        <div id="dest-list" class="admin-list"></div>
+        <p class="admin-empty" id="dest-empty" hidden>Nothing here.</p>
+      </div>
+    </div>
+  </main>
+
+  <!-- Edit / create dialog -->
+  <dialog id="edit-dialog" class="admin-dialog">
+    <form method="dialog" id="edit-form" class="admin-form">
+      <h2 id="edit-title">Edit destination</h2>
+      <label><span>Name</span><input type="text" id="f-name" required /></label>
+      <label><span>Description</span><textarea id="f-description" rows="4"></textarea></label>
+      <label><span>Location</span><input type="text" id="f-location" /></label>
+      <label><span>Tags (comma separated)</span><input type="text" id="f-tags" placeholder="nature, family" /></label>
+      <label><span>Image URL</span><input type="text" id="f-image" placeholder="/static/destinations/name.jpg" /></label>
+      <label><span>Opening hours</span><input type="text" id="f-hours" /></label>
+      <label><span>Entry fee</span><input type="text" id="f-fee" /></label>
+      <label><span>Tips</span><textarea id="f-tips" rows="2"></textarea></label>
+      <p class="admin-error" id="edit-error" hidden></p>
+      <div class="admin-dialog-actions">
+        <button type="button" class="btn btn-ghost" id="edit-cancel">Cancel</button>
+        <button type="button" class="btn btn-primary" id="edit-save">Save</button>
+      </div>
+    </form>
+  </dialog>
+
+  <footer>
+    <div class="container">
+      <div class="footer-brand">
+        <img src="assets/logo.png" alt="trip_io" />
+        <span>trip_io</span>
+      </div>
+      <p>Admin &middot; &copy; <span id="year"></span> trip_io.</p>
+    </div>
+  </footer>
+
+  <script src="admin.js"></script>
+</body>
+</html>

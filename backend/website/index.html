@@ -42,10 +42,24 @@
   </nav>
 
   <header class="hero">
-    <div class="hero-bg" style="background-image: url('/static/destinations/reunification_monument.png')"></div>
+    <div class="hero-bg-slideshow" id="hero-slideshow">
+      <div class="hero-bg-slide is-active" style="background-image: url('/static/destinations/reunification_monument.png')"></div>
+      <div class="hero-bg-slide" style="background-image: url('/static/destinations/grande_mosquee_de_yaounde.jpg')"></div>
+      <div class="hero-bg-slide" style="background-image: url('/static/destinations/basilica.png')"></div>
+      <div class="hero-bg-slide" style="background-image: url('/static/destinations/mont_febe.png')"></div>
+      <div class="hero-bg-slide" style="background-image: url('/static/destinations/Stade_Paul_Biya.jpg')"></div>
+      <div class="hero-bg-slide" style="background-image: url('/static/destinations/palais_des_congres.png')"></div>
+      <div class="hero-bg-slide" style="background-image: url('/static/destinations/Lac_Municipal.jpg')"></div>
+      <div class="hero-bg-slide" style="background-image: url('/static/destinations/monument_de_l_independance.jpg')"></div>
+      <div class="hero-bg-slide" style="background-image: url('/static/destinations/le_safoutier.jpg')"></div>
+    </div>
     <div class="hero-scrim"></div>
     <div>
-      <img class="hero-logo" src="assets/logo.png" alt="trip_io" data-aos="zoom-in" data-aos-duration="600" />
+      <div class="hero-logo-wrap" data-aos="zoom-in" data-aos-duration="600">
+        <span class="hero-logo-halo" aria-hidden="true"></span>
+        <span class="hero-logo-ring" aria-hidden="true"></span>
+        <img class="hero-logo" src="assets/logo.png" alt="trip_io" />
+      </div>
       <div class="hero-badge" data-aos="fade-up" data-aos-delay="100">
         <span class="dot"></span>
         <span data-i18n="heroBadge">Built for Yaoundé, made for real trips</span>

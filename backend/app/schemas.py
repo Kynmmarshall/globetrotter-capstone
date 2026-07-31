@@ -17,6 +17,7 @@ class UserProfile(BaseModel):
     interests: Optional[List[str]] = []
     avatar_url: Optional[str] = None
     favorite_ids: Optional[List[str]] = []
+    role: Optional[str] = "user"  # "user" | "admin"
 
 class InterestsUpdate(BaseModel):
     interests: List[str]
@@ -40,6 +41,52 @@ class Destination(BaseModel):
     opening_hours: Optional[str] = None
     entry_fee: Optional[str] = None
     tips: Optional[str] = None
+    # Moderation: "approved" destinations are the public catalog; "pending"
+    # ones are user submissions awaiting review; "rejected" ones are kept
+    # (not deleted) so a submitter can still see what happened to theirs.
+    status: Optional[str] = "approved"
+    submitted_by: Optional[str] = None
+    # Aggregated from the ratings store - never stored on the destination
+    # record itself, so they can't drift out of sync with the raw ratings.
+    rating_average: Optional[float] = None
+    rating_count: Optional[int] = 0
+    # The requesting user's own 1-5 star rating, if they've left one.
+    user_rating: Optional[int] = None
+
+class DestinationSubmit(BaseModel):
+    """What a regular user may supply when proposing a new destination.
+    Deliberately excludes id/status/submitted_by - the server owns those."""
+    name: str
+    description: Optional[str] = None
+    location: Optional[str] = None
+    tags: Optional[List[str]] = []
+    country: Optional[str] = "Cameroon"
+    image_url: Optional[str] = None
+    opening_hours: Optional[str] = None
+    entry_fee: Optional[str] = None
+    tips: Optional[str] = None
+
+class DestinationUpdate(BaseModel):
+    """Admin edit payload - every field optional, only what's sent changes."""
+    name: Optional[str] = None
+    description: Optional[str] = None
+    location: Optional[str] = None
+    tags: Optional[List[str]] = None
+    country: Optional[str] = None
+    image_url: Optional[str] = None
+    opening_hours: Optional[str] = None
+    entry_fee: Optional[str] = None
+    tips: Optional[str] = None
+    status: Optional[str] = None
+
+class RatingRequest(BaseModel):
+    stars: int  # 1-5
+
+class RatingSummary(BaseModel):
+    destination_id: str
+    rating_average: Optional[float] = None
+    rating_count: int = 0
+    user_rating: Optional[int] = None
 
 class ScheduleItem(BaseModel):
     destination_id: str

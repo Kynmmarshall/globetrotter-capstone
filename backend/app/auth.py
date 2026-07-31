@@ -39,9 +39,38 @@ def decode_token(token: str) -> Optional[dict]:
         return None
 
 security = HTTPBearer()
+# auto_error=False so endpoints that work for both signed-in and anonymous
+# callers (e.g. /destinations, which the public website also fetches) can
+# personalise their response without requiring a token.
+optional_security = HTTPBearer(auto_error=False)
 
 def get_current_user(creds: HTTPAuthorizationCredentials = Depends(security)):
     payload = decode_token(creds.credentials)
     if not payload:
         raise HTTPException(status_code=401, detail="Invalid token")
     return payload.get("sub")
+
+def get_optional_user(
+    creds: HTTPAuthorizationCredentials = Depends(optional_security),
+) -> Optional[str]:
+    if not creds:
+        return None
+    payload = decode_token(creds.credentials)
+    return payload.get("sub") if payload else None
+
+def is_admin(username: str) -> bool:
+    # Reads .data directly rather than going through crud, which imports
+    # this module - a crud import here would be circular.
+    from .data import read_data
+
+    for u in read_data().get("users", []):
+        if u.get("username") == username:
+            return u.get("role") == "admin"
+    return False
+
+def require_admin(user: str = Depends(get_current_user)) -> str:
+    """Like get_current_user, but 403s anyone whose account isn't flagged
+    role="admin" in data.json. Promote an account by setting that field."""
+    if not is_admin(user):
+        raise HTTPException(status_code=403, detail="Admin access required")
+    return user

@@ -1,0 +1,277 @@
+// Admin dashboard for the trip_io catalog. Talks to the same backend the
+// app does; every /admin/* endpoint is gated server-side by require_admin,
+// so hiding UI here is convenience, not the actual security boundary.
+(function () {
+  const TOKEN_KEY = 'trip_io_admin_token';
+
+  const el = (id) => document.getElementById(id);
+  const yearEl = el('year');
+  if (yearEl) yearEl.textContent = new Date().getFullYear();
+
+  let token = localStorage.getItem(TOKEN_KEY);
+  let currentStatus = 'pending';
+  let editingId = null; // null while creating a brand-new destination
+
+  function showError(node, message) {
+    node.textContent = message;
+    node.hidden = !message;
+  }
+
+  async function api(path, options = {}) {
+    const res = await fetch(path, {
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...(options.headers || {}),
+      },
+    });
+    if (res.status === 401 || res.status === 403) {
+      // Either the token expired or this account isn't an admin - either
+      // way the only useful next step is signing in again.
+      signOut();
+      throw new Error('Your session is not valid for admin access.');
+    }
+    if (!res.ok) {
+      let detail = `Request failed (${res.status})`;
+      try {
+        const body = await res.json();
+        if (body.detail) detail = body.detail;
+      } catch (_) {
+        // keep the status-code message
+      }
+      throw new Error(detail);
+    }
+    return res.status === 204 ? null : res.json();
+  }
+
+  function signOut() {
+    token = null;
+    localStorage.removeItem(TOKEN_KEY);
+    el('dashboard').hidden = true;
+    el('login-section').hidden = false;
+    el('logout-btn').hidden = true;
+  }
+
+  async function signIn(username, password) {
+    const res = await fetch('/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password }),
+    });
+    if (!res.ok) throw new Error('Invalid username or password.');
+    const body = await res.json();
+    token = body.access_token;
+
+    // Confirm the account is actually an admin before showing the
+    // dashboard, so a normal user gets a clear message instead of an
+    // empty screen full of failing requests.
+    const me = await api('/me');
+    if (me.role !== 'admin') {
+      token = null;
+      throw new Error('That account does not have admin access.');
+    }
+    localStorage.setItem(TOKEN_KEY, token);
+  }
+
+  function enterDashboard() {
+    el('login-section').hidden = true;
+    el('dashboard').hidden = false;
+    el('logout-btn').hidden = false;
+    refresh();
+  }
+
+  function statusBadge(status) {
+    const cls = { pending: 'is-pending', approved: 'is-approved', rejected: 'is-rejected' }[status] || '';
+    return `<span class="admin-badge ${cls}">${status}</span>`;
+  }
+
+  function card(dest) {
+    const status = dest.status || 'approved';
+    const node = document.createElement('div');
+    node.className = 'glass admin-item';
+
+    const thumb = dest.image_url
+      ? `<img class="admin-thumb" src="${dest.image_url}" alt="" loading="lazy" />`
+      : `<div class="admin-thumb admin-thumb-empty">No image</div>`;
+
+    // textContent-style escaping isn't available for an innerHTML template,
+    // so user-supplied fields go through escapeHtml - a submitted name is
+    // arbitrary user input and must never be treated as markup.
+    node.innerHTML = `
+      ${thumb}
+      <div class="admin-item-body">
+        <div class="admin-item-head">
+          <h3>${escapeHtml(dest.name || '(untitled)')}</h3>
+          ${statusBadge(status)}
+        </div>
+        <p class="admin-item-meta">${escapeHtml(dest.id)}${dest.submitted_by ? ` &middot; submitted by ${escapeHtml(dest.submitted_by)}` : ''}${dest.rating_count ? ` &middot; ★ ${dest.rating_average} (${dest.rating_count})` : ''}</p>
+        ${dest.location ? `<p class="admin-item-meta">${escapeHtml(dest.location)}</p>` : ''}
+        ${dest.description ? `<p class="admin-item-desc">${escapeHtml(dest.description)}</p>` : ''}
+        <div class="admin-item-actions"></div>
+      </div>
+    `;
+
+    const actions = node.querySelector('.admin-item-actions');
+    if (status !== 'approved') {
+      actions.appendChild(button('Approve', 'btn-primary', () => setStatus(dest.id, 'approved')));
+    }
+    if (status !== 'rejected') {
+      actions.appendChild(button('Reject', 'btn-ghost', () => setStatus(dest.id, 'rejected')));
+    }
+    actions.appendChild(button('Edit', 'btn-ghost', () => openEditor(dest)));
+    actions.appendChild(button('Delete', 'btn-ghost admin-danger', () => remove(dest)));
+    return node;
+  }
+
+  function button(label, cls, onClick) {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = `btn ${cls}`;
+    b.textContent = label;
+    b.addEventListener('click', onClick);
+    return b;
+  }
+
+  function escapeHtml(value) {
+    return String(value ?? '').replace(/[&<>"']/g, (c) => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+    }[c]));
+  }
+
+  async function refresh() {
+    showError(el('dash-error'), '');
+    const list = el('dest-list');
+    list.innerHTML = '';
+    try {
+      const all = await api('/admin/destinations');
+      const counts = { pending: 0, approved: 0, rejected: 0 };
+      all.forEach((d) => {
+        const s = d.status || 'approved';
+        if (counts[s] !== undefined) counts[s] += 1;
+      });
+      el('count-pending').textContent = counts.pending;
+      el('count-approved').textContent = counts.approved;
+      el('count-rejected').textContent = counts.rejected;
+
+      const shown = all.filter((d) => (d.status || 'approved') === currentStatus);
+      el('dest-empty').hidden = shown.length > 0;
+      shown.forEach((d) => list.appendChild(card(d)));
+    } catch (err) {
+      showError(el('dash-error'), err.message);
+    }
+  }
+
+  async function setStatus(id, status) {
+    try {
+      await api(`/admin/destinations/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status }),
+      });
+      refresh();
+    } catch (err) {
+      showError(el('dash-error'), err.message);
+    }
+  }
+
+  async function remove(dest) {
+    const ok = window.confirm(
+      `Delete "${dest.name}" permanently?\n\nThis also removes its ratings, comments and any users' saved favorites for it. This cannot be undone.`
+    );
+    if (!ok) return;
+    try {
+      await api(`/admin/destinations/${dest.id}`, { method: 'DELETE' });
+      refresh();
+    } catch (err) {
+      showError(el('dash-error'), err.message);
+    }
+  }
+
+  function openEditor(dest) {
+    editingId = dest ? dest.id : null;
+    el('edit-title').textContent = dest ? 'Edit destination' : 'New destination';
+    el('f-name').value = dest?.name || '';
+    el('f-description').value = dest?.description || '';
+    el('f-location').value = dest?.location || '';
+    el('f-tags').value = (dest?.tags || []).join(', ');
+    el('f-image').value = dest?.image_url || '';
+    el('f-hours').value = dest?.opening_hours || '';
+    el('f-fee').value = dest?.entry_fee || '';
+    el('f-tips').value = dest?.tips || '';
+    showError(el('edit-error'), '');
+    el('edit-dialog').showModal();
+  }
+
+  async function saveEditor() {
+    const name = el('f-name').value.trim();
+    if (!name) {
+      showError(el('edit-error'), 'Name is required.');
+      return;
+    }
+    const payload = {
+      name,
+      description: el('f-description').value.trim() || null,
+      location: el('f-location').value.trim() || null,
+      tags: el('f-tags').value.split(',').map((t) => t.trim()).filter(Boolean),
+      image_url: el('f-image').value.trim() || null,
+      opening_hours: el('f-hours').value.trim() || null,
+      entry_fee: el('f-fee').value.trim() || null,
+      tips: el('f-tips').value.trim() || null,
+    };
+    try {
+      if (editingId) {
+        await api(`/admin/destinations/${editingId}`, {
+          method: 'PATCH',
+          body: JSON.stringify(payload),
+        });
+      } else {
+        await api('/admin/destinations', {
+          method: 'POST',
+          body: JSON.stringify(payload),
+        });
+      }
+      el('edit-dialog').close();
+      refresh();
+    } catch (err) {
+      showError(el('edit-error'), err.message);
+    }
+  }
+
+  // ---------- wiring ----------
+
+  el('login-form').addEventListener('submit', async (event) => {
+    event.preventDefault();
+    showError(el('login-error'), '');
+    try {
+      await signIn(el('login-username').value.trim(), el('login-password').value);
+      el('login-password').value = '';
+      enterDashboard();
+    } catch (err) {
+      showError(el('login-error'), err.message);
+    }
+  });
+
+  el('logout-btn').addEventListener('click', signOut);
+  el('new-btn').addEventListener('click', () => openEditor(null));
+  el('edit-save').addEventListener('click', saveEditor);
+  el('edit-cancel').addEventListener('click', () => el('edit-dialog').close());
+
+  document.querySelectorAll('.admin-tab').forEach((tab) => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.admin-tab').forEach((t) => t.classList.remove('is-active'));
+      tab.classList.add('is-active');
+      currentStatus = tab.dataset.status;
+      refresh();
+    });
+  });
+
+  // Resume a previous session if the stored token is still valid.
+  if (token) {
+    api('/me')
+      .then((me) => {
+        if (me.role === 'admin') enterDashboard();
+        else signOut();
+      })
+      .catch(() => signOut());
+  }
+})();
