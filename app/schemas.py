@@ -37,6 +37,8 @@ class Destination(BaseModel):
     image_url: Optional[str] = None
     description: Optional[str] = None
     location: Optional[str] = None
+    lat: Optional[float] = None
+    lon: Optional[float] = None
     nearby: Optional[List[NearbyPlace]] = None
     opening_hours: Optional[str] = None
     entry_fee: Optional[str] = None
@@ -71,6 +73,8 @@ class DestinationUpdate(BaseModel):
     name: Optional[str] = None
     description: Optional[str] = None
     location: Optional[str] = None
+    lat: Optional[float] = None
+    lon: Optional[float] = None
     tags: Optional[List[str]] = None
     country: Optional[str] = None
     image_url: Optional[str] = None
@@ -87,6 +91,19 @@ class RatingSummary(BaseModel):
     rating_average: Optional[float] = None
     rating_count: int = 0
     user_rating: Optional[int] = None
+
+class RouteWaypoint(BaseModel):
+    lat: float
+    lon: float
+
+class RouteRequest(BaseModel):
+    waypoints: List[RouteWaypoint]
+    profile: str = "driving-car"  # driving-car | foot-walking | cycling-regular
+
+class RouteResponse(BaseModel):
+    geometry: List[RouteWaypoint]
+    distance_meters: float
+    duration_seconds: float
 
 class ScheduleItem(BaseModel):
     destination_id: str

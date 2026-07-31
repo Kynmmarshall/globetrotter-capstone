@@ -1223,6 +1223,12 @@ footer .footer-brand img {
   color: var(--text-dim);
 }
 
+.admin-form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
 .admin-form input,
 .admin-form textarea {
   font-family: inherit;

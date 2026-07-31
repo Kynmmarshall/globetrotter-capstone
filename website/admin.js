@@ -193,6 +193,8 @@
     el('f-name').value = dest?.name || '';
     el('f-description').value = dest?.description || '';
     el('f-location').value = dest?.location || '';
+    el('f-lat').value = dest?.lat ?? '';
+    el('f-lon').value = dest?.lon ?? '';
     el('f-tags').value = (dest?.tags || []).join(', ');
     el('f-image').value = dest?.image_url || '';
     el('f-hours').value = dest?.opening_hours || '';
@@ -202,16 +204,34 @@
     el('edit-dialog').showModal();
   }
 
+  function parseOptionalFloat(rawValue, fieldLabel) {
+    const trimmed = rawValue.trim();
+    if (!trimmed) return { value: null, error: null };
+    const parsed = Number(trimmed);
+    if (!Number.isFinite(parsed)) {
+      return { value: null, error: `${fieldLabel} must be a number.` };
+    }
+    return { value: parsed, error: null };
+  }
+
   async function saveEditor() {
     const name = el('f-name').value.trim();
     if (!name) {
       showError(el('edit-error'), 'Name is required.');
       return;
     }
+    const lat = parseOptionalFloat(el('f-lat').value, 'Latitude');
+    const lon = parseOptionalFloat(el('f-lon').value, 'Longitude');
+    if (lat.error || lon.error) {
+      showError(el('edit-error'), lat.error || lon.error);
+      return;
+    }
     const payload = {
       name,
       description: el('f-description').value.trim() || null,
       location: el('f-location').value.trim() || null,
+      lat: lat.value,
+      lon: lon.value,
       tags: el('f-tags').value.split(',').map((t) => t.trim()).filter(Boolean),
       image_url: el('f-image').value.trim() || null,
       opening_hours: el('f-hours').value.trim() || null,

@@ -4,7 +4,7 @@ from fastapi import FastAPI, File, HTTPException, Depends, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
-from . import ai, crud, google_auth, stats
+from . import ai, crud, google_auth, routing, stats
 from .schemas import (
     UserCreate,
     Token,
@@ -23,6 +23,8 @@ from .schemas import (
     DestinationUpdate,
     RatingRequest,
     RatingSummary,
+    RouteRequest,
+    RouteResponse,
 )
 from .auth import (
     create_access_token,
@@ -406,6 +408,22 @@ async def ai_explain(destination_id: str, user: str = Depends(get_current_user))
         raise _ai_error_response(exc)
     crud.set_destination_ai_explanation(destination_id, reply)
     return {"reply": reply}
+
+
+@app.post("/route", response_model=RouteResponse)
+async def get_route(payload: RouteRequest, user: str = Depends(get_current_user)):
+    if len(payload.waypoints) < 2:
+        raise HTTPException(status_code=400, detail="At least two waypoints are required")
+    try:
+        result = await routing.get_route(
+            [(wp.lat, wp.lon) for wp in payload.waypoints],
+            profile=payload.profile,
+        )
+    except routing.RoutingNotConfiguredError:
+        raise HTTPException(status_code=503, detail="Routing is not configured")
+    except routing.RoutingRequestError:
+        raise HTTPException(status_code=502, detail="Routing service is temporarily unavailable")
+    return result
 
 
 # Mounted last (and most-specific-first) so none of these can shadow the

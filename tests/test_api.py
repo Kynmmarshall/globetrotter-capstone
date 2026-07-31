@@ -2,7 +2,7 @@ import pytest
 from httpx import AsyncClient
 from app import main
 from app.main import app
-from app import ai, auth, google_auth
+from app import ai, auth, google_auth, routing
 
 
 @pytest.mark.asyncio
@@ -727,3 +727,80 @@ async def test_delete_itinerary_owner_only(tmp_path):
         # deleting again 404s
         again = await ac.delete(f"/itineraries/{itin_id}", headers=headers_a)
         assert again.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_route_not_configured(tmp_path, monkeypatch):
+    data_file = tmp_path / "data.json"
+    data_file.write_text('{"users": [], "itineraries": [], "destinations": []}')
+    import os
+    os.environ["GLOBETROTTER_DATA_PATH"] = str(data_file)
+    monkeypatch.setattr(routing, "ORS_API_KEY", None)
+
+    async with AsyncClient(app=app, base_url="http://test") as ac:
+        r = await ac.post("/register", json={"username": "alice", "password": "secret"})
+        headers = {"Authorization": f"Bearer {r.json()['access_token']}"}
+
+        resp = await ac.post(
+            "/route",
+            json={"waypoints": [{"lat": 3.86, "lon": 11.52}, {"lat": 3.87, "lon": 11.50}]},
+            headers=headers,
+        )
+        assert resp.status_code == 503
+
+
+@pytest.mark.asyncio
+async def test_route_requires_two_waypoints(tmp_path, monkeypatch):
+    data_file = tmp_path / "data.json"
+    data_file.write_text('{"users": [], "itineraries": [], "destinations": []}')
+    import os
+    os.environ["GLOBETROTTER_DATA_PATH"] = str(data_file)
+    monkeypatch.setattr(routing, "ORS_API_KEY", "fake-key")
+
+    async with AsyncClient(app=app, base_url="http://test") as ac:
+        r = await ac.post("/register", json={"username": "alice", "password": "secret"})
+        headers = {"Authorization": f"Bearer {r.json()['access_token']}"}
+
+        resp = await ac.post(
+            "/route",
+            json={"waypoints": [{"lat": 3.86, "lon": 11.52}]},
+            headers=headers,
+        )
+        assert resp.status_code == 400
+
+
+@pytest.mark.asyncio
+async def test_route_success(tmp_path, monkeypatch):
+    data_file = tmp_path / "data.json"
+    data_file.write_text('{"users": [], "itineraries": [], "destinations": []}')
+    import os
+    os.environ["GLOBETROTTER_DATA_PATH"] = str(data_file)
+    monkeypatch.setattr(routing, "ORS_API_KEY", "fake-key")
+
+    async def fake_get_route(waypoints, profile="driving-car"):
+        assert profile == "foot-walking"
+        assert waypoints == [(3.86, 11.52), (3.87, 11.50)]
+        return {
+            "geometry": [{"lat": 3.86, "lon": 11.52}, {"lat": 3.865, "lon": 11.51}, {"lat": 3.87, "lon": 11.50}],
+            "distance_meters": 1234.5,
+            "duration_seconds": 600.0,
+        }
+
+    monkeypatch.setattr(routing, "get_route", fake_get_route)
+
+    async with AsyncClient(app=app, base_url="http://test") as ac:
+        r = await ac.post("/register", json={"username": "alice", "password": "secret"})
+        headers = {"Authorization": f"Bearer {r.json()['access_token']}"}
+
+        resp = await ac.post(
+            "/route",
+            json={
+                "waypoints": [{"lat": 3.86, "lon": 11.52}, {"lat": 3.87, "lon": 11.50}],
+                "profile": "foot-walking",
+            },
+            headers=headers,
+        )
+        assert resp.status_code == 200
+        body = resp.json()
+        assert body["distance_meters"] == 1234.5
+        assert len(body["geometry"]) == 3
