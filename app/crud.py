@@ -124,6 +124,18 @@ def get_itineraries_for(user: str):
     data = read_data()
     return [i for i in data.get("itineraries", []) if i.get("user") == user]
 
+def delete_itinerary(itinerary_id: str, username: str) -> bool:
+    data = read_data()
+    itineraries = data.get("itineraries", [])
+    before = len(itineraries)
+    data["itineraries"] = [
+        i for i in itineraries if not (i.get("id") == itinerary_id and i.get("user") == username)
+    ]
+    if len(data["itineraries"]) == before:
+        return False
+    write_data(data)
+    return True
+
 def get_destination(destination_id: str):
     data = read_data()
     for d in data.get("destinations", []):

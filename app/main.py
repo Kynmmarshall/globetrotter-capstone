@@ -364,6 +364,13 @@ def list_itineraries(user: str = Depends(get_current_user)):
     return crud.get_itineraries_for(user)
 
 
+@app.delete("/itineraries/{itinerary_id}")
+def delete_itinerary(itinerary_id: str, user: str = Depends(get_current_user)):
+    if not crud.delete_itinerary(itinerary_id, user):
+        raise HTTPException(status_code=404, detail="Itinerary not found")
+    return {"deleted": itinerary_id}
+
+
 def _ai_error_response(exc: Exception):
     if isinstance(exc, ai.AiNotConfiguredError):
         return HTTPException(status_code=503, detail="AI assistant is not configured")

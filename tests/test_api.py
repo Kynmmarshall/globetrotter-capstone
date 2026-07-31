@@ -690,3 +690,40 @@ async def test_submission_image_upload_ownership(tmp_path, monkeypatch):
             files={"file": ("photo.png", b"\x89PNG fake bytes", "image/png")},
         )
         assert missing.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_delete_itinerary_owner_only(tmp_path):
+    data_file = tmp_path / "data.json"
+    data_file.write_text('{"users": [], "itineraries": [], "destinations": []}')
+    import os
+    os.environ["GLOBETROTTER_DATA_PATH"] = str(data_file)
+
+    async with AsyncClient(app=app, base_url="http://test") as ac:
+        r = await ac.post("/register", json={"username": "alice", "password": "secret"})
+        headers_a = {"Authorization": f"Bearer {r.json()['access_token']}"}
+        r = await ac.post("/register", json={"username": "bob", "password": "secret"})
+        headers_b = {"Authorization": f"Bearer {r.json()['access_token']}"}
+
+        created = await ac.post(
+            "/itineraries",
+            json={"title": "My Trip", "destinations": ["d1", "d2"]},
+            headers=headers_a,
+        )
+        itin_id = created.json()["id"]
+
+        # a stranger can't delete someone else's itinerary
+        stolen = await ac.delete(f"/itineraries/{itin_id}", headers=headers_b)
+        assert stolen.status_code == 404
+        still_there = await ac.get("/itineraries", headers=headers_a)
+        assert len(still_there.json()) == 1
+
+        # the owner can
+        deleted = await ac.delete(f"/itineraries/{itin_id}", headers=headers_a)
+        assert deleted.status_code == 200
+        gone = await ac.get("/itineraries", headers=headers_a)
+        assert gone.json() == []
+
+        # deleting again 404s
+        again = await ac.delete(f"/itineraries/{itin_id}", headers=headers_a)
+        assert again.status_code == 404
