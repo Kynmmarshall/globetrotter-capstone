@@ -207,6 +207,50 @@ class AppLocalizationsFr extends AppLocalizations {
       'Aucune destination ne correspond aux filtres sélectionnés.';
 
   @override
+  String get suggestDestinationButton => 'Suggérer une destination';
+
+  @override
+  String get submitDestinationTitle => 'Suggérer une destination';
+
+  @override
+  String get submitDestinationSubtitle =>
+      'Vous connaissez un vrai lieu à Yaoundé qui manque ? Suggérez-le ici - un administrateur examine chaque suggestion avant sa mise en ligne.';
+
+  @override
+  String get submitDestinationNameLabel => 'Nom de la destination';
+
+  @override
+  String get submitDestinationNameRequired => 'Le nom est requis';
+
+  @override
+  String get submitDestinationLocationLabel => 'Lieu';
+
+  @override
+  String get submitDestinationLocationHint => 'ex. Bastos, Yaoundé';
+
+  @override
+  String get submitDestinationDescriptionLabel => 'Description';
+
+  @override
+  String get submitDestinationReviewNotice =>
+      'Votre suggestion n\'apparaîtra pas dans l\'application tant qu\'un administrateur ne l\'aura pas approuvée.';
+
+  @override
+  String get submitDestinationButton => 'Envoyer pour examen';
+
+  @override
+  String get submitDestinationSuccess =>
+      'Merci ! Votre suggestion a été envoyée pour examen.';
+
+  @override
+  String submitDestinationSuccessImageFailed(String error) {
+    return 'Votre suggestion a été envoyée, mais l\'envoi de la photo a échoué : $error';
+  }
+
+  @override
+  String get submitDestinationAddPhoto => 'Ajouter une photo (facultatif)';
+
+  @override
   String get recommendationsTitle => 'Sélectionné pour vous';
 
   @override

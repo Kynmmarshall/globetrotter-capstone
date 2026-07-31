@@ -201,6 +201,50 @@ class AppLocalizationsEn extends AppLocalizations {
       'No destinations match the selected filters.';
 
   @override
+  String get suggestDestinationButton => 'Suggest a destination';
+
+  @override
+  String get submitDestinationTitle => 'Suggest a destination';
+
+  @override
+  String get submitDestinationSubtitle =>
+      'Know a real spot in Yaoundé that\'s missing? Suggest it here - an admin reviews every submission before it goes live.';
+
+  @override
+  String get submitDestinationNameLabel => 'Destination name';
+
+  @override
+  String get submitDestinationNameRequired => 'Name is required';
+
+  @override
+  String get submitDestinationLocationLabel => 'Location';
+
+  @override
+  String get submitDestinationLocationHint => 'e.g. Bastos, Yaoundé';
+
+  @override
+  String get submitDestinationDescriptionLabel => 'Description';
+
+  @override
+  String get submitDestinationReviewNotice =>
+      'Your suggestion won\'t appear in the app until an admin approves it.';
+
+  @override
+  String get submitDestinationButton => 'Submit for review';
+
+  @override
+  String get submitDestinationSuccess =>
+      'Thanks! Your suggestion was submitted for review.';
+
+  @override
+  String submitDestinationSuccessImageFailed(String error) {
+    return 'Your suggestion was submitted, but the photo failed to upload: $error';
+  }
+
+  @override
+  String get submitDestinationAddPhoto => 'Add a photo (optional)';
+
+  @override
   String get recommendationsTitle => 'Picked for you';
 
   @override

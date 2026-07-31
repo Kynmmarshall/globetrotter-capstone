@@ -72,6 +72,22 @@
   "destinationsFilterLabel": "Filter by interest",
   "destinationsFilterClear": "Clear",
   "destinationsFilterEmpty": "No destinations match the selected filters.",
+  "suggestDestinationButton": "Suggest a destination",
+  "submitDestinationTitle": "Suggest a destination",
+  "submitDestinationSubtitle": "Know a real spot in Yaoundé that's missing? Suggest it here - an admin reviews every submission before it goes live.",
+  "submitDestinationNameLabel": "Destination name",
+  "submitDestinationNameRequired": "Name is required",
+  "submitDestinationLocationLabel": "Location",
+  "submitDestinationLocationHint": "e.g. Bastos, Yaoundé",
+  "submitDestinationDescriptionLabel": "Description",
+  "submitDestinationReviewNotice": "Your suggestion won't appear in the app until an admin approves it.",
+  "submitDestinationButton": "Submit for review",
+  "submitDestinationSuccess": "Thanks! Your suggestion was submitted for review.",
+  "submitDestinationSuccessImageFailed": "Your suggestion was submitted, but the photo failed to upload: {error}",
+  "@submitDestinationSuccessImageFailed": {
+    "placeholders": { "error": { "type": "String" } }
+  },
+  "submitDestinationAddPhoto": "Add a photo (optional)",
 
   "recommendationsTitle": "Picked for you",
   "recommendationsSubtitle": "A quick shortlist of Yaoundé spots worth adding to your itinerary.",
