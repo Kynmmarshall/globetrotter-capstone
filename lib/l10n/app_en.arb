@@ -98,6 +98,18 @@
   "itineraryTitleHint": "My Yaoundé weekend",
   "destinationsLabel": "Destinations",
   "noDestinationsAvailable": "No destinations available yet.",
+  "itineraryDestinationSearchHint": "Search destinations to add…",
+  "itineraryShowAllDestinations": "Show all {count} destinations",
+  "@itineraryShowAllDestinations": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "itineraryHideAllDestinations": "Hide full list",
+  "itineraryDestinationSearchPrompt": "Search by name, or tap \"show all\" to browse every destination.",
+  "itineraryDestinationSearchNoMatches": "No destinations match \"{query}\".",
+  "@itineraryDestinationSearchNoMatches": {
+    "placeholders": { "query": { "type": "String" } }
+  },
+  "itineraryAllDestinationsAdded": "All destinations have been added.",
   "createItineraryButton": "Create Itinerary",
   "itinerariesErrorMessage": "Could not load itineraries.\n{error}",
   "@itinerariesErrorMessage": {

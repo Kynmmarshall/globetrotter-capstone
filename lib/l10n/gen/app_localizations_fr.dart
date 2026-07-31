@@ -268,6 +268,31 @@ class AppLocalizationsFr extends AppLocalizations {
       'Aucune destination disponible pour l\'instant.';
 
   @override
+  String get itineraryDestinationSearchHint =>
+      'Rechercher des destinations à ajouter…';
+
+  @override
+  String itineraryShowAllDestinations(int count) {
+    return 'Afficher les $count destinations';
+  }
+
+  @override
+  String get itineraryHideAllDestinations => 'Masquer la liste complète';
+
+  @override
+  String get itineraryDestinationSearchPrompt =>
+      'Recherchez par nom, ou appuyez sur « afficher tout » pour parcourir toutes les destinations.';
+
+  @override
+  String itineraryDestinationSearchNoMatches(String query) {
+    return 'Aucune destination ne correspond à « $query ».';
+  }
+
+  @override
+  String get itineraryAllDestinationsAdded =>
+      'Toutes les destinations ont été ajoutées.';
+
+  @override
   String get createItineraryButton => 'Créer l\'itinéraire';
 
   @override

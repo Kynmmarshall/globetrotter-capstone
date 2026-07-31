@@ -260,6 +260,30 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noDestinationsAvailable => 'No destinations available yet.';
 
   @override
+  String get itineraryDestinationSearchHint => 'Search destinations to add…';
+
+  @override
+  String itineraryShowAllDestinations(int count) {
+    return 'Show all $count destinations';
+  }
+
+  @override
+  String get itineraryHideAllDestinations => 'Hide full list';
+
+  @override
+  String get itineraryDestinationSearchPrompt =>
+      'Search by name, or tap \"show all\" to browse every destination.';
+
+  @override
+  String itineraryDestinationSearchNoMatches(String query) {
+    return 'No destinations match \"$query\".';
+  }
+
+  @override
+  String get itineraryAllDestinationsAdded =>
+      'All destinations have been added.';
+
+  @override
   String get createItineraryButton => 'Create Itinerary';
 
   @override

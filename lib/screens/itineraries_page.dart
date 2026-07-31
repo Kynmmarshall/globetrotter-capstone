@@ -28,10 +28,12 @@ class ItinerariesPage extends StatefulWidget {
 
 class _ItinerariesPageState extends State<ItinerariesPage> {
   final _titleController = TextEditingController();
+  final _destinationSearchController = TextEditingController();
   final Set<String> _selectedDestinationIds = {};
   late Future<List<Itinerary>> _future;
   late Future<List<Destination>> _destinationsFuture;
   bool _creating = false;
+  bool _showAllDestinations = false;
   TimeOfDay _startTime = const TimeOfDay(hour: 9, minute: 0);
   double _availableHours = 4;
   DateTimeRange? _tripDates;
@@ -51,6 +53,7 @@ class _ItinerariesPageState extends State<ItinerariesPage> {
   @override
   void dispose() {
     _titleController.dispose();
+    _destinationSearchController.dispose();
     super.dispose();
   }
 
@@ -182,54 +185,127 @@ class _ItinerariesPageState extends State<ItinerariesPage> {
     );
   }
 
+  Widget _destinationChip(Destination d, ColorScheme colors) {
+    final selected = _selectedDestinationIds.contains(d.id);
+    return FilterChip(
+      label: Text(
+        d.name,
+        style: TextStyle(
+          color: selected
+              ? Colors.white
+              : const Color.fromARGB(255, 96, 193, 177).withValues(alpha: 0.92),
+          fontSize: 12.5,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+      selected: selected,
+      onSelected: (value) {
+        setState(() {
+          if (value) {
+            _selectedDestinationIds.add(d.id);
+          } else {
+            _selectedDestinationIds.remove(d.id);
+          }
+        });
+      },
+      showCheckmark: false,
+      avatar: selected
+          ? const Icon(Icons.check, size: 16, color: Colors.white)
+          : null,
+      backgroundColor: Colors.white.withValues(alpha: 0.14),
+      selectedColor: colors.primary.withValues(alpha: 0.85),
+      side: BorderSide(color: Colors.white.withValues(alpha: 0.28)),
+    );
+  }
+
+  // Candidates a user can still add: everything not already selected,
+  // narrowed down either by the search box or by "show all" - the full
+  // 60+ destination list never renders unfiltered by default.
+  List<Destination> _destinationCandidates(List<Destination> all) {
+    final unselected = all.where((d) => !_selectedDestinationIds.contains(d.id));
+    if (_showAllDestinations) return unselected.toList();
+    final query = _destinationSearchController.text.trim().toLowerCase();
+    if (query.isEmpty) return const [];
+    return unselected.where((d) => d.name.toLowerCase().contains(query)).toList();
+  }
+
   Widget _buildDestinationPicker(List<Destination> destinations) {
+    final l10n = AppLocalizations.of(context)!;
     if (destinations.isEmpty) {
       return Text(
-        AppLocalizations.of(context)!.noDestinationsAvailable,
+        l10n.noDestinationsAvailable,
         style: const TextStyle(color: Colors.white60),
       );
     }
     final colors = Theme.of(context).colorScheme;
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: destinations.map((d) {
-        final selected = _selectedDestinationIds.contains(d.id);
-        return FilterChip(
-          label: Text(
-            d.name,
-            style: TextStyle(
-              color: selected
-                  ? Colors.white
-                  : const Color.fromARGB(
-                      255,
-                      96,
-                      193,
-                      177,
-                    ).withValues(alpha: 0.92),
-              fontSize: 12.5,
-              fontWeight: FontWeight.w600,
+    final byId = {for (final d in destinations) d.id: d};
+    final selected = _selectedDestinationIds
+        .map((id) => byId[id])
+        .whereType<Destination>()
+        .toList();
+    final candidates = _destinationCandidates(destinations);
+    final query = _destinationSearchController.text.trim();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (selected.isNotEmpty) ...[
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: selected.map((d) => _destinationChip(d, colors)).toList(),
+          ),
+          const SizedBox(height: 12),
+        ],
+        TextField(
+          controller: _destinationSearchController,
+          style: const TextStyle(color: Colors.white),
+          cursorColor: Colors.white,
+          decoration: _fieldDecoration(l10n.itineraryDestinationSearchHint).copyWith(
+            prefixIcon: const Icon(Icons.search, color: Colors.white54, size: 20),
+          ),
+          onChanged: (_) => setState(() {}),
+        ),
+        const SizedBox(height: 8),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: TextButton.icon(
+            onPressed: () => setState(() => _showAllDestinations = !_showAllDestinations),
+            style: TextButton.styleFrom(
+              padding: EdgeInsets.zero,
+              minimumSize: Size.zero,
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
+            icon: Icon(
+              _showAllDestinations ? Icons.expand_less : Icons.expand_more,
+              size: 18,
+              color: Colors.white70,
+            ),
+            label: Text(
+              _showAllDestinations
+                  ? l10n.itineraryHideAllDestinations
+                  : l10n.itineraryShowAllDestinations(destinations.length),
+              style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.w600, fontSize: 12.5),
             ),
           ),
-          selected: selected,
-          onSelected: (value) {
-            setState(() {
-              if (value) {
-                _selectedDestinationIds.add(d.id);
-              } else {
-                _selectedDestinationIds.remove(d.id);
-              }
-            });
-          },
-          showCheckmark: false,
-          avatar: selected
-              ? const Icon(Icons.check, size: 16, color: Colors.white)
-              : null,
-          backgroundColor: Colors.white.withValues(alpha: 0.14),
-          selectedColor: colors.primary.withValues(alpha: 0.85),
-          side: BorderSide(color: Colors.white.withValues(alpha: 0.28)),
-        );
-      }).toList(),
+        ),
+        const SizedBox(height: 8),
+        if (candidates.isEmpty)
+          Text(
+            _showAllDestinations
+                ? l10n.itineraryAllDestinationsAdded
+                : (query.isEmpty
+                    ? l10n.itineraryDestinationSearchPrompt
+                    : l10n.itineraryDestinationSearchNoMatches(query)),
+            style: const TextStyle(color: Colors.white54, fontSize: 12.5),
+          )
+        else
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: candidates.map((d) => _destinationChip(d, colors)).toList(),
+          ),
+      ],
     );
   }
 

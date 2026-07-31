@@ -554,6 +554,42 @@ abstract class AppLocalizations {
   /// **'No destinations available yet.'**
   String get noDestinationsAvailable;
 
+  /// No description provided for @itineraryDestinationSearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search destinations to add…'**
+  String get itineraryDestinationSearchHint;
+
+  /// No description provided for @itineraryShowAllDestinations.
+  ///
+  /// In en, this message translates to:
+  /// **'Show all {count} destinations'**
+  String itineraryShowAllDestinations(int count);
+
+  /// No description provided for @itineraryHideAllDestinations.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide full list'**
+  String get itineraryHideAllDestinations;
+
+  /// No description provided for @itineraryDestinationSearchPrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Search by name, or tap \"show all\" to browse every destination.'**
+  String get itineraryDestinationSearchPrompt;
+
+  /// No description provided for @itineraryDestinationSearchNoMatches.
+  ///
+  /// In en, this message translates to:
+  /// **'No destinations match \"{query}\".'**
+  String itineraryDestinationSearchNoMatches(String query);
+
+  /// No description provided for @itineraryAllDestinationsAdded.
+  ///
+  /// In en, this message translates to:
+  /// **'All destinations have been added.'**
+  String get itineraryAllDestinationsAdded;
+
   /// No description provided for @createItineraryButton.
   ///
   /// In en, this message translates to:
