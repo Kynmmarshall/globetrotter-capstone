@@ -1,6 +1,6 @@
 # GlobeTrotter — Travel Recommendation & Itinerary Platform
 
-GlobeTrotter is a full-stack travel assistant that lets users search destinations, receive personalized recommendations, plan itineraries, and interact with an AI travel assistant — with social features like comments, favorites, and profile avatars, plus Google Sign-In and public usage analytics. The repository contains two independently deployable projects:
+GlobeTrotter is a full-stack travel assistant that lets users search destinations, receive personalized recommendations, plan and delete itineraries, and interact with an AI travel assistant — with social features like ratings, comments, favorites, and profile avatars, community-submitted destinations reviewed through an admin moderation panel, plus Google Sign-In and public usage analytics. The repository contains two independently deployable projects:
 
 | Project | Description | Stack |
 |---|---|---|
@@ -186,18 +186,26 @@ Base URL: `https://trip-io.duckdns.org` (production) or `http://localhost:8000` 
 | `GET` | `/me/favorites` | Bearer token | List the current user's favorited destinations |
 | `POST` | `/me/favorites/{destination_id}` | Bearer token | Add a destination to favorites |
 | `DELETE` | `/me/favorites/{destination_id}` | Bearer token | Remove a destination from favorites |
-| `GET` | `/destinations?q=` | — | Search/list destinations by name or tag |
+| `GET` | `/destinations?q=` | Optional | Search/list approved destinations by name or tag; includes rating average/count, plus the viewer's own rating if signed in |
+| `GET` | `/destinations/{id}` | Optional | Get a single approved destination, with its rating summary |
+| `PUT` | `/destinations/{id}/rating` | Bearer token | Rate a destination 1-5 stars |
+| `DELETE` | `/destinations/{id}/rating` | Bearer token | Clear your own rating on a destination |
+| `POST` | `/destinations/submit` | Bearer token | Propose a new destination; enters a `pending` moderation queue |
+| `GET` | `/me/submissions` | Bearer token | List destinations you've submitted, with their moderation status |
+| `POST` | `/destinations/{id}/image` | Bearer token | Attach/replace a destination's photo (only its submitter or an admin) |
 | `GET` | `/destinations/{id}/comments` | Bearer token | Get threaded comments for a destination, with the viewer's own vote on each |
 | `POST` | `/destinations/{id}/comments` | Bearer token | Post a comment or reply (`parent_id`), max 2000 characters |
 | `POST` | `/comments/{id}/vote` | Bearer token | Upvote/downvote/clear your vote on a comment (`direction`: `up`/`down`/`none`) |
 | `GET` | `/recommendations` | Bearer token | Personalized destinations, ranked by overlap with the user's interest tags (falls back to popular picks if none are set) |
 | `POST` | `/itineraries` | Bearer token | Create an itinerary (title, destinations, optional `schedule`, `start_date`/`end_date`) |
 | `GET` | `/itineraries` | Bearer token | List itineraries owned by the current user |
+| `DELETE` | `/itineraries/{id}` | Bearer token | Delete an itinerary you own |
 | `POST` | `/ai/chat` | Bearer token | Chat with the in-app AI travel assistant (Groq-backed, grounded in the real destination catalog) |
 | `POST` | `/ai/explain/{destination_id}` | Bearer token | Get (and cache) an AI-generated explanation of a destination |
 | `GET` | `/stats/public` | — | Aggregated, anonymized usage stats (total users, active today/this week, 14-day daily-active series, top sections) for the public stats page, sourced from Matomo server-side and cached for 60s |
+| `GET`/`PATCH`/`POST`/`DELETE` | `/admin/destinations[/{id}]` | Bearer token (admin) | Review/approve/reject/edit, directly create, or delete destinations — restricted to accounts with `role: "admin"` in the data store |
 
-Destinations also carry richer detail fields — `nearby` (nearby hotels/restaurants), `opening_hours`, `entry_fee`, and `tips` — returned by both `/destinations` and `/recommendations`. The interest-tag vocabulary used for filtering/recommendations is kept in sync between backend seed data and [`frontend/lib/models/interest_tags.dart`](frontend/lib/models/interest_tags.dart).
+Destinations also carry richer detail fields — `nearby` (nearby hotels/restaurants), `opening_hours`, `entry_fee`, and `tips` — returned by both `/destinations` and `/recommendations`. The interest-tag vocabulary used for filtering/recommendations is kept in sync between backend seed data and [`frontend/lib/models/interest_tags.dart`](frontend/lib/models/interest_tags.dart). A destination's `status` (`approved`/`pending`/`rejected`) governs whether it's publicly visible; only `approved` destinations are returned by the public-facing endpoints. There's a lightweight, browser-based admin panel at `/admin.html` on the deployed site for moderating submissions — access is gated by JWT + the account's `role`, not a separate login.
 
 Authenticated requests must include:
 

@@ -13,12 +13,28 @@ Planned for **Phase 2: Microservices** — see [README → Roadmap](README.md#ro
 - Replace direct in-process calls with REST (sync) and message-queue (async) inter-service communication.
 - Give each service its own datastore instead of a shared JSON file.
 
+## [0.12.0] - 2026-07-31 — Community destination submissions, ratings & admin moderation
+
+- **Star ratings**: users can rate any destination 1-5 stars (`PUT`/`DELETE /destinations/{id}/rating`); the aggregated average and count are computed from the raw ratings store (never cached on the destination record, so they can't drift), and every destination response includes the viewer's own rating alongside them. Added a `StarRating` widget in the app.
+- **User-submitted destinations**: `POST /destinations/submit` lets users propose a new destination (name, description, location, tags, opening hours, entry fee, tips); submissions enter a `pending` moderation queue and stay visible to their submitter via `GET /me/submissions` even if later rejected (rejected destinations are kept, not deleted). Added a dedicated submission screen (`frontend/lib/screens/submit_destination_page.dart`).
+- **Destination photos**: `POST /destinations/{id}/image` lets a submitter (or an admin) attach/replace a destination's photo, restricted by ownership check.
+- **Admin dashboard**: a new role-gated (`role="admin"` in `data.json`) review panel on the marketing site (`website/admin.html`, `website/admin.js`) to list destinations by status, approve/reject/edit submissions, or create/delete destinations directly — backed by `GET`/`PATCH`/`POST`/`DELETE /admin/destinations`.
+- Added `GET /destinations/{id}` to fetch a single (approved) destination directly, also returning its rating summary.
+
+## [0.11.0] - 2026-07-31 — Itinerary deletion, in-app search & UX polish
+
+- **Itinerary deletion**: `DELETE /itineraries/{id}` (ownership-checked — only the owner can delete their own itinerary), with a confirmation dialog and snackbar feedback in the app.
+- Added a search box for filtering destinations while building an itinerary, instead of scrolling the full destination list.
+- Reworked comments into a draggable bottom sheet with a dedicated comments button on the dashboard; the AI assistant similarly moved into its own sheet (`widgets/ai_chat_sheet.dart`) opened via a floating action button (`widgets/ai_fab_button.dart`).
+- Added an animated hero background slideshow to the marketing site's landing page.
+
 ## [0.10.0] - 2026-07-30 — Social & personalization: avatars, comments, favorites
 
 - **Avatar upload**: `POST /me/avatar` accepts a JPEG/PNG/WEBP/GIF up to 5MB, stores it under `static/avatars/<user-id>.<ext>` (keyed by the server-generated user id, never the raw username, to avoid path-traversal risk), and replaces any previous avatar for that user.
 - **Destination comments**: threaded comments per destination with replies and up/down voting — `GET`/`POST /destinations/{id}/comments` and `POST /comments/{id}/vote` — surfaced in the app via a new `CommentsSection` widget on the destination detail page, with per-viewer vote state and a 2000-character limit.
 - **Favorites**: `GET /me/favorites`, `POST`/`DELETE /me/favorites/{destination_id}` let users save destinations to a personal list; added a `FavoriteToggleButton` and a dedicated favorites screen in the app, localized in English and French.
 - `UserProfile` now also reports `avatar_url` and `favorite_ids`.
+- Extended JWT access token lifetime from 1 hour to 1 week, so users stay signed in between sessions instead of being logged out constantly.
 
 ## [0.9.0] - 2026-07-30 — AI travel assistant
 
