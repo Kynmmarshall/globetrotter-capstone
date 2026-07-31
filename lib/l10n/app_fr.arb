@@ -93,6 +93,11 @@
 
   "itinerariesFormMissing": "Ajoutez un titre et choisissez au moins une destination.",
   "itineraryCreatedSnackbar": "Itinéraire créé.",
+  "itineraryDeletedSnackbar": "Itinéraire supprimé.",
+  "deleteItineraryButton": "Supprimer",
+  "deleteItineraryConfirmTitle": "Supprimer cet itinéraire ?",
+  "deleteItineraryConfirmMessage": "« {title} » sera définitivement supprimé. Cette action est irréversible.",
+  "cancelButton": "Annuler",
   "itinerariesPlanTitle": "Planifier un nouvel itinéraire",
   "itineraryTitleLabel": "Titre de l'itinéraire",
   "itineraryTitleHint": "Mon week-end à Yaoundé",

@@ -319,6 +319,14 @@ class ApiClient {
         .toList();
   }
 
+  Future<void> deleteItinerary(String token, String itineraryId) async {
+    final response = await _client.delete(
+      _uri('/itineraries/$itineraryId'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+    _throwIfNotOk(response);
+  }
+
   Future<List<Comment>> getComments(String token, String destinationId) async {
     final response = await _client.get(
       _uri('/destinations/$destinationId/comments'),

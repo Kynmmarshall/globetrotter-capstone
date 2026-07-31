@@ -296,6 +296,23 @@ class AppLocalizationsFr extends AppLocalizations {
   String get itineraryCreatedSnackbar => 'Itinéraire créé.';
 
   @override
+  String get itineraryDeletedSnackbar => 'Itinéraire supprimé.';
+
+  @override
+  String get deleteItineraryButton => 'Supprimer';
+
+  @override
+  String get deleteItineraryConfirmTitle => 'Supprimer cet itinéraire ?';
+
+  @override
+  String deleteItineraryConfirmMessage(String title) {
+    return '« $title » sera définitivement supprimé. Cette action est irréversible.';
+  }
+
+  @override
+  String get cancelButton => 'Annuler';
+
+  @override
   String get itinerariesPlanTitle => 'Planifier un nouvel itinéraire';
 
   @override

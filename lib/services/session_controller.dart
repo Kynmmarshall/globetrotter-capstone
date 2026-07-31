@@ -365,6 +365,12 @@ class SessionController extends ChangeNotifier {
     return ApiClient().getItineraries(token);
   }
 
+  Future<void> deleteItinerary(String itineraryId) async {
+    final token = _requireToken();
+    await ApiClient().deleteItinerary(token, itineraryId);
+    Analytics.instance.trackEvent('itinerary', 'deleted', name: itineraryId);
+  }
+
   Future<String> aiChat(List<ChatMessage> messages) async {
     final token = _requireToken();
     final reply = await ApiClient().aiChat(token, messages);

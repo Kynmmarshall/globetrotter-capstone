@@ -11,6 +11,7 @@ import 'package:trip_io/screens/itineraries_page.dart';
 import 'package:trip_io/screens/profile_page.dart';
 import 'package:trip_io/screens/recommendations_page.dart';
 import 'package:trip_io/widgets/ai_chat_sheet.dart';
+import 'package:trip_io/widgets/ai_fab_button.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key, required this.session});
@@ -77,29 +78,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   // dashboard tab as an overlay sheet rather than a nav item - asking the
   // AI something no longer means navigating away from what you're browsing.
   Widget _aiFab(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      shape: const CircleBorder(),
-      clipBehavior: Clip.antiAlias,
-      elevation: 6,
-      child: InkWell(
-        onTap: () => showAiChatSheet(context, session: widget.session),
-        child: Container(
-          width: 56,
-          height: 56,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            gradient: LinearGradient(
-              colors: [
-                Theme.of(context).colorScheme.primary,
-                Theme.of(context).colorScheme.tertiary,
-              ],
-            ),
-          ),
-          child: const Icon(Icons.smart_toy, color: Colors.white, size: 26),
-        ),
-      ),
-    );
+    return AiFabButton(onTap: () => showAiChatSheet(context, session: widget.session));
   }
 
   Widget _frostedSurface({required Widget child, double blur = 18, double alpha = 0.16}) {

@@ -63,6 +63,48 @@ class _ItinerariesPageState extends State<ItinerariesPage> {
     });
   }
 
+  Future<void> _deleteItinerary(Itinerary item) async {
+    final l10n = AppLocalizations.of(context)!;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(l10n.deleteItineraryConfirmTitle),
+        content: Text(l10n.deleteItineraryConfirmMessage(item.title)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(l10n.cancelButton),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: FilledButton.styleFrom(backgroundColor: Colors.red.shade600),
+            child: Text(l10n.deleteItineraryButton),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    try {
+      await widget.session.deleteItinerary(item.id);
+      await _refresh();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.itineraryDeletedSnackbar)),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      if (isAuthError(e)) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.sessionExpiredTitle)));
+        await widget.session.logout();
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
+      );
+    }
+  }
+
   Future<void> _create() async {
     final l10n = AppLocalizations.of(context)!;
     final title = _titleController.text.trim();
@@ -621,6 +663,12 @@ class _ItinerariesPageState extends State<ItinerariesPage> {
                                   fontSize: 15,
                                 ),
                               ),
+                            ),
+                            IconButton(
+                              onPressed: () => _deleteItinerary(item),
+                              icon: const Icon(Icons.delete_outline, color: Colors.white70, size: 20),
+                              tooltip: AppLocalizations.of(context)!.deleteItineraryButton,
+                              visualDensity: VisualDensity.compact,
                             ),
                           ],
                         ),

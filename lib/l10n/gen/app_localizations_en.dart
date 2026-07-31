@@ -289,6 +289,23 @@ class AppLocalizationsEn extends AppLocalizations {
   String get itineraryCreatedSnackbar => 'Itinerary created.';
 
   @override
+  String get itineraryDeletedSnackbar => 'Itinerary deleted.';
+
+  @override
+  String get deleteItineraryButton => 'Delete';
+
+  @override
+  String get deleteItineraryConfirmTitle => 'Delete this itinerary?';
+
+  @override
+  String deleteItineraryConfirmMessage(String title) {
+    return '\"$title\" will be permanently deleted. This can\'t be undone.';
+  }
+
+  @override
+  String get cancelButton => 'Cancel';
+
+  @override
   String get itinerariesPlanTitle => 'Plan a new itinerary';
 
   @override

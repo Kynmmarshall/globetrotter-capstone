@@ -602,6 +602,36 @@ abstract class AppLocalizations {
   /// **'Itinerary created.'**
   String get itineraryCreatedSnackbar;
 
+  /// No description provided for @itineraryDeletedSnackbar.
+  ///
+  /// In en, this message translates to:
+  /// **'Itinerary deleted.'**
+  String get itineraryDeletedSnackbar;
+
+  /// No description provided for @deleteItineraryButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get deleteItineraryButton;
+
+  /// No description provided for @deleteItineraryConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this itinerary?'**
+  String get deleteItineraryConfirmTitle;
+
+  /// No description provided for @deleteItineraryConfirmMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'\"{title}\" will be permanently deleted. This can\'t be undone.'**
+  String deleteItineraryConfirmMessage(String title);
+
+  /// No description provided for @cancelButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get cancelButton;
+
   /// No description provided for @itinerariesPlanTitle.
   ///
   /// In en, this message translates to:
