@@ -10,6 +10,11 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="css/style.css" />
+
+  <!-- Location picker map in the destination editor - version must match
+       the maplibre-gl.js used by the Flutter web build (see trip_io/web/index.html). -->
+  <script src="https://unpkg.com/maplibre-gl@^5.24.0/dist/maplibre-gl.js"></script>
+  <link href="https://unpkg.com/maplibre-gl@^5.24.0/dist/maplibre-gl.css" rel="stylesheet" />
 </head>
 <body>
 
@@ -78,8 +83,25 @@
       <label><span>Name</span><input type="text" id="f-name" required /></label>
       <label><span>Description</span><textarea id="f-description" rows="4"></textarea></label>
       <label><span>Location</span><input type="text" id="f-location" /></label>
+      <label>
+        <span>Position (click the map to set it)</span>
+        <div class="admin-map-wrap">
+          <div id="location-map" class="admin-location-map"></div>
+          <button type="button" class="admin-map-locate" id="locate-btn" title="Use my current location">&#9679;</button>
+        </div>
+      </label>
+      <div class="admin-form-row">
+        <label><span>Latitude</span><input type="text" inputmode="decimal" id="f-lat" placeholder="3.8667" /></label>
+        <label><span>Longitude</span><input type="text" inputmode="decimal" id="f-lon" placeholder="11.5167" /></label>
+      </div>
       <label><span>Tags (comma separated)</span><input type="text" id="f-tags" placeholder="nature, family" /></label>
-      <label><span>Image URL</span><input type="text" id="f-image" placeholder="/static/destinations/name.jpg" /></label>
+      <label>
+        <span>Image</span>
+        <div class="admin-image-picker">
+          <img id="f-image-preview" class="admin-image-preview" alt="" hidden />
+          <input type="file" id="f-image-file" accept="image/jpeg,image/png,image/webp,image/gif" />
+        </div>
+      </label>
       <label><span>Opening hours</span><input type="text" id="f-hours" /></label>
       <label><span>Entry fee</span><input type="text" id="f-fee" /></label>
       <label><span>Tips</span><textarea id="f-tips" rows="2"></textarea></label>

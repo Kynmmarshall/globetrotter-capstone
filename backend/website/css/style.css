@@ -1223,6 +1223,66 @@ footer .footer-brand img {
   color: var(--text-dim);
 }
 
+.admin-form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.admin-map-wrap {
+  position: relative;
+}
+
+.admin-location-map {
+  height: 220px;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  cursor: crosshair;
+}
+
+.admin-map-locate {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  z-index: 2;
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  border: none;
+  background: #0b1a24;
+  color: #fff;
+  font-size: 0.8rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+}
+
+.admin-map-locate:hover {
+  background: #13303b;
+}
+
+.admin-map-locate.is-busy {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.admin-image-picker {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.admin-image-preview {
+  width: 72px;
+  height: 72px;
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+}
+
 .admin-form input,
 .admin-form textarea {
   font-family: inherit;

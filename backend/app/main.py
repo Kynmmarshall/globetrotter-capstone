@@ -1,10 +1,12 @@
+import re
+import unicodedata
 from pathlib import Path
 
 from fastapi import FastAPI, File, HTTPException, Depends, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
-from . import ai, crud, google_auth, stats
+from . import ai, crud, google_auth, routing, stats
 from .schemas import (
     UserCreate,
     Token,
@@ -23,6 +25,8 @@ from .schemas import (
     DestinationUpdate,
     RatingRequest,
     RatingSummary,
+    RouteRequest,
+    RouteResponse,
 )
 from .auth import (
     create_access_token,
@@ -54,9 +58,10 @@ app.mount("/static", StaticFiles(directory=_static_dir), name="static")
 _avatars_dir = _static_dir / "avatars"
 _avatars_dir.mkdir(parents=True, exist_ok=True)
 # Same folder the 62 curated destination photos already live in - a user-
-# or admin-uploaded destination image lands right alongside them, keyed by
-# the server-generated destination id (never anything user-supplied) so
-# there's no path-traversal risk in the filename.
+# or admin-uploaded destination image lands right alongside them, named from
+# a slugified version of the destination's name (see _slugify) so the
+# filename stays human-readable while still being safe against path
+# traversal, since slugifying is what strips out anything dangerous.
 _destinations_images_dir = _static_dir / "destinations"
 _destinations_images_dir.mkdir(parents=True, exist_ok=True)
 _IMAGE_MAX_BYTES = 5 * 1024 * 1024
@@ -66,6 +71,16 @@ _IMAGE_EXTENSIONS = {
     "image/webp": ".webp",
     "image/gif": ".gif",
 }
+
+
+def _slugify(text: str) -> str:
+    """ASCII, filesystem-safe slug - e.g. for naming an uploaded destination
+    image after the destination's name. This is what actually makes it safe
+    to build a path from user-supplied text: the output can only ever
+    contain [a-z0-9_], so there's no path-traversal surface regardless of
+    what was typed in."""
+    normalized = unicodedata.normalize("NFKD", text).encode("ascii", "ignore").decode("ascii")
+    return re.sub(r"[^a-z0-9]+", "_", normalized.lower()).strip("_")[:60]
 
 
 @app.post("/register", response_model=Token)
@@ -255,10 +270,27 @@ async def upload_destination_image(
     if len(body) > _IMAGE_MAX_BYTES:
         raise HTTPException(status_code=400, detail="Image is larger than 5MB")
 
-    for existing in _destinations_images_dir.glob(f"{destination_id}.*"):
+    # Human-readable filenames, matching the curated catalog's own images
+    # (e.g. "le_safoutier.jpg"), rather than the opaque destination id.
+    old_url = dest.get("image_url") or ""
+    slug = _slugify(dest.get("name") or "") or destination_id
+    dest_path = _destinations_images_dir / f"{slug}{ext}"
+    if dest_path.exists() and old_url != f"/static/destinations/{dest_path.name}":
+        # Another destination already has this slug (e.g. two destinations
+        # named "Le Safoutier") - disambiguate instead of overwriting it.
+        slug = f"{slug}-{destination_id}"
+        dest_path = _destinations_images_dir / f"{slug}{ext}"
+
+    # Remove this destination's previous image file, whatever it was named -
+    # a prior upload under a different slug/extension - so a later name edit
+    # doesn't leave orphaned files behind.
+    if old_url.startswith("/static/destinations/"):
+        stale = _static_dir / "destinations" / Path(old_url).name
+        if stale.exists() and stale != dest_path:
+            stale.unlink(missing_ok=True)
+    for existing in _destinations_images_dir.glob(f"{slug}.*"):
         existing.unlink(missing_ok=True)
 
-    dest_path = _destinations_images_dir / f"{destination_id}{ext}"
     dest_path.write_bytes(body)
 
     updated = crud.update_destination(destination_id, {"image_url": f"/static/destinations/{dest_path.name}"})
@@ -406,6 +438,22 @@ async def ai_explain(destination_id: str, user: str = Depends(get_current_user))
         raise _ai_error_response(exc)
     crud.set_destination_ai_explanation(destination_id, reply)
     return {"reply": reply}
+
+
+@app.post("/route", response_model=RouteResponse)
+async def get_route(payload: RouteRequest, user: str = Depends(get_current_user)):
+    if len(payload.waypoints) < 2:
+        raise HTTPException(status_code=400, detail="At least two waypoints are required")
+    try:
+        result = await routing.get_route(
+            [(wp.lat, wp.lon) for wp in payload.waypoints],
+            profile=payload.profile,
+        )
+    except routing.RoutingNotConfiguredError:
+        raise HTTPException(status_code=503, detail="Routing is not configured")
+    except routing.RoutingRequestError:
+        raise HTTPException(status_code=502, detail="Routing service is temporarily unavailable")
+    return result
 
 
 # Mounted last (and most-specific-first) so none of these can shadow the

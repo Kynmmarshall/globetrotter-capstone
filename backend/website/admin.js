@@ -12,16 +12,121 @@
   let currentStatus = 'pending';
   let editingId = null; // null while creating a brand-new destination
 
+  // ---------- location picker map (editor dialog) ----------
+
+  const YAOUNDE_CENTER = [11.5021, 3.8480]; // MapLibre wants [lng, lat]
+  let locationMap = null;
+  let locationMarker = null;
+
+  function ensureLocationMap() {
+    if (locationMap) return locationMap;
+    locationMap = new maplibregl.Map({
+      container: 'location-map',
+      style: 'https://tiles.openfreemap.org/styles/liberty',
+      center: YAOUNDE_CENTER,
+      zoom: 11,
+    });
+    locationMap.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
+    // Clicking the map is the primary way to set a point - the lat/lon text
+    // inputs stay editable too, for precision or pasting known coordinates.
+    locationMap.on('click', (e) => {
+      el('f-lat').value = e.lngLat.lat.toFixed(6);
+      el('f-lon').value = e.lngLat.lng.toFixed(6);
+      placeMarker(e.lngLat.lat, e.lngLat.lng);
+    });
+    return locationMap;
+  }
+
+  function placeMarker(lat, lon) {
+    const map = ensureLocationMap();
+    if (locationMarker) {
+      locationMarker.setLngLat([lon, lat]);
+    } else {
+      locationMarker = new maplibregl.Marker({ color: '#0A7E8C', draggable: true })
+        .setLngLat([lon, lat])
+        .addTo(map);
+      locationMarker.on('dragend', () => {
+        const pos = locationMarker.getLngLat();
+        el('f-lat').value = pos.lat.toFixed(6);
+        el('f-lon').value = pos.lng.toFixed(6);
+      });
+    }
+  }
+
+  function clearMarker() {
+    if (locationMarker) {
+      locationMarker.remove();
+      locationMarker = null;
+    }
+  }
+
+  // Keeps the marker in sync if an admin types/pastes coordinates directly
+  // instead of clicking the map.
+  function syncMarkerFromFields() {
+    const latRaw = el('f-lat').value.trim();
+    const lonRaw = el('f-lon').value.trim();
+    const lat = Number(latRaw);
+    const lon = Number(lonRaw);
+    if (latRaw && lonRaw && Number.isFinite(lat) && Number.isFinite(lon)) {
+      placeMarker(lat, lon);
+    } else {
+      clearMarker();
+    }
+  }
+
+  function goToMyLocation() {
+    if (!navigator.geolocation) {
+      showError(el('edit-error'), 'Geolocation is not available in this browser.');
+      return;
+    }
+    const btn = el('locate-btn');
+    btn.classList.add('is-busy');
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        btn.classList.remove('is-busy');
+        const { latitude, longitude } = position.coords;
+        el('f-lat').value = latitude.toFixed(6);
+        el('f-lon').value = longitude.toFixed(6);
+        placeMarker(latitude, longitude);
+        const map = ensureLocationMap();
+        map.flyTo({ center: [longitude, latitude], zoom: 14 });
+      },
+      (err) => {
+        btn.classList.remove('is-busy');
+        showError(el('edit-error'), `Could not get your location: ${err.message}`);
+      },
+      { enableHighAccuracy: true, timeout: 10000 },
+    );
+  }
+
+  // ---------- image picker (editor dialog) ----------
+
+  let pendingImageFile = null; // a newly chosen file awaiting upload on save
+
+  function setImagePreview(url) {
+    const img = el('f-image-preview');
+    if (url) {
+      img.src = url;
+      img.hidden = false;
+    } else {
+      img.src = '';
+      img.hidden = true;
+    }
+  }
+
   function showError(node, message) {
     node.textContent = message;
     node.hidden = !message;
   }
 
   async function api(path, options = {}) {
+    // FormData (image uploads) must NOT get a manual Content-Type - the
+    // browser sets its own multipart boundary, which we'd otherwise clobber.
+    const isFormData = options.body instanceof FormData;
     const res = await fetch(path, {
       ...options,
       headers: {
-        'Content-Type': 'application/json',
+        ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
         ...(options.headers || {}),
       },
@@ -193,13 +298,43 @@
     el('f-name').value = dest?.name || '';
     el('f-description').value = dest?.description || '';
     el('f-location').value = dest?.location || '';
+    el('f-lat').value = dest?.lat ?? '';
+    el('f-lon').value = dest?.lon ?? '';
     el('f-tags').value = (dest?.tags || []).join(', ');
-    el('f-image').value = dest?.image_url || '';
+    pendingImageFile = null;
+    el('f-image-file').value = '';
+    setImagePreview(dest?.image_url || null);
     el('f-hours').value = dest?.opening_hours || '';
     el('f-fee').value = dest?.entry_fee || '';
     el('f-tips').value = dest?.tips || '';
     showError(el('edit-error'), '');
     el('edit-dialog').showModal();
+
+    const map = ensureLocationMap();
+    const hasPoint = typeof dest?.lat === 'number' && typeof dest?.lon === 'number';
+    clearMarker();
+    if (hasPoint) {
+      placeMarker(dest.lat, dest.lon);
+      map.setCenter([dest.lon, dest.lat]);
+      map.setZoom(13);
+    } else {
+      map.setCenter(YAOUNDE_CENTER);
+      map.setZoom(11);
+    }
+    // The map's container has zero size until the <dialog> is actually
+    // shown, so MapLibre needs a nudge to recompute its canvas size once it
+    // is - a same-tick resize() call sees the old (zero) layout.
+    setTimeout(() => map.resize(), 50);
+  }
+
+  function parseOptionalFloat(rawValue, fieldLabel) {
+    const trimmed = rawValue.trim();
+    if (!trimmed) return { value: null, error: null };
+    const parsed = Number(trimmed);
+    if (!Number.isFinite(parsed)) {
+      return { value: null, error: `${fieldLabel} must be a number.` };
+    }
+    return { value: parsed, error: null };
   }
 
   async function saveEditor() {
@@ -208,28 +343,46 @@
       showError(el('edit-error'), 'Name is required.');
       return;
     }
+    const lat = parseOptionalFloat(el('f-lat').value, 'Latitude');
+    const lon = parseOptionalFloat(el('f-lon').value, 'Longitude');
+    if (lat.error || lon.error) {
+      showError(el('edit-error'), lat.error || lon.error);
+      return;
+    }
     const payload = {
       name,
       description: el('f-description').value.trim() || null,
       location: el('f-location').value.trim() || null,
+      lat: lat.value,
+      lon: lon.value,
       tags: el('f-tags').value.split(',').map((t) => t.trim()).filter(Boolean),
-      image_url: el('f-image').value.trim() || null,
       opening_hours: el('f-hours').value.trim() || null,
       entry_fee: el('f-fee').value.trim() || null,
       tips: el('f-tips').value.trim() || null,
     };
     try {
-      if (editingId) {
-        await api(`/admin/destinations/${editingId}`, {
-          method: 'PATCH',
-          body: JSON.stringify(payload),
-        });
-      } else {
-        await api('/admin/destinations', {
+      const saved = editingId
+        ? await api(`/admin/destinations/${editingId}`, {
+            method: 'PATCH',
+            body: JSON.stringify(payload),
+          })
+        : await api('/admin/destinations', {
+            method: 'POST',
+            body: JSON.stringify(payload),
+          });
+
+      // The image URL is server-generated (from the destination's name) -
+      // this only ever runs once the destination itself (and so its id)
+      // definitely exists, whether that's from an edit or a brand-new one.
+      if (pendingImageFile) {
+        const formData = new FormData();
+        formData.append('file', pendingImageFile);
+        await api(`/destinations/${saved.id}/image`, {
           method: 'POST',
-          body: JSON.stringify(payload),
+          body: formData,
         });
       }
+
       el('edit-dialog').close();
       refresh();
     } catch (err) {
@@ -255,6 +408,14 @@
   el('new-btn').addEventListener('click', () => openEditor(null));
   el('edit-save').addEventListener('click', saveEditor);
   el('edit-cancel').addEventListener('click', () => el('edit-dialog').close());
+  el('f-lat').addEventListener('change', syncMarkerFromFields);
+  el('f-lon').addEventListener('change', syncMarkerFromFields);
+  el('locate-btn').addEventListener('click', goToMyLocation);
+  el('f-image-file').addEventListener('change', () => {
+    const file = el('f-image-file').files[0] || null;
+    pendingImageFile = file;
+    if (file) setImagePreview(URL.createObjectURL(file));
+  });
 
   document.querySelectorAll('.admin-tab').forEach((tab) => {
     tab.addEventListener('click', () => {
