@@ -363,6 +363,18 @@ class AppLocalizationsFr extends AppLocalizations {
       'L\'accès à la position est nécessaire pour l\'afficher sur la carte. Veuillez l\'autoriser dans les paramètres de votre appareil.';
 
   @override
+  String get mapUseMyLocation => 'Utiliser ma position actuelle';
+
+  @override
+  String get mapMyLocationLabel => 'Ma position actuelle';
+
+  @override
+  String get mapResolvingLocation => 'Recherche de votre position…';
+
+  @override
+  String get startItineraryButton => 'Démarrer l\'itinéraire';
+
+  @override
   String mapRouteError(String error) {
     return 'Impossible d\'obtenir l\'itinéraire.\n$error';
   }

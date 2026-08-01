@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart' as ll;
@@ -26,11 +28,43 @@ class TripMapFlutterMapView extends StatelessWidget {
   final double initialLon;
   final double initialZoom;
 
-  /// The device's current GPS position, if the user has granted permission -
-  /// rendered as a plain dot. Unlike the MapLibre backend there's no native
-  /// puck to lean on here, and Windows desktops have no compass hardware, so
-  /// there's no heading arrow to draw.
-  final ({double lat, double lon})? myLocation;
+  /// The device's current GPS position, if the user has granted permission.
+  /// [myLocation.heading] is only non-null when the platform actually has a
+  /// real heading to report (most Windows desktops have no compass hardware
+  /// and won't) - the arrow is only drawn in that case.
+  final ({double lat, double lon, double? heading})? myLocation;
+
+  Widget _myLocationMarker({double? heading}) {
+    final dot = Container(
+      width: 16,
+      height: 16,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: const Color(0xFF1E88E5),
+        border: Border.all(color: Colors.white, width: 3),
+        boxShadow: const [BoxShadow(color: Colors.black45, blurRadius: 5)],
+      ),
+    );
+    if (heading == null) return Center(child: dot);
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        // 0deg is due north, matching Icons.navigation's default up-pointing
+        // orientation - rotating it by the heading (clockwise, in radians)
+        // points it exactly where the device is facing.
+        Transform.rotate(
+          angle: heading * (math.pi / 180),
+          child: const Icon(
+            Icons.navigation,
+            color: Color(0xFF1E88E5),
+            size: 34,
+            shadows: [Shadow(color: Colors.black45, blurRadius: 4)],
+          ),
+        ),
+        dot,
+      ],
+    );
+  }
 
   Widget _pin({required bool selected}) {
     return Container(
@@ -91,16 +125,9 @@ class TripMapFlutterMapView extends StatelessWidget {
             markers: [
               Marker(
                 point: ll.LatLng(myLocation!.lat, myLocation!.lon),
-                width: 22,
-                height: 22,
-                child: Container(
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: const Color(0xFF1E88E5),
-                    border: Border.all(color: Colors.white, width: 3),
-                    boxShadow: const [BoxShadow(color: Colors.black45, blurRadius: 5)],
-                  ),
-                ),
+                width: myLocation!.heading != null ? 34 : 22,
+                height: myLocation!.heading != null ? 34 : 22,
+                child: _myLocationMarker(heading: myLocation!.heading),
               ),
             ],
           ),

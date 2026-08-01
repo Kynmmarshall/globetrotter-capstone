@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -21,6 +22,8 @@ class MapPage extends StatefulWidget {
     required this.session,
     this.focusDestination,
     this.showAppBar = false,
+    this.itineraryDestinationIds,
+    this.itineraryTitle,
   });
 
   final SessionController session;
@@ -34,6 +37,17 @@ class MapPage extends StatefulWidget {
   /// embedded as a dashboard tab - it then needs its own back button, since
   /// there's no dashboard AppBar/Scaffold around it to provide one.
   final bool showAppBar;
+
+  /// When set (opened via an itinerary's "Start itinerary" button), the page
+  /// switches into turn-by-turn mode: it resolves the device's current
+  /// location as the route's start point and routes through these
+  /// destination IDs, in order, as checkpoints - the usual From/To pickers
+  /// are replaced with a read-only summary of the stops.
+  final List<String>? itineraryDestinationIds;
+
+  /// Shown in the AppBar title instead of the generic "Map" label when
+  /// [itineraryDestinationIds] is set.
+  final String? itineraryTitle;
 
   @override
   State<MapPage> createState() => _MapPageState();
@@ -50,11 +64,76 @@ class _MapPageState extends State<MapPage> {
   bool _routeLoading = false;
   String? _routeError;
 
+  List<Destination> _allDestinations = [];
+  bool _resolvingMyLocation = false;
+  String? _myLocationError;
+
+  bool get _isItineraryMode => widget.itineraryDestinationIds != null;
+
+  List<Destination> get _itineraryCheckpoints {
+    final ids = widget.itineraryDestinationIds;
+    if (ids == null) return const [];
+    final byId = {for (final d in _allDestinations) d.id: d};
+    return ids
+        .map((id) => byId[id])
+        .whereType<Destination>()
+        .where((d) => d.hasCoordinates)
+        .toList();
+  }
+
   @override
   void initState() {
     super.initState();
     _future = widget.session.destinations();
+    unawaited(
+      _future.then((list) {
+        if (mounted) setState(() => _allDestinations = list);
+      }),
+    );
     _destination = widget.focusDestination;
+    if (_isItineraryMode) {
+      unawaited(_resolveMyLocationForItinerary());
+    }
+  }
+
+  Future<void> _resolveMyLocationForItinerary() async {
+    setState(() {
+      _resolvingMyLocation = true;
+      _myLocationError = null;
+    });
+    final granted = await ensureLocationPermission();
+    if (!mounted) return;
+    if (!granted) {
+      setState(() {
+        _resolvingMyLocation = false;
+        _myLocationError = AppLocalizations.of(
+          context,
+        )!.mapLocationPermissionDenied;
+      });
+      return;
+    }
+    try {
+      final position = await Geolocator.getCurrentPosition();
+      if (!mounted) return;
+      setState(() {
+        _origin = Destination(
+          id: _myLocationDestinationId,
+          name: AppLocalizations.of(context)!.mapMyLocationLabel,
+          country: '',
+          tags: const [],
+          lat: position.latitude,
+          lon: position.longitude,
+        );
+        _resolvingMyLocation = false;
+      });
+      unawaited(_computeRoute());
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _resolvingMyLocation = false;
+        _myLocationError = e.toString();
+      });
+    }
   }
 
   @override
@@ -88,8 +167,9 @@ class _MapPageState extends State<MapPage> {
 
   Future<Destination?> _pickDestination(
     List<Destination> options,
-    String title,
-  ) async {
+    String title, {
+    bool allowMyLocation = false,
+  }) async {
     _searchController.clear();
     return showModalBottomSheet<Destination>(
       context: context,
@@ -102,6 +182,10 @@ class _MapPageState extends State<MapPage> {
           maxChildSize: 0.92,
           expand: false,
           builder: (context, scrollController) {
+            // Lives here, one level above StatefulBuilder, so it survives
+            // the setSheetState calls below instead of resetting each time.
+            var locatingMe = false;
+            String? locateError;
             return ClipRRect(
               borderRadius: const BorderRadius.vertical(
                 top: Radius.circular(24),
@@ -180,6 +264,87 @@ class _MapPageState extends State<MapPage> {
                               onChanged: (_) => setSheetState(() {}),
                             ),
                           ),
+                          if (allowMyLocation) ...[
+                            const SizedBox(height: 4),
+                            ListTile(
+                              leading: locatingMe
+                                  ? const SizedBox(
+                                      width: 20,
+                                      height: 20,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: Colors.white70,
+                                      ),
+                                    )
+                                  : const Icon(
+                                      Icons.my_location,
+                                      color: Colors.white,
+                                    ),
+                              title: Text(
+                                AppLocalizations.of(context)!.mapUseMyLocation,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              subtitle: locateError != null
+                                  ? Text(
+                                      locateError!,
+                                      style: TextStyle(
+                                        color: Colors.red.shade100,
+                                        fontSize: 12,
+                                      ),
+                                    )
+                                  : null,
+                              onTap: locatingMe
+                                  ? null
+                                  : () async {
+                                      setSheetState(() {
+                                        locatingMe = true;
+                                        locateError = null;
+                                      });
+                                      final granted =
+                                          await ensureLocationPermission();
+                                      if (!context.mounted) return;
+                                      if (!granted) {
+                                        setSheetState(() {
+                                          locatingMe = false;
+                                          locateError = AppLocalizations.of(
+                                            context,
+                                          )!.mapLocationPermissionDenied;
+                                        });
+                                        return;
+                                      }
+                                      try {
+                                        final position =
+                                            await Geolocator.getCurrentPosition();
+                                        if (!context.mounted) return;
+                                        Navigator.of(context).pop(
+                                          Destination(
+                                            id: _myLocationDestinationId,
+                                            name: AppLocalizations.of(
+                                              context,
+                                            )!.mapMyLocationLabel,
+                                            country: '',
+                                            tags: const [],
+                                            lat: position.latitude,
+                                            lon: position.longitude,
+                                          ),
+                                        );
+                                      } catch (e) {
+                                        if (!context.mounted) return;
+                                        setSheetState(() {
+                                          locatingMe = false;
+                                          locateError = e.toString();
+                                        });
+                                      }
+                                    },
+                            ),
+                            Divider(
+                              color: Colors.white.withValues(alpha: 0.12),
+                              height: 1,
+                            ),
+                          ],
                           const SizedBox(height: 8),
                           Expanded(
                             child: ListView.builder(
@@ -230,12 +395,17 @@ class _MapPageState extends State<MapPage> {
     required Destination? value,
     required List<Destination> options,
     required void Function(Destination) onPicked,
+    bool allowMyLocation = false,
   }) {
     final l10n = AppLocalizations.of(context)!;
     return InkWell(
       borderRadius: BorderRadius.circular(12),
       onTap: () async {
-        final picked = await _pickDestination(options, label);
+        final picked = await _pickDestination(
+          options,
+          label,
+          allowMyLocation: allowMyLocation,
+        );
         if (picked != null) {
           onPicked(picked);
           _computeRoute();
@@ -279,6 +449,94 @@ class _MapPageState extends State<MapPage> {
     );
   }
 
+  Widget _itineraryStopChip(String label, {IconData icon = Icons.place}) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.14),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.24)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 12, color: Colors.white70),
+            const SizedBox(width: 4),
+            Text(
+              label,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 11.5,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildItinerarySummary(
+    AppLocalizations l10n,
+    List<Destination> checkpoints,
+  ) {
+    if (_resolvingMyLocation) {
+      return Row(
+        children: [
+          const SizedBox(
+            width: 14,
+            height: 14,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              color: Colors.white70,
+            ),
+          ),
+          const SizedBox(width: 10),
+          Text(
+            l10n.mapResolvingLocation,
+            style: const TextStyle(color: Colors.white70, fontSize: 12.5),
+          ),
+        ],
+      );
+    }
+    if (_myLocationError != null) {
+      return Row(
+        children: [
+          Expanded(
+            child: Text(
+              _myLocationError!,
+              style: TextStyle(color: Colors.red.shade100, fontSize: 12.5),
+            ),
+          ),
+          TextButton(
+            onPressed: _resolveMyLocationForItinerary,
+            style: TextButton.styleFrom(
+              padding: EdgeInsets.zero,
+              minimumSize: Size.zero,
+            ),
+            child: Text(
+              l10n.mapUseMyLocation,
+              style: const TextStyle(color: Colors.white, fontSize: 12.5),
+            ),
+          ),
+        ],
+      );
+    }
+    return Wrap(
+      spacing: 6,
+      runSpacing: 6,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        _itineraryStopChip(l10n.mapMyLocationLabel, icon: Icons.my_location),
+        for (final stop in checkpoints) ...[
+          const Icon(Icons.arrow_forward, size: 13, color: Colors.white54),
+          _itineraryStopChip(stop.name),
+        ],
+      ],
+    );
+  }
+
   void _swapPoints() {
     setState(() {
       final tmp = _origin;
@@ -288,13 +546,25 @@ class _MapPageState extends State<MapPage> {
     _computeRoute();
   }
 
-  Future<void> _computeRoute() async {
+  /// The ordered stops the route should run through - origin plus either
+  /// the itinerary's checkpoints (in itinerary mode) or the single manually
+  /// picked destination. Null when there isn't enough to route yet.
+  List<Destination>? get _routeStops {
     final origin = _origin;
+    if (origin == null || !origin.hasCoordinates) return null;
+    if (_isItineraryMode) {
+      final checkpoints = _itineraryCheckpoints;
+      if (checkpoints.isEmpty) return null;
+      return [origin, ...checkpoints];
+    }
     final destination = _destination;
-    if (origin == null ||
-        destination == null ||
-        !origin.hasCoordinates ||
-        !destination.hasCoordinates) {
+    if (destination == null || !destination.hasCoordinates) return null;
+    return [origin, destination];
+  }
+
+  Future<void> _computeRoute() async {
+    final stops = _routeStops;
+    if (stops == null) {
       setState(() {
         _route = null;
         _routeError = null;
@@ -306,10 +576,13 @@ class _MapPageState extends State<MapPage> {
       _routeError = null;
     });
     try {
-      final result = await widget.session.getRoute([
-        RouteWaypoint(lat: origin.lat!, lon: origin.lon!),
-        RouteWaypoint(lat: destination.lat!, lon: destination.lon!),
-      ], profile: _profile);
+      final waypoints = [
+        for (final stop in stops) RouteWaypoint(lat: stop.lat!, lon: stop.lon!),
+      ];
+      final result = await widget.session.getRoute(
+        waypoints,
+        profile: _profile,
+      );
       if (!mounted) return;
       setState(() => _route = result);
     } catch (e) {
@@ -435,7 +708,7 @@ class _MapPageState extends State<MapPage> {
       backgroundColor: Colors.transparent,
       appBar: widget.showAppBar
           ? AppBar(
-              title: Text(l10n.navMap),
+              title: Text(widget.itineraryTitle ?? l10n.navMap),
               backgroundColor: Colors.transparent,
               foregroundColor: Colors.white,
               elevation: 0,
@@ -458,17 +731,39 @@ class _MapPageState extends State<MapPage> {
           }
           final all = snapshot.data ?? <Destination>[];
           final withCoords = all.where((d) => d.hasCoordinates).toList();
-          final markers = [
-            for (final d in withCoords)
-              TripMapMarker(
-                id: d.id,
-                name: d.name,
-                lat: d.lat!,
-                lon: d.lon!,
-                selected: d.id == _origin?.id || d.id == _destination?.id,
-              ),
-          ];
+          final checkpoints = _itineraryCheckpoints;
+          final markers = _isItineraryMode
+              ? [
+                  if (_origin != null)
+                    TripMapMarker(
+                      id: _origin!.id,
+                      name: _origin!.name,
+                      lat: _origin!.lat!,
+                      lon: _origin!.lon!,
+                    ),
+                  for (final stop in checkpoints)
+                    TripMapMarker(
+                      id: stop.id,
+                      name: stop.name,
+                      lat: stop.lat!,
+                      lon: stop.lon!,
+                      selected: true,
+                    ),
+                ]
+              : [
+                  for (final d in withCoords)
+                    TripMapMarker(
+                      id: d.id,
+                      name: d.name,
+                      lat: d.lat!,
+                      lon: d.lon!,
+                      selected: d.id == _origin?.id || d.id == _destination?.id,
+                    ),
+                ];
           final focus = widget.focusDestination;
+          final firstCheckpoint = checkpoints.isNotEmpty
+              ? checkpoints.first
+              : null;
 
           return Column(
             children: [
@@ -485,7 +780,9 @@ class _MapPageState extends State<MapPage> {
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
-                              l10n.mapTitle,
+                              _isItineraryMode
+                                  ? (widget.itineraryTitle ?? l10n.navMap)
+                                  : l10n.mapTitle,
                               style: const TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.w800,
@@ -493,7 +790,8 @@ class _MapPageState extends State<MapPage> {
                               ),
                             ),
                           ),
-                          if (_origin != null || _destination != null)
+                          if (!_isItineraryMode &&
+                              (_origin != null || _destination != null))
                             TextButton(
                               onPressed: _clearRoute,
                               style: TextButton.styleFrom(
@@ -512,44 +810,50 @@ class _MapPageState extends State<MapPage> {
                         ],
                       ),
                       const SizedBox(height: 10),
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Expanded(
-                            child: Column(
-                              children: [
-                                _pointField(
-                                  icon: Icons.trip_origin,
-                                  label: l10n.mapFromLabel,
-                                  value: _origin,
-                                  options: withCoords,
-                                  onPicked: (d) => setState(() => _origin = d),
-                                ),
-                                const SizedBox(height: 8),
-                                _pointField(
-                                  icon: Icons.flag,
-                                  label: l10n.mapToLabel,
-                                  value: _destination,
-                                  options: withCoords,
-                                  onPicked: (d) =>
-                                      setState(() => _destination = d),
-                                ),
-                              ],
+                      if (_isItineraryMode)
+                        _buildItinerarySummary(l10n, checkpoints)
+                      else
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              child: Column(
+                                children: [
+                                  _pointField(
+                                    icon: Icons.trip_origin,
+                                    label: l10n.mapFromLabel,
+                                    value: _origin,
+                                    options: withCoords,
+                                    onPicked: (d) =>
+                                        setState(() => _origin = d),
+                                    allowMyLocation: true,
+                                  ),
+                                  const SizedBox(height: 8),
+                                  _pointField(
+                                    icon: Icons.flag,
+                                    label: l10n.mapToLabel,
+                                    value: _destination,
+                                    options: withCoords,
+                                    onPicked: (d) =>
+                                        setState(() => _destination = d),
+                                  ),
+                                ],
+                              ),
                             ),
-                          ),
-                          const SizedBox(width: 6),
-                          IconButton(
-                            onPressed: (_origin == null && _destination == null)
-                                ? null
-                                : _swapPoints,
-                            icon: const Icon(
-                              Icons.swap_vert,
-                              color: Colors.white70,
+                            const SizedBox(width: 6),
+                            IconButton(
+                              onPressed:
+                                  (_origin == null && _destination == null)
+                                  ? null
+                                  : _swapPoints,
+                              icon: const Icon(
+                                Icons.swap_vert,
+                                color: Colors.white70,
+                              ),
+                              tooltip: l10n.mapSwapButton,
                             ),
-                            tooltip: l10n.mapSwapButton,
-                          ),
-                        ],
-                      ),
+                          ],
+                        ),
                       const SizedBox(height: 10),
                       Wrap(
                         spacing: 8,
@@ -646,9 +950,17 @@ class _MapPageState extends State<MapPage> {
                       markers: markers,
                       routeGeometry: _route?.geometry,
                       onMarkerTap: (id) => _onMarkerTap(id, withCoords),
-                      initialLat: focus?.lat ?? yaoundeCenterLat,
-                      initialLon: focus?.lon ?? yaoundeCenterLon,
-                      initialZoom: focus != null ? 15 : 12.5,
+                      initialLat:
+                          firstCheckpoint?.lat ??
+                          focus?.lat ??
+                          yaoundeCenterLat,
+                      initialLon:
+                          firstCheckpoint?.lon ??
+                          focus?.lon ??
+                          yaoundeCenterLon,
+                      initialZoom: (firstCheckpoint != null || focus != null)
+                          ? 14
+                          : 12.5,
                     ),
                   ),
                 ),

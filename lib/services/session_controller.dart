@@ -21,6 +21,10 @@ class SessionController extends ChangeNotifier {
   static const _favoriteIdsKey = 'gt_favorite_ids';
   static const _roleKey = 'gt_role';
   static const _chatHistoryKey = 'gt_ai_chat_history';
+  // One key per destination the user has viewed comments for, storing the
+  // total comment+reply count seen at that point - compared against the
+  // live count to decide whether the "unseen comments" badge should show.
+  static const _commentsSeenKeyPrefix = 'gt_comments_seen_';
   // Roughly 8 back-and-forth exchanges - enough for the AI to keep track of
   // what's already been discussed without every reply resending the user's
   // entire lifetime chat history to Groq (which is exactly what would
@@ -103,10 +107,14 @@ class SessionController extends ChangeNotifier {
       final parts = token.split('.');
       if (parts.length != 3) return false;
       final normalized = base64Url.normalize(parts[1]);
-      final payload = jsonDecode(utf8.decode(base64Url.decode(normalized))) as Map<String, dynamic>;
+      final payload =
+          jsonDecode(utf8.decode(base64Url.decode(normalized)))
+              as Map<String, dynamic>;
       final exp = payload['exp'];
       if (exp is! int) return false;
-      return DateTime.now().toUtc().isAfter(DateTime.fromMillisecondsSinceEpoch(exp * 1000, isUtc: true));
+      return DateTime.now().toUtc().isAfter(
+        DateTime.fromMillisecondsSinceEpoch(exp * 1000, isUtc: true),
+      );
     } catch (_) {
       return false;
     }
@@ -150,7 +158,13 @@ class SessionController extends ChangeNotifier {
         email: email,
         interests: interests,
       );
-      await _saveAuth(token, username, email: email, interests: interests, isNewAccount: true);
+      await _saveAuth(
+        token,
+        username,
+        email: email,
+        interests: interests,
+        isNewAccount: true,
+      );
     });
   }
 
@@ -188,6 +202,11 @@ class SessionController extends ChangeNotifier {
     // Chat content is personal - don't leave it behind for the next account
     // that logs in on this device.
     await prefs.remove(_chatHistoryKey);
+    for (final key in prefs.getKeys().where(
+      (k) => k.startsWith(_commentsSeenKeyPrefix),
+    )) {
+      await prefs.remove(key);
+    }
     _token = null;
     _username = null;
     _error = null;
@@ -202,7 +221,9 @@ class SessionController extends ChangeNotifier {
     if (raw == null || raw.isEmpty) return [];
     try {
       final decoded = jsonDecode(raw) as List<dynamic>;
-      return decoded.map((e) => ChatMessage.fromJson(e as Map<String, dynamic>)).toList();
+      return decoded
+          .map((e) => ChatMessage.fromJson(e as Map<String, dynamic>))
+          .toList();
     } catch (_) {
       return [];
     }
@@ -213,7 +234,10 @@ class SessionController extends ChangeNotifier {
         ? messages.sublist(messages.length - _maxChatHistoryMessages)
         : messages;
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_chatHistoryKey, jsonEncode(trimmed.map((m) => m.toJson()).toList()));
+    await prefs.setString(
+      _chatHistoryKey,
+      jsonEncode(trimmed.map((m) => m.toJson()).toList()),
+    );
     return trimmed;
   }
 
@@ -273,7 +297,11 @@ class SessionController extends ChangeNotifier {
 
   Future<Destination> rateDestination(String destinationId, int stars) async {
     final token = _requireToken();
-    final result = await ApiClient().rateDestination(token, destinationId, stars);
+    final result = await ApiClient().rateDestination(
+      token,
+      destinationId,
+      stars,
+    );
     Analytics.instance.trackEvent('destination', 'rated', name: destinationId);
     return result;
   }
@@ -305,10 +333,23 @@ class SessionController extends ChangeNotifier {
     return ApiClient().getMySubmissions(token);
   }
 
-  Future<Destination> uploadDestinationImage(String destinationId, List<int> bytes, String filename) async {
+  Future<Destination> uploadDestinationImage(
+    String destinationId,
+    List<int> bytes,
+    String filename,
+  ) async {
     final token = _requireToken();
-    final result = await ApiClient().uploadDestinationImage(token, destinationId, bytes, filename);
-    Analytics.instance.trackEvent('destination', 'image_uploaded', name: destinationId);
+    final result = await ApiClient().uploadDestinationImage(
+      token,
+      destinationId,
+      bytes,
+      filename,
+    );
+    Analytics.instance.trackEvent(
+      'destination',
+      'image_uploaded',
+      name: destinationId,
+    );
     return result;
   }
 
@@ -371,9 +412,16 @@ class SessionController extends ChangeNotifier {
     Analytics.instance.trackEvent('itinerary', 'deleted', name: itineraryId);
   }
 
-  Future<RouteResult> getRoute(List<RouteWaypoint> waypoints, {String profile = 'driving-car'}) async {
+  Future<RouteResult> getRoute(
+    List<RouteWaypoint> waypoints, {
+    String profile = 'driving-car',
+  }) async {
     final token = _requireToken();
-    final result = await ApiClient().getRoute(token, waypoints, profile: profile);
+    final result = await ApiClient().getRoute(
+      token,
+      waypoints,
+      profile: profile,
+    );
     Analytics.instance.trackEvent('map', 'route_requested', name: profile);
     return result;
   }
@@ -388,7 +436,11 @@ class SessionController extends ChangeNotifier {
   Future<String> aiExplain(String destinationId) async {
     final token = _requireToken();
     final reply = await ApiClient().aiExplain(token, destinationId);
-    Analytics.instance.trackEvent('ai', 'explain_destination', name: destinationId);
+    Analytics.instance.trackEvent(
+      'ai',
+      'explain_destination',
+      name: destinationId,
+    );
     return reply;
   }
 
@@ -397,10 +449,33 @@ class SessionController extends ChangeNotifier {
     return ApiClient().getComments(token, destinationId);
   }
 
-  Future<Comment> postComment(String destinationId, String text, {String? parentId}) async {
+  Future<int> lastSeenCommentCount(String destinationId) async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getInt('$_commentsSeenKeyPrefix$destinationId') ?? 0;
+  }
+
+  Future<void> markCommentsSeen(String destinationId, int count) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('$_commentsSeenKeyPrefix$destinationId', count);
+  }
+
+  Future<Comment> postComment(
+    String destinationId,
+    String text, {
+    String? parentId,
+  }) async {
     final token = _requireToken();
-    final comment = await ApiClient().postComment(token, destinationId, text, parentId: parentId);
-    Analytics.instance.trackEvent('comment', parentId == null ? 'posted' : 'replied', name: destinationId);
+    final comment = await ApiClient().postComment(
+      token,
+      destinationId,
+      text,
+      parentId: parentId,
+    );
+    Analytics.instance.trackEvent(
+      'comment',
+      parentId == null ? 'posted' : 'replied',
+      name: destinationId,
+    );
     return comment;
   }
 
@@ -442,10 +517,7 @@ class SessionController extends ChangeNotifier {
     }
 
     Analytics.instance.setUser(username);
-    Analytics.instance.trackEvent(
-      'auth',
-      isNewAccount ? 'register' : 'login',
-    );
+    Analytics.instance.trackEvent('auth', isNewAccount ? 'register' : 'login');
   }
 
   Future<void> _runGuarded(Future<void> Function() action) async {

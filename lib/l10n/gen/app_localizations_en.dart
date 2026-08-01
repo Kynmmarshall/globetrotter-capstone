@@ -351,6 +351,18 @@ class AppLocalizationsEn extends AppLocalizations {
       'Location access is needed to show your position on the map. Please allow it in your device settings.';
 
   @override
+  String get mapUseMyLocation => 'Use my current location';
+
+  @override
+  String get mapMyLocationLabel => 'My current location';
+
+  @override
+  String get mapResolvingLocation => 'Finding your location…';
+
+  @override
+  String get startItineraryButton => 'Start itinerary';
+
+  @override
   String mapRouteError(String error) {
     return 'Couldn\'t get directions.\n$error';
   }

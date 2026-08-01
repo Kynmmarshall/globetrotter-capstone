@@ -722,6 +722,30 @@ abstract class AppLocalizations {
   /// **'Location access is needed to show your position on the map. Please allow it in your device settings.'**
   String get mapLocationPermissionDenied;
 
+  /// No description provided for @mapUseMyLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Use my current location'**
+  String get mapUseMyLocation;
+
+  /// No description provided for @mapMyLocationLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'My current location'**
+  String get mapMyLocationLabel;
+
+  /// No description provided for @mapResolvingLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Finding your location…'**
+  String get mapResolvingLocation;
+
+  /// No description provided for @startItineraryButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Start itinerary'**
+  String get startItineraryButton;
+
   /// No description provided for @mapRouteError.
   ///
   /// In en, this message translates to:

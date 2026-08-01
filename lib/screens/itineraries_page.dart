@@ -624,6 +624,7 @@ class _ItinerariesPageState extends State<ItinerariesPage> {
                         builder: (_) => ItineraryDetailPage(
                           itinerary: item,
                           destinationsById: destinationsById,
+                          session: widget.session,
                         ),
                       ),
                     );

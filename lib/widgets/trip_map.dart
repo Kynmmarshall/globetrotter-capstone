@@ -31,13 +31,17 @@ class TripMapMarker {
 const double yaoundeCenterLat = 3.8480;
 const double yaoundeCenterLon = 11.5021;
 
-Future<bool> _ensureLocationPermission() async {
+/// Requests location permission if needed and reports whether it's usable -
+/// shared between this widget's own "locate me" button and the Map screen's
+/// "use my current location as start point" option.
+Future<bool> ensureLocationPermission() async {
   if (!await Geolocator.isLocationServiceEnabled()) return false;
   var permission = await Geolocator.checkPermission();
   if (permission == LocationPermission.denied) {
     permission = await Geolocator.requestPermission();
   }
-  return permission == LocationPermission.always || permission == LocationPermission.whileInUse;
+  return permission == LocationPermission.always ||
+      permission == LocationPermission.whileInUse;
 }
 
 /// Shows a map with destination pins and an optional route line - backed by
@@ -63,7 +67,8 @@ class TripMap extends StatefulWidget {
   final double initialLon;
   final double initialZoom;
 
-  static bool get usesMapLibre => kIsWeb || defaultTargetPlatform == TargetPlatform.android;
+  static bool get usesMapLibre =>
+      kIsWeb || defaultTargetPlatform == TargetPlatform.android;
 
   @override
   State<TripMap> createState() => _TripMapState();
@@ -90,12 +95,16 @@ class _TripMapState extends State<TripMap> {
   Future<void> _onLocatePressed() async {
     if (_locating) return;
     setState(() => _locating = true);
-    final granted = await _ensureLocationPermission();
+    final granted = await ensureLocationPermission();
     if (!mounted) return;
     if (!granted) {
       setState(() => _locating = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AppLocalizations.of(context)!.mapLocationPermissionDenied)),
+        SnackBar(
+          content: Text(
+            AppLocalizations.of(context)!.mapLocationPermissionDenied,
+          ),
+        ),
       );
       return;
     }
@@ -109,21 +118,29 @@ class _TripMapState extends State<TripMap> {
         // (e.g. cold GPS) even though the stream still comes up fine.
       }
       unawaited(_positionSub?.cancel());
-      _positionSub = Geolocator.getPositionStream(
-        locationSettings: const LocationSettings(accuracy: LocationAccuracy.high, distanceFilter: 5),
-      ).listen((position) {
-        if (mounted) setState(() => _myPosition = position);
-      });
+      _positionSub =
+          Geolocator.getPositionStream(
+            locationSettings: const LocationSettings(
+              accuracy: LocationAccuracy.high,
+              distanceFilter: 5,
+            ),
+          ).listen((position) {
+            if (mounted) setState(() => _myPosition = position);
+          });
     }
     if (mounted) setState(() => _locating = false);
   }
 
   Widget _locateButton() {
     return Positioned(
-      right: 12,
+      // Left, not right - the dashboard's AI chat FAB sits fixed at the
+      // bottom-right of every screen and would otherwise sit on top of this.
+      left: 12,
       bottom: 12,
       child: Material(
-        color: _showMyLocation ? Theme.of(context).colorScheme.primary : const Color(0xFF0B1A24),
+        color: _showMyLocation
+            ? Theme.of(context).colorScheme.primary
+            : const Color(0xFF0B1A24),
         shape: const CircleBorder(),
         elevation: 3,
         child: InkWell(
@@ -135,7 +152,10 @@ class _TripMapState extends State<TripMap> {
                 ? const SizedBox(
                     width: 18,
                     height: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
                   )
                 : const Icon(Icons.my_location, color: Colors.white, size: 20),
           ),
@@ -163,7 +183,18 @@ class _TripMapState extends State<TripMap> {
             initialLat: widget.initialLat,
             initialLon: widget.initialLon,
             initialZoom: widget.initialZoom,
-            myLocation: _myPosition == null ? null : (lat: _myPosition!.latitude, lon: _myPosition!.longitude),
+            myLocation: _myPosition == null
+                ? null
+                : (
+                    lat: _myPosition!.latitude,
+                    lon: _myPosition!.longitude,
+                    // headingAccuracy is negative when the platform has no
+                    // real heading to give (e.g. stationary, or no compass
+                    // hardware) - only draw the arrow when it's genuine.
+                    heading: _myPosition!.headingAccuracy >= 0
+                        ? _myPosition!.heading
+                        : null,
+                  ),
           );
 
     return Stack(

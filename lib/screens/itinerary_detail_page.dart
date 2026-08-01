@@ -3,8 +3,10 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:trip_io/l10n/gen/app_localizations.dart';
 import 'package:trip_io/models/models.dart';
+import 'package:trip_io/screens/map_page.dart';
 import 'package:trip_io/services/api_client.dart';
 import 'package:trip_io/services/itinerary_scheduler.dart';
+import 'package:trip_io/services/session_controller.dart';
 import 'package:trip_io/screens/itineraries_page.dart' show formatDuration;
 
 class ItineraryDetailPage extends StatelessWidget {
@@ -12,10 +14,12 @@ class ItineraryDetailPage extends StatelessWidget {
     super.key,
     required this.itinerary,
     required this.destinationsById,
+    required this.session,
   });
 
   final Itinerary itinerary;
   final Map<String, Destination> destinationsById;
+  final SessionController session;
 
   static const double _backgroundBreakpoint = 700;
 
@@ -96,6 +100,26 @@ class ItineraryDetailPage extends StatelessWidget {
                   ),
                 ),
               ],
+            ),
+          ],
+          if (itinerary.destinations.isNotEmpty) ...[
+            const SizedBox(height: 14),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                onPressed: () => Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => MapPage(
+                      session: session,
+                      showAppBar: true,
+                      itineraryTitle: itinerary.title,
+                      itineraryDestinationIds: itinerary.destinations,
+                    ),
+                  ),
+                ),
+                icon: const Icon(Icons.navigation),
+                label: Text(l10n.startItineraryButton),
+              ),
             ),
           ],
         ],
