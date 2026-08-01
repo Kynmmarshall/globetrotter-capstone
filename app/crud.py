@@ -111,7 +111,8 @@ def get_favorites_for(username: str):
     favs = [dests_by_id[i] for i in fav_ids if i in dests_by_id]
     stats = _rating_stats(data)
     mine = _viewer_ratings(data, username)
-    return [_with_ratings(d, stats, mine) for d in favs]
+    comment_counts = _comment_counts(data)
+    return [_with_ratings(d, stats, mine, comment_counts) for d in favs]
 
 def create_itinerary(itin: dict):
     data = read_data()
@@ -185,20 +186,33 @@ def _viewer_ratings(data: dict, viewer: str | None) -> dict:
         if r.get("username") == viewer
     }
 
-def _with_ratings(dest: dict, stats: dict, mine: dict) -> dict:
+def _comment_counts(data: dict) -> dict:
+    """{destination_id: total comment+reply count} across all stored comments -
+    every comment (top-level or reply) carries its own destination_id, so no
+    tree-walking is needed to total them up."""
+    counts: dict[str, int] = {}
+    for c in data.get("comments", []):
+        did = c.get("destination_id")
+        if did:
+            counts[did] = counts.get(did, 0) + 1
+    return counts
+
+def _with_ratings(dest: dict, stats: dict, mine: dict, comment_counts: dict | None = None) -> dict:
     average, count = stats.get(dest["id"], (None, 0))
     return {
         **dest,
         "rating_average": average,
         "rating_count": count,
         "user_rating": mine.get(dest["id"]),
+        "comment_count": (comment_counts or {}).get(dest["id"], 0),
     }
 
 def enrich_destinations(dests: list[dict], viewer: str | None = None) -> list[dict]:
     data = read_data()
     stats = _rating_stats(data)
     mine = _viewer_ratings(data, viewer)
-    return [_with_ratings(d, stats, mine) for d in dests]
+    comment_counts = _comment_counts(data)
+    return [_with_ratings(d, stats, mine, comment_counts) for d in dests]
 
 def enrich_destination(dest: dict, viewer: str | None = None) -> dict:
     return enrich_destinations([dest], viewer)[0]
@@ -215,7 +229,8 @@ def search_destinations(q: str = None, viewer: str | None = None):
         dests = [d for d in dests if match(d)]
     stats = _rating_stats(data)
     mine = _viewer_ratings(data, viewer)
-    return [_with_ratings(d, stats, mine) for d in dests]
+    comment_counts = _comment_counts(data)
+    return [_with_ratings(d, stats, mine, comment_counts) for d in dests]
 
 def rate_destination(destination_id: str, username: str, stars: int):
     """Upserts this user's rating - one per user per destination, so
@@ -408,8 +423,9 @@ def recommendations_for(user: str):
 
     stats = _rating_stats(data)
     mine = _viewer_ratings(data, user)
+    comment_counts = _comment_counts(data)
     def finish(items):
-        return [_with_ratings(d, stats, mine) for d in items]
+        return [_with_ratings(d, stats, mine, comment_counts) for d in items]
 
     if not interests:
         return finish(dests[:3])

@@ -54,6 +54,10 @@ class Destination(BaseModel):
     rating_count: Optional[int] = 0
     # The requesting user's own 1-5 star rating, if they've left one.
     user_rating: Optional[int] = None
+    # Aggregated from the comments store, same as the rating fields above -
+    # total comments plus replies, used client-side to show a "new comments"
+    # indicator against each viewer's locally tracked last-seen count.
+    comment_count: Optional[int] = 0
 
 class DestinationSubmit(BaseModel):
     """What a regular user may supply when proposing a new destination.
@@ -61,6 +65,8 @@ class DestinationSubmit(BaseModel):
     name: str
     description: Optional[str] = None
     location: Optional[str] = None
+    lat: Optional[float] = None
+    lon: Optional[float] = None
     tags: Optional[List[str]] = []
     country: Optional[str] = "Cameroon"
     image_url: Optional[str] = None

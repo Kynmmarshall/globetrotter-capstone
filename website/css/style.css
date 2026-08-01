@@ -1229,6 +1229,14 @@ footer .footer-brand img {
   gap: 14px;
 }
 
+.admin-location-map {
+  height: 220px;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  cursor: crosshair;
+}
+
 .admin-form input,
 .admin-form textarea {
   font-family: inherit;

@@ -12,6 +12,68 @@
   let currentStatus = 'pending';
   let editingId = null; // null while creating a brand-new destination
 
+  // ---------- location picker map (editor dialog) ----------
+
+  const YAOUNDE_CENTER = [11.5021, 3.8480]; // MapLibre wants [lng, lat]
+  let locationMap = null;
+  let locationMarker = null;
+
+  function ensureLocationMap() {
+    if (locationMap) return locationMap;
+    locationMap = new maplibregl.Map({
+      container: 'location-map',
+      style: 'https://tiles.openfreemap.org/styles/liberty',
+      center: YAOUNDE_CENTER,
+      zoom: 11,
+    });
+    locationMap.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
+    // Clicking the map is the primary way to set a point - the lat/lon text
+    // inputs stay editable too, for precision or pasting known coordinates.
+    locationMap.on('click', (e) => {
+      el('f-lat').value = e.lngLat.lat.toFixed(6);
+      el('f-lon').value = e.lngLat.lng.toFixed(6);
+      placeMarker(e.lngLat.lat, e.lngLat.lng);
+    });
+    return locationMap;
+  }
+
+  function placeMarker(lat, lon) {
+    const map = ensureLocationMap();
+    if (locationMarker) {
+      locationMarker.setLngLat([lon, lat]);
+    } else {
+      locationMarker = new maplibregl.Marker({ color: '#0A7E8C', draggable: true })
+        .setLngLat([lon, lat])
+        .addTo(map);
+      locationMarker.on('dragend', () => {
+        const pos = locationMarker.getLngLat();
+        el('f-lat').value = pos.lat.toFixed(6);
+        el('f-lon').value = pos.lng.toFixed(6);
+      });
+    }
+  }
+
+  function clearMarker() {
+    if (locationMarker) {
+      locationMarker.remove();
+      locationMarker = null;
+    }
+  }
+
+  // Keeps the marker in sync if an admin types/pastes coordinates directly
+  // instead of clicking the map.
+  function syncMarkerFromFields() {
+    const latRaw = el('f-lat').value.trim();
+    const lonRaw = el('f-lon').value.trim();
+    const lat = Number(latRaw);
+    const lon = Number(lonRaw);
+    if (latRaw && lonRaw && Number.isFinite(lat) && Number.isFinite(lon)) {
+      placeMarker(lat, lon);
+    } else {
+      clearMarker();
+    }
+  }
+
   function showError(node, message) {
     node.textContent = message;
     node.hidden = !message;
@@ -202,6 +264,22 @@
     el('f-tips').value = dest?.tips || '';
     showError(el('edit-error'), '');
     el('edit-dialog').showModal();
+
+    const map = ensureLocationMap();
+    const hasPoint = typeof dest?.lat === 'number' && typeof dest?.lon === 'number';
+    clearMarker();
+    if (hasPoint) {
+      placeMarker(dest.lat, dest.lon);
+      map.setCenter([dest.lon, dest.lat]);
+      map.setZoom(13);
+    } else {
+      map.setCenter(YAOUNDE_CENTER);
+      map.setZoom(11);
+    }
+    // The map's container has zero size until the <dialog> is actually
+    // shown, so MapLibre needs a nudge to recompute its canvas size once it
+    // is - a same-tick resize() call sees the old (zero) layout.
+    setTimeout(() => map.resize(), 50);
   }
 
   function parseOptionalFloat(rawValue, fieldLabel) {
@@ -275,6 +353,8 @@
   el('new-btn').addEventListener('click', () => openEditor(null));
   el('edit-save').addEventListener('click', saveEditor);
   el('edit-cancel').addEventListener('click', () => el('edit-dialog').close());
+  el('f-lat').addEventListener('change', syncMarkerFromFields);
+  el('f-lon').addEventListener('change', syncMarkerFromFields);
 
   document.querySelectorAll('.admin-tab').forEach((tab) => {
     tab.addEventListener('click', () => {
