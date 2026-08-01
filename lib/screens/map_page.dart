@@ -11,9 +11,14 @@ import 'package:trip_io/widgets/session_expired_card.dart';
 import 'package:trip_io/widgets/trip_map.dart';
 
 class MapPage extends StatefulWidget {
-  const MapPage({super.key, required this.session});
+  const MapPage({super.key, required this.session, this.focusDestination});
 
   final SessionController session;
+
+  /// When set (e.g. opened via a destination's "View on map" button), the
+  /// map centers on this destination and highlights it as the "to" point
+  /// instead of the generic Yaoundé city-center default.
+  final Destination? focusDestination;
 
   @override
   State<MapPage> createState() => _MapPageState();
@@ -34,6 +39,7 @@ class _MapPageState extends State<MapPage> {
   void initState() {
     super.initState();
     _future = widget.session.destinations();
+    _destination = widget.focusDestination;
   }
 
   @override
@@ -342,11 +348,13 @@ class _MapPageState extends State<MapPage> {
           for (final d in withCoords)
             TripMapMarker(
               id: d.id,
+              name: d.name,
               lat: d.lat!,
               lon: d.lon!,
               selected: d.id == _origin?.id || d.id == _destination?.id,
             ),
         ];
+        final focus = widget.focusDestination;
 
         return Column(
           children: [
@@ -462,6 +470,9 @@ class _MapPageState extends State<MapPage> {
                     markers: markers,
                     routeGeometry: _route?.geometry,
                     onMarkerTap: (id) => _onMarkerTap(id, withCoords),
+                    initialLat: focus?.lat ?? yaoundeCenterLat,
+                    initialLon: focus?.lon ?? yaoundeCenterLon,
+                    initialZoom: focus != null ? 15 : 12.5,
                   ),
                 ),
               ),

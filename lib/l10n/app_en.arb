@@ -128,6 +128,7 @@
   "mapProfileWalking": "Walk",
   "mapProfileCycling": "Bike",
   "mapRoutingNotConfigured": "Directions aren't set up yet. Please check back soon.",
+  "viewOnMapButton": "View on map",
   "mapRouteError": "Couldn't get directions.\n{error}",
   "@mapRouteError": {
     "placeholders": { "error": { "type": "String" } }

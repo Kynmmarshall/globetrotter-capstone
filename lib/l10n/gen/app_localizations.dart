@@ -710,6 +710,12 @@ abstract class AppLocalizations {
   /// **'Directions aren\'t set up yet. Please check back soon.'**
   String get mapRoutingNotConfigured;
 
+  /// No description provided for @viewOnMapButton.
+  ///
+  /// In en, this message translates to:
+  /// **'View on map'**
+  String get viewOnMapButton;
+
   /// No description provided for @mapRouteError.
   ///
   /// In en, this message translates to:

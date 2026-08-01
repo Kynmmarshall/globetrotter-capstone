@@ -356,6 +356,9 @@ class AppLocalizationsFr extends AppLocalizations {
       'L\'itinéraire n\'est pas encore configuré. Revenez bientôt.';
 
   @override
+  String get viewOnMapButton => 'Voir sur la carte';
+
+  @override
   String mapRouteError(String error) {
     return 'Impossible d\'obtenir l\'itinéraire.\n$error';
   }

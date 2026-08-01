@@ -1,3 +1,5 @@
+import 'dart:math' show Point;
+
 import 'package:flutter/material.dart';
 import 'package:maplibre_gl/maplibre_gl.dart';
 import 'package:trip_io/models/models.dart';
@@ -33,6 +35,12 @@ class _TripMapLibreViewState extends State<TripMapLibreView> {
   MapLibreMapController? _controller;
   final Map<String, String> _circleIdToMarkerId = {};
 
+  // Mouse-hover label - only ever populated on platforms that actually send
+  // hover events (web has a real cursor; Android/iOS touch never fires
+  // enter/move, so this simply stays null there).
+  String? _hoveredLabel;
+  Offset? _hoverPosition;
+
   @override
   void didUpdateWidget(covariant TripMapLibreView oldWidget) {
     super.didUpdateWidget(oldWidget);
@@ -44,17 +52,39 @@ class _TripMapLibreViewState extends State<TripMapLibreView> {
   @override
   void dispose() {
     _controller?.onCircleTapped.remove(_handleCircleTapped);
+    _controller?.onFeatureHover.remove(_handleFeatureHover);
     super.dispose();
   }
 
   void _onMapCreated(MapLibreMapController controller) {
     _controller = controller;
     controller.onCircleTapped.add(_handleCircleTapped);
+    controller.onFeatureHover.add(_handleFeatureHover);
   }
 
   void _handleCircleTapped(Circle circle) {
     final markerId = _circleIdToMarkerId[circle.id];
     if (markerId != null) widget.onMarkerTap?.call(markerId);
+  }
+
+  void _handleFeatureHover(
+    Point<double> point,
+    LatLng coordinates,
+    String id,
+    Annotation? annotation,
+    HoverEventType eventType,
+  ) {
+    final markerId = _circleIdToMarkerId[id];
+    if (markerId == null || eventType == HoverEventType.leave) {
+      if (_hoveredLabel != null) setState(() => _hoveredLabel = null);
+      return;
+    }
+    final marker = widget.markers.where((m) => m.id == markerId).firstOrNull;
+    if (marker == null) return;
+    setState(() {
+      _hoveredLabel = marker.name;
+      _hoverPosition = Offset(point.x, point.y);
+    });
   }
 
   // Only safe to call once the style has actually finished loading -
@@ -89,18 +119,48 @@ class _TripMapLibreViewState extends State<TripMapLibreView> {
     }
   }
 
+  Widget _hoverLabel() {
+    final label = _hoveredLabel;
+    final position = _hoverPosition;
+    if (label == null || position == null) return const SizedBox.shrink();
+    return Positioned(
+      // Offset above-left of the cursor so the label doesn't sit under it.
+      left: position.dx + 12,
+      top: position.dy - 34,
+      child: IgnorePointer(
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          decoration: BoxDecoration(
+            color: const Color(0xFF0B1A24).withValues(alpha: 0.94),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+          ),
+          child: Text(
+            label,
+            style: const TextStyle(color: Colors.white, fontSize: 12.5, fontWeight: FontWeight.w600),
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    return MapLibreMap(
-      styleString: MapLibreStyles.openfreemapLiberty,
-      initialCameraPosition: CameraPosition(
-        target: LatLng(widget.initialLat, widget.initialLon),
-        zoom: widget.initialZoom,
-      ),
-      onMapCreated: _onMapCreated,
-      onStyleLoadedCallback: _syncAnnotations,
-      compassEnabled: false,
-      logoEnabled: false,
+    return Stack(
+      children: [
+        MapLibreMap(
+          styleString: MapLibreStyles.openfreemapLiberty,
+          initialCameraPosition: CameraPosition(
+            target: LatLng(widget.initialLat, widget.initialLon),
+            zoom: widget.initialZoom,
+          ),
+          onMapCreated: _onMapCreated,
+          onStyleLoadedCallback: _syncAnnotations,
+          compassEnabled: false,
+          logoEnabled: false,
+        ),
+        _hoverLabel(),
+      ],
     );
   }
 }

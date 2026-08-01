@@ -344,6 +344,9 @@ class AppLocalizationsEn extends AppLocalizations {
       'Directions aren\'t set up yet. Please check back soon.';
 
   @override
+  String get viewOnMapButton => 'View on map';
+
+  @override
   String mapRouteError(String error) {
     return 'Couldn\'t get directions.\n$error';
   }

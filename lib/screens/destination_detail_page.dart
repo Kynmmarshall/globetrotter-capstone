@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:trip_io/l10n/gen/app_localizations.dart';
 import 'package:trip_io/models/models.dart';
+import 'package:trip_io/screens/map_page.dart';
 import 'package:trip_io/services/api_client.dart';
 import 'package:trip_io/services/session_controller.dart';
 import 'package:trip_io/widgets/comments_section.dart';
@@ -305,6 +306,38 @@ class _DestinationDetailPageState extends State<DestinationDetailPage> {
     );
   }
 
+  Widget _buildViewOnMapButton(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(22),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () => Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => MapPage(session: widget.session, focusDestination: destination),
+          ),
+        ),
+        child: _glassPanel(
+          borderRadius: BorderRadius.circular(22),
+          child: Row(
+            children: [
+              const Icon(Icons.map_outlined, color: Colors.white, size: 20),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  l10n.viewOnMapButton,
+                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 15),
+                ),
+              ),
+              const Icon(Icons.chevron_right, color: Colors.white70),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildCommentsButton(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     return Material(
@@ -575,6 +608,10 @@ class _DestinationDetailPageState extends State<DestinationDetailPage> {
                                   ],
                                 ),
                               ),
+                            ],
+                            if (destination.hasCoordinates) ...[
+                              const SizedBox(height: 22),
+                              _buildViewOnMapButton(context),
                             ],
                             const SizedBox(height: 22),
                             _buildCommentsButton(context),

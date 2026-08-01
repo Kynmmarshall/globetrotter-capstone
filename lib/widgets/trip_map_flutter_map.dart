@@ -67,9 +67,14 @@ class TripMapFlutterMapView extends StatelessWidget {
               point: ll.LatLng(marker.lat, marker.lon),
               width: size,
               height: size,
-              child: GestureDetector(
-                onTap: onMarkerTap == null ? null : () => onMarkerTap!(marker.id),
-                child: _pin(selected: marker.selected),
+              // A generous hit area around the small pin so the tooltip and
+              // tap target are actually easy to hit with a mouse.
+              child: Tooltip(
+                message: marker.name,
+                child: GestureDetector(
+                  onTap: onMarkerTap == null ? null : () => onMarkerTap!(marker.id),
+                  child: _pin(selected: marker.selected),
+                ),
               ),
             );
           }).toList(),

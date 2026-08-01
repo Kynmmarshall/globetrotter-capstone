@@ -9,12 +9,14 @@ import 'package:trip_io/widgets/trip_map_maplibre.dart';
 class TripMapMarker {
   const TripMapMarker({
     required this.id,
+    required this.name,
     required this.lat,
     required this.lon,
     this.selected = false,
   });
 
   final String id;
+  final String name;
   final double lat;
   final double lon;
   final bool selected;
