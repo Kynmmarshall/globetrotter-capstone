@@ -13,6 +13,19 @@ Planned for **Phase 2: Microservices** — see [README → Roadmap](README.md#ro
 - Replace direct in-process calls with REST (sync) and message-queue (async) inter-service communication.
 - Give each service its own datastore instead of a shared JSON file.
 
+## [0.14.0] - 2026-08-01 — AI chat suggestions, new-comments badge & read-aloud
+
+- Added preset/suggested prompts to the AI chat sheet so users can start a conversation with one tap instead of typing from scratch; also fixed the map failing to render inside the chat flow.
+- Added a "new comments" badge on destination cards and the detail page: each device locally tracks the last-seen comment count per destination (`SessionController.lastSeenCommentCount`) and shows a pill when the server-reported `comment_count` has grown since. `Destination` now reports `comment_count`.
+- Added read-aloud support (`flutter_tts`) on the destination detail page — a tooltip-labelled button reads the description or AI explanation aloud, tracking which source is currently speaking so only one plays at a time.
+
+## [0.13.0] - 2026-07-31 — Interactive maps & turn-by-turn routing
+
+- Added `POST /route` (`backend/app/routing.py`), a server-side proxy to OpenRouteService for turn-by-turn directions between waypoints (`driving-car`, `foot-walking`, or `cycling-regular`), keeping the ORS API key off the client — same pattern already used for the Groq and Matomo integrations.
+- `Destination` (and the submit/admin-update payloads) gained `lat`/`lon` coordinates.
+- Added an in-app interactive map (`frontend/lib/screens/map_page.dart`) with platform-appropriate rendering (`trip_map_flutter_map.dart` / `trip_map_maplibre.dart` behind a shared `trip_map.dart` interface), a "View on map" button and map navigation from the destination detail page, and a "show my location" control backed by `geolocator` (with the necessary location permissions).
+- Added a location picker (`frontend/lib/screens/location_picker_page.dart`) used both when a user submits a new destination and when an admin edits one's coordinates from the moderation panel.
+
 ## [0.12.0] - 2026-07-31 — Community destination submissions, ratings & admin moderation
 
 - **Star ratings**: users can rate any destination 1-5 stars (`PUT`/`DELETE /destinations/{id}/rating`); the aggregated average and count are computed from the raw ratings store (never cached on the destination record, so they can't drift), and every destination response includes the viewer's own rating alongside them. Added a `StarRating` widget in the app.

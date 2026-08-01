@@ -1,6 +1,6 @@
 # GlobeTrotter — Travel Recommendation & Itinerary Platform
 
-GlobeTrotter is a full-stack travel assistant that lets users search destinations, receive personalized recommendations, plan and delete itineraries, and interact with an AI travel assistant — with social features like ratings, comments, favorites, and profile avatars, community-submitted destinations reviewed through an admin moderation panel, plus Google Sign-In and public usage analytics. The repository contains two independently deployable projects:
+GlobeTrotter is a full-stack travel assistant that lets users search destinations, receive personalized recommendations, plan and delete itineraries, view destinations on an interactive map with turn-by-turn directions, and interact with an AI travel assistant (with read-aloud support) — plus social features like ratings, comments, favorites, and profile avatars, community-submitted destinations reviewed through an admin moderation panel, Google Sign-In, and public usage analytics. The repository contains two independently deployable projects:
 
 | Project | Description | Stack |
 |---|---|---|
@@ -204,8 +204,9 @@ Base URL: `https://trip-io.duckdns.org` (production) or `http://localhost:8000` 
 | `POST` | `/ai/explain/{destination_id}` | Bearer token | Get (and cache) an AI-generated explanation of a destination |
 | `GET` | `/stats/public` | — | Aggregated, anonymized usage stats (total users, active today/this week, 14-day daily-active series, top sections) for the public stats page, sourced from Matomo server-side and cached for 60s |
 | `GET`/`PATCH`/`POST`/`DELETE` | `/admin/destinations[/{id}]` | Bearer token (admin) | Review/approve/reject/edit, directly create, or delete destinations — restricted to accounts with `role: "admin"` in the data store |
+| `POST` | `/route` | Bearer token | Turn-by-turn directions between 2+ waypoints (`driving-car`/`foot-walking`/`cycling-regular`), proxied server-side to OpenRouteService |
 
-Destinations also carry richer detail fields — `nearby` (nearby hotels/restaurants), `opening_hours`, `entry_fee`, and `tips` — returned by both `/destinations` and `/recommendations`. The interest-tag vocabulary used for filtering/recommendations is kept in sync between backend seed data and [`frontend/lib/models/interest_tags.dart`](frontend/lib/models/interest_tags.dart). A destination's `status` (`approved`/`pending`/`rejected`) governs whether it's publicly visible; only `approved` destinations are returned by the public-facing endpoints. There's a lightweight, browser-based admin panel at `/admin.html` on the deployed site for moderating submissions — access is gated by JWT + the account's `role`, not a separate login.
+Destinations also carry richer detail fields — `nearby` (nearby hotels/restaurants), `opening_hours`, `entry_fee`, `tips`, `lat`/`lon` coordinates, and a `comment_count` (used client-side to show a "new comments" indicator) — returned by both `/destinations` and `/recommendations`. The interest-tag vocabulary used for filtering/recommendations is kept in sync between backend seed data and [`frontend/lib/models/interest_tags.dart`](frontend/lib/models/interest_tags.dart). A destination's `status` (`approved`/`pending`/`rejected`) governs whether it's publicly visible; only `approved` destinations are returned by the public-facing endpoints. There's a lightweight, browser-based admin panel at `/admin.html` on the deployed site for moderating submissions — access is gated by JWT + the account's `role`, not a separate login.
 
 Authenticated requests must include:
 
@@ -244,6 +245,7 @@ Full request/response schemas are available live via the Swagger UI at `/docs`.
 | `GROQ_API_KEY` | *(unset)* | API key for Groq's chat completions API, powering `/ai/chat` and `/ai/explain`; without it, both endpoints return `503` |
 | `GROQ_MODEL` | `llama-3.3-70b-versatile` | Groq model used for the AI assistant |
 | `GOOGLE_OAUTH_CLIENT_ID` | *(unset)* | Expected audience for Google Sign-In ID tokens verified by `/auth/google`; without it, that endpoint returns `401` |
+| `ORS_API_KEY` | *(unset)* | API key for OpenRouteService, powering `/route`; without it, the endpoint fails with a "not configured" error |
 
 Set them before starting the server, e.g.:
 
