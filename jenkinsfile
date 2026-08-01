@@ -214,8 +214,13 @@ pipeline {
             environment {
                 ANDROID_HOME = '/usr/lib/android-sdk'
                 ANDROID_SDK_ROOT = '/usr/lib/android-sdk'
-                JAVA_HOME = '/usr/lib/jvm/java-17-openjdk-amd64'
-                PATH = "/opt/flutter/bin:/usr/lib/jvm/java-17-openjdk-amd64/bin:/usr/lib/android-sdk/cmdline-tools/11.0/bin:/usr/lib/android-sdk/platform-tools:${env.PATH}"
+                // maplibre_gl's Android module needs a JDK that can target
+                // --release 21 (JDK 17's javac errors with "invalid source
+                // release: 21") - this app's own module still targets 17
+                // (see android/app/build.gradle.kts), only this build step
+                // needs the newer compiler.
+                JAVA_HOME = '/usr/lib/jvm/java-21-openjdk-amd64'
+                PATH = "/opt/flutter/bin:/usr/lib/jvm/java-21-openjdk-amd64/bin:/usr/lib/android-sdk/cmdline-tools/11.0/bin:/usr/lib/android-sdk/platform-tools:${env.PATH}"
             }
             steps {
                 sh '''
