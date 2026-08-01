@@ -669,7 +669,9 @@ async def test_submission_image_upload_ownership(tmp_path, monkeypatch):
             files={"file": ("photo.png", b"\x89PNG fake bytes", "image/png")},
         )
         assert uploaded.status_code == 200
-        assert uploaded.json()["image_url"] == f"/static/destinations/{new_id}.png"
+        # Filenames are slugified from the destination's name ("Hidden Gem"),
+        # not the opaque id - matches the curated catalog's own image names.
+        assert uploaded.json()["image_url"] == "/static/destinations/hidden_gem.png"
         saved = list(images_dir.iterdir())
         assert len(saved) == 1
 
@@ -680,9 +682,9 @@ async def test_submission_image_upload_ownership(tmp_path, monkeypatch):
             files={"file": ("photo.jpg", b"\xff\xd8\xff fake jpeg", "image/jpeg")},
         )
         assert replaced.status_code == 200
-        assert replaced.json()["image_url"] == f"/static/destinations/{new_id}.jpg"
+        assert replaced.json()["image_url"] == "/static/destinations/hidden_gem.jpg"
         # old .png was cleaned up, not left behind alongside the new .jpg
-        assert [p.name for p in images_dir.iterdir()] == [f"{new_id}.jpg"]
+        assert [p.name for p in images_dir.iterdir()] == ["hidden_gem.jpg"]
 
         missing = await ac.post(
             "/destinations/does-not-exist/image",

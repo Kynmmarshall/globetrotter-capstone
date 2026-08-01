@@ -74,16 +74,59 @@
     }
   }
 
+  function goToMyLocation() {
+    if (!navigator.geolocation) {
+      showError(el('edit-error'), 'Geolocation is not available in this browser.');
+      return;
+    }
+    const btn = el('locate-btn');
+    btn.classList.add('is-busy');
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        btn.classList.remove('is-busy');
+        const { latitude, longitude } = position.coords;
+        el('f-lat').value = latitude.toFixed(6);
+        el('f-lon').value = longitude.toFixed(6);
+        placeMarker(latitude, longitude);
+        const map = ensureLocationMap();
+        map.flyTo({ center: [longitude, latitude], zoom: 14 });
+      },
+      (err) => {
+        btn.classList.remove('is-busy');
+        showError(el('edit-error'), `Could not get your location: ${err.message}`);
+      },
+      { enableHighAccuracy: true, timeout: 10000 },
+    );
+  }
+
+  // ---------- image picker (editor dialog) ----------
+
+  let pendingImageFile = null; // a newly chosen file awaiting upload on save
+
+  function setImagePreview(url) {
+    const img = el('f-image-preview');
+    if (url) {
+      img.src = url;
+      img.hidden = false;
+    } else {
+      img.src = '';
+      img.hidden = true;
+    }
+  }
+
   function showError(node, message) {
     node.textContent = message;
     node.hidden = !message;
   }
 
   async function api(path, options = {}) {
+    // FormData (image uploads) must NOT get a manual Content-Type - the
+    // browser sets its own multipart boundary, which we'd otherwise clobber.
+    const isFormData = options.body instanceof FormData;
     const res = await fetch(path, {
       ...options,
       headers: {
-        'Content-Type': 'application/json',
+        ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
         ...(options.headers || {}),
       },
@@ -258,7 +301,9 @@
     el('f-lat').value = dest?.lat ?? '';
     el('f-lon').value = dest?.lon ?? '';
     el('f-tags').value = (dest?.tags || []).join(', ');
-    el('f-image').value = dest?.image_url || '';
+    pendingImageFile = null;
+    el('f-image-file').value = '';
+    setImagePreview(dest?.image_url || null);
     el('f-hours').value = dest?.opening_hours || '';
     el('f-fee').value = dest?.entry_fee || '';
     el('f-tips').value = dest?.tips || '';
@@ -311,23 +356,33 @@
       lat: lat.value,
       lon: lon.value,
       tags: el('f-tags').value.split(',').map((t) => t.trim()).filter(Boolean),
-      image_url: el('f-image').value.trim() || null,
       opening_hours: el('f-hours').value.trim() || null,
       entry_fee: el('f-fee').value.trim() || null,
       tips: el('f-tips').value.trim() || null,
     };
     try {
-      if (editingId) {
-        await api(`/admin/destinations/${editingId}`, {
-          method: 'PATCH',
-          body: JSON.stringify(payload),
-        });
-      } else {
-        await api('/admin/destinations', {
+      const saved = editingId
+        ? await api(`/admin/destinations/${editingId}`, {
+            method: 'PATCH',
+            body: JSON.stringify(payload),
+          })
+        : await api('/admin/destinations', {
+            method: 'POST',
+            body: JSON.stringify(payload),
+          });
+
+      // The image URL is server-generated (from the destination's name) -
+      // this only ever runs once the destination itself (and so its id)
+      // definitely exists, whether that's from an edit or a brand-new one.
+      if (pendingImageFile) {
+        const formData = new FormData();
+        formData.append('file', pendingImageFile);
+        await api(`/destinations/${saved.id}/image`, {
           method: 'POST',
-          body: JSON.stringify(payload),
+          body: formData,
         });
       }
+
       el('edit-dialog').close();
       refresh();
     } catch (err) {
@@ -355,6 +410,12 @@
   el('edit-cancel').addEventListener('click', () => el('edit-dialog').close());
   el('f-lat').addEventListener('change', syncMarkerFromFields);
   el('f-lon').addEventListener('change', syncMarkerFromFields);
+  el('locate-btn').addEventListener('click', goToMyLocation);
+  el('f-image-file').addEventListener('change', () => {
+    const file = el('f-image-file').files[0] || null;
+    pendingImageFile = file;
+    if (file) setImagePreview(URL.createObjectURL(file));
+  });
 
   document.querySelectorAll('.admin-tab').forEach((tab) => {
     tab.addEventListener('click', () => {
