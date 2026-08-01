@@ -1,8 +1,11 @@
+import 'dart:async';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_tts/flutter_tts.dart';
 import 'package:trip_io/l10n/gen/app_localizations.dart';
 import 'package:trip_io/models/models.dart';
+import 'package:trip_io/screens/map_page.dart';
 import 'package:trip_io/services/api_client.dart';
 import 'package:trip_io/services/session_controller.dart';
 import 'package:trip_io/widgets/comments_section.dart';
@@ -34,6 +37,16 @@ class _DestinationDetailPageState extends State<DestinationDetailPage> {
   String? _explainError;
   bool _rating = false;
 
+  int? _commentCount;
+  bool _hasUnseenComments = false;
+
+  final FlutterTts _tts = FlutterTts();
+  bool _speaking = false;
+  // Which text is currently being read - 'details' (name/description/tips)
+  // or 'explanation' (the AI-generated one) - so each button only shows
+  // itself as active while it's the one actually playing.
+  String? _speakingSource;
+
   Destination get destination => _destination;
   String get heroTag => widget.heroTag;
 
@@ -41,6 +54,97 @@ class _DestinationDetailPageState extends State<DestinationDetailPage> {
   void initState() {
     super.initState();
     _destination = widget.destination;
+    unawaited(_checkUnseenComments());
+    _initTts();
+  }
+
+  void _initTts() {
+    // Destination content is authored in English regardless of the app's
+    // UI language, so the reader always uses an English voice - matching
+    // the text rather than whatever locale the interface happens to be in.
+    unawaited(_tts.setLanguage('en-US'));
+    _tts.setStartHandler(() {
+      if (mounted) setState(() => _speaking = true);
+    });
+    void resetSpeakingState() {
+      if (mounted) {
+        setState(() {
+          _speaking = false;
+          _speakingSource = null;
+        });
+      }
+    }
+
+    _tts.setCompletionHandler(resetSpeakingState);
+    _tts.setCancelHandler(resetSpeakingState);
+    _tts.setErrorHandler((_) => resetSpeakingState());
+  }
+
+  Future<void> _toggleReadAloud(String source, String text) async {
+    if (_speaking && _speakingSource == source) {
+      await _tts.stop();
+      return;
+    }
+    if (_speaking) {
+      // Switching source mid-playback - stop whatever's currently reading
+      // before starting the other one, rather than letting them overlap.
+      await _tts.stop();
+    }
+    _speakingSource = source;
+    await _tts.speak(text);
+  }
+
+  String _detailsSpokenText() {
+    final parts = <String>[
+      destination.name,
+      if ((destination.description ?? '').isNotEmpty) destination.description!,
+      if ((destination.tips ?? '').isNotEmpty) destination.tips!,
+    ];
+    return parts.join('. ');
+  }
+
+  @override
+  void dispose() {
+    unawaited(_tts.stop());
+    super.dispose();
+  }
+
+  int _countComments(List<Comment> nodes) {
+    var total = 0;
+    for (final c in nodes) {
+      total += 1 + _countComments(c.replies);
+    }
+    return total;
+  }
+
+  Future<void> _checkUnseenComments() async {
+    try {
+      final comments = await widget.session.comments(destination.id);
+      final total = _countComments(comments);
+      final lastSeen = await widget.session.lastSeenCommentCount(
+        destination.id,
+      );
+      if (!mounted) return;
+      setState(() {
+        _commentCount = total;
+        _hasUnseenComments = total > lastSeen;
+      });
+    } catch (_) {
+      // Non-critical - the button just works without a badge if this fails.
+    }
+  }
+
+  void _openComments() {
+    final count = _commentCount;
+    if (count != null) {
+      unawaited(widget.session.markCommentsSeen(destination.id, count));
+      setState(() => _hasUnseenComments = false);
+    }
+    showCommentsSheet(
+      context,
+      session: widget.session,
+      destinationId: destination.id,
+    );
   }
 
   Future<void> _rate(int stars) async {
@@ -80,7 +184,9 @@ class _DestinationDetailPageState extends State<DestinationDetailPage> {
       final reply = await widget.session.aiExplain(destination.id);
       setState(() => _explanation = reply);
     } catch (e) {
-      setState(() => _explainError = e.toString().replaceFirst('Exception: ', ''));
+      setState(
+        () => _explainError = e.toString().replaceFirst('Exception: ', ''),
+      );
     } finally {
       setState(() => _explaining = false);
     }
@@ -202,19 +308,30 @@ class _DestinationDetailPageState extends State<DestinationDetailPage> {
                 children: [
                   Text(
                     place.name,
-                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 14.5),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 14.5,
+                    ),
                   ),
                   if ((place.location ?? '').isNotEmpty) ...[
                     const SizedBox(height: 3),
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Icon(Icons.location_on, size: 13, color: Colors.white60),
+                        const Icon(
+                          Icons.location_on,
+                          size: 13,
+                          color: Colors.white60,
+                        ),
                         const SizedBox(width: 4),
                         Expanded(
                           child: Text(
                             place.location!,
-                            style: const TextStyle(color: Colors.white60, fontSize: 12),
+                            style: const TextStyle(
+                              color: Colors.white60,
+                              fontSize: 12,
+                            ),
                           ),
                         ),
                       ],
@@ -224,7 +341,11 @@ class _DestinationDetailPageState extends State<DestinationDetailPage> {
                     const SizedBox(height: 6),
                     Text(
                       place.description!,
-                      style: TextStyle(color: Colors.white.withValues(alpha: 0.85), fontSize: 12.5, height: 1.3),
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.85),
+                        fontSize: 12.5,
+                        height: 1.3,
+                      ),
                     ),
                   ],
                   if (place.tags.isNotEmpty) ...[
@@ -272,13 +393,38 @@ class _DestinationDetailPageState extends State<DestinationDetailPage> {
                       ? const SizedBox(
                           width: 14,
                           height: 14,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white70),
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white70,
+                          ),
                         )
-                      : const Icon(Icons.auto_awesome, size: 16, color: Colors.white),
+                      : const Icon(
+                          Icons.auto_awesome,
+                          size: 16,
+                          color: Colors.white,
+                        ),
                   label: Text(
                     l10n.aiExplainButton,
-                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
+                ),
+              if (_explanation != null)
+                IconButton(
+                  onPressed: () =>
+                      _toggleReadAloud('explanation', _explanation!),
+                  icon: Icon(
+                    _speaking && _speakingSource == 'explanation'
+                        ? Icons.stop_circle
+                        : Icons.volume_up,
+                    color: Colors.white,
+                    size: 20,
+                  ),
+                  tooltip: _speaking && _speakingSource == 'explanation'
+                      ? l10n.readAloudStopTooltip
+                      : l10n.readAloudTooltip,
                 ),
             ],
           ),
@@ -305,6 +451,46 @@ class _DestinationDetailPageState extends State<DestinationDetailPage> {
     );
   }
 
+  Widget _buildViewOnMapButton(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(22),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () => Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => MapPage(
+              session: widget.session,
+              focusDestination: destination,
+              showAppBar: true,
+            ),
+          ),
+        ),
+        child: _glassPanel(
+          borderRadius: BorderRadius.circular(22),
+          child: Row(
+            children: [
+              const Icon(Icons.map_outlined, color: Colors.white, size: 20),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  l10n.viewOnMapButton,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 15,
+                  ),
+                ),
+              ),
+              const Icon(Icons.chevron_right, color: Colors.white70),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildCommentsButton(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     return Material(
@@ -312,17 +498,47 @@ class _DestinationDetailPageState extends State<DestinationDetailPage> {
       borderRadius: BorderRadius.circular(22),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
-        onTap: () => showCommentsSheet(context, session: widget.session, destinationId: destination.id),
+        onTap: _openComments,
         child: _glassPanel(
           borderRadius: BorderRadius.circular(22),
           child: Row(
             children: [
-              const Icon(Icons.forum_outlined, color: Colors.white, size: 20),
+              Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  const Icon(
+                    Icons.forum_outlined,
+                    color: Colors.white,
+                    size: 20,
+                  ),
+                  if (_hasUnseenComments)
+                    Positioned(
+                      right: -3,
+                      top: -3,
+                      child: Container(
+                        width: 10,
+                        height: 10,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.redAccent,
+                          border: Border.all(
+                            color: const Color(0xFF0B1A24),
+                            width: 1.5,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
                   l10n.commentsButtonLabel,
-                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 15),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 15,
+                  ),
                 ),
               ),
               const Icon(Icons.keyboard_arrow_up, color: Colors.white70),
@@ -444,7 +660,8 @@ class _DestinationDetailPageState extends State<DestinationDetailPage> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Row(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Expanded(
                                         child: Text(
@@ -455,6 +672,28 @@ class _DestinationDetailPageState extends State<DestinationDetailPage> {
                                             fontSize: 22,
                                           ),
                                         ),
+                                      ),
+                                      IconButton(
+                                        onPressed: () => _toggleReadAloud(
+                                          'details',
+                                          _detailsSpokenText(),
+                                        ),
+                                        icon: Icon(
+                                          _speaking &&
+                                                  _speakingSource == 'details'
+                                              ? Icons.stop_circle
+                                              : Icons.volume_up,
+                                          color: Colors.white,
+                                        ),
+                                        tooltip:
+                                            _speaking &&
+                                                _speakingSource == 'details'
+                                            ? AppLocalizations.of(
+                                                context,
+                                              )!.readAloudStopTooltip
+                                            : AppLocalizations.of(
+                                                context,
+                                              )!.readAloudTooltip,
                                       ),
                                       FavoriteToggleButton(
                                         session: widget.session,
@@ -540,7 +779,9 @@ class _DestinationDetailPageState extends State<DestinationDetailPage> {
                                 destination.tips != null) ...[
                               const SizedBox(height: 22),
                               Text(
-                                AppLocalizations.of(context)!.practicalInfoTitle,
+                                AppLocalizations.of(
+                                  context,
+                                )!.practicalInfoTitle,
                                 style: const TextStyle(
                                   color: Colors.white,
                                   fontWeight: FontWeight.w800,
@@ -550,20 +791,29 @@ class _DestinationDetailPageState extends State<DestinationDetailPage> {
                               const SizedBox(height: 12),
                               _glassPanel(
                                 borderRadius: BorderRadius.circular(20),
-                                padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
+                                padding: const EdgeInsets.fromLTRB(
+                                  16,
+                                  16,
+                                  16,
+                                  4,
+                                ),
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     if (destination.openingHours != null)
                                       _buildInfoRow(
                                         Icons.schedule,
-                                        AppLocalizations.of(context)!.openingHoursLabel,
+                                        AppLocalizations.of(
+                                          context,
+                                        )!.openingHoursLabel,
                                         destination.openingHours!,
                                       ),
                                     if (destination.entryFee != null)
                                       _buildInfoRow(
                                         Icons.confirmation_number_outlined,
-                                        AppLocalizations.of(context)!.entryFeeLabel,
+                                        AppLocalizations.of(
+                                          context,
+                                        )!.entryFeeLabel,
                                         destination.entryFee!,
                                       ),
                                     if (destination.tips != null)
@@ -575,6 +825,10 @@ class _DestinationDetailPageState extends State<DestinationDetailPage> {
                                   ],
                                 ),
                               ),
+                            ],
+                            if (destination.hasCoordinates) ...[
+                              const SizedBox(height: 22),
+                              _buildViewOnMapButton(context),
                             ],
                             const SizedBox(height: 22),
                             _buildCommentsButton(context),
@@ -591,10 +845,15 @@ class _DestinationDetailPageState extends State<DestinationDetailPage> {
                               const SizedBox(height: 4),
                               Text(
                                 AppLocalizations.of(context)!.nearbySubtitle,
-                                style: const TextStyle(color: Colors.white70, fontSize: 12.5),
+                                style: const TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 12.5,
+                                ),
                               ),
                               const SizedBox(height: 12),
-                              ...destination.nearby.map((place) => _buildNearbyCard(context, place)),
+                              ...destination.nearby.map(
+                                (place) => _buildNearbyCard(context, place),
+                              ),
                             ],
                           ],
                         ),

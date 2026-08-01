@@ -8,6 +8,7 @@ import 'package:trip_io/services/session_controller.dart';
 import 'package:trip_io/screens/destinations_page.dart';
 import 'package:trip_io/screens/favorites_page.dart';
 import 'package:trip_io/screens/itineraries_page.dart';
+import 'package:trip_io/screens/map_page.dart';
 import 'package:trip_io/screens/profile_page.dart';
 import 'package:trip_io/screens/recommendations_page.dart';
 import 'package:trip_io/widgets/ai_chat_sheet.dart';
@@ -30,6 +31,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     Icons.star,
     Icons.favorite,
     Icons.map,
+    Icons.event_note,
     Icons.person,
   ];
   static const double _backgroundBreakpoint = 700;
@@ -39,6 +41,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     'destinations',
     'recommendations',
     'favorites',
+    'map',
     'itineraries',
     'profile',
   ];
@@ -69,6 +72,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       l10n.navDestinations,
       l10n.navRecommendations,
       l10n.navFavorites,
+      l10n.navMap,
       l10n.navItineraries,
       l10n.navProfile,
     ];
@@ -149,6 +153,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       DestinationsPage(session: widget.session),
       RecommendationsPage(session: widget.session),
       FavoritesPage(session: widget.session),
+      MapPage(session: widget.session),
       ItinerariesPage(session: widget.session),
       ProfilePage(session: widget.session),
     ];

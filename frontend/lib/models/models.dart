@@ -37,6 +37,8 @@ class Destination {
     this.imageUrl,
     this.description,
     this.location,
+    this.lat,
+    this.lon,
     this.nearby = const [],
     this.openingHours,
     this.entryFee,
@@ -46,6 +48,7 @@ class Destination {
     this.ratingAverage,
     this.ratingCount = 0,
     this.userRating,
+    this.commentCount = 0,
   });
 
   final String id;
@@ -55,6 +58,8 @@ class Destination {
   final String? imageUrl;
   final String? description;
   final String? location;
+  final double? lat;
+  final double? lon;
   final List<NearbyPlace> nearby;
   final String? openingHours;
   final String? entryFee;
@@ -64,12 +69,15 @@ class Destination {
   final double? ratingAverage;
   final int ratingCount;
   final int? userRating; // 1-5, this viewer's own rating if any
+  final int commentCount; // total comments + replies
 
   /// Whether the backend supplied enough content to show this as a
   /// featured, photo-led card rather than a plain search result.
   bool get isFeatured => (imageUrl ?? '').isNotEmpty;
 
   bool get hasRatings => ratingCount > 0 && ratingAverage != null;
+
+  bool get hasCoordinates => lat != null && lon != null;
 
   factory Destination.fromJson(Map<String, dynamic> json) {
     final rawTags = (json['tags'] as List<dynamic>? ?? <dynamic>[])
@@ -90,6 +98,8 @@ class Destination {
       imageUrl: optionalString('image_url'),
       description: optionalString('description'),
       location: optionalString('location'),
+      lat: (json['lat'] as num?)?.toDouble(),
+      lon: (json['lon'] as num?)?.toDouble(),
       nearby: (json['nearby'] as List<dynamic>? ?? <dynamic>[])
           .map((e) => NearbyPlace.fromJson(e as Map<String, dynamic>))
           .toList(),
@@ -101,6 +111,7 @@ class Destination {
       ratingAverage: (json['rating_average'] as num?)?.toDouble(),
       ratingCount: (json['rating_count'] as num?)?.toInt() ?? 0,
       userRating: (json['user_rating'] as num?)?.toInt(),
+      commentCount: (json['comment_count'] as num?)?.toInt() ?? 0,
     );
   }
 
@@ -115,6 +126,8 @@ class Destination {
       imageUrl: imageUrl,
       description: description,
       location: location,
+      lat: lat,
+      lon: lon,
       nearby: nearby,
       openingHours: openingHours,
       entryFee: entryFee,
@@ -124,6 +137,7 @@ class Destination {
       ratingAverage: ratingAverage,
       ratingCount: ratingCount,
       userRating: userRating,
+      commentCount: commentCount,
     );
   }
 }
@@ -304,6 +318,49 @@ class Comment {
       score: score,
       userVote: userVote,
       replies: replies,
+    );
+  }
+}
+
+/// A single point along a route's geometry - mirrors the backend's
+/// RouteWaypoint schema, also used for the origin/destination waypoints
+/// sent to POST /route.
+class RouteWaypoint {
+  const RouteWaypoint({required this.lat, required this.lon});
+
+  final double lat;
+  final double lon;
+
+  Map<String, dynamic> toJson() => {'lat': lat, 'lon': lon};
+
+  factory RouteWaypoint.fromJson(Map<String, dynamic> json) {
+    return RouteWaypoint(
+      lat: (json['lat'] as num).toDouble(),
+      lon: (json['lon'] as num).toDouble(),
+    );
+  }
+}
+
+/// The result of a POST /route call: the full path geometry to draw, plus
+/// trip totals - mirrors the backend's RouteResponse schema.
+class RouteResult {
+  const RouteResult({
+    required this.geometry,
+    required this.distanceMeters,
+    required this.durationSeconds,
+  });
+
+  final List<RouteWaypoint> geometry;
+  final double distanceMeters;
+  final double durationSeconds;
+
+  factory RouteResult.fromJson(Map<String, dynamic> json) {
+    return RouteResult(
+      geometry: (json['geometry'] as List<dynamic>? ?? <dynamic>[])
+          .map((e) => RouteWaypoint.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      distanceMeters: (json['distance_meters'] as num).toDouble(),
+      durationSeconds: (json['duration_seconds'] as num).toDouble(),
     );
   }
 }

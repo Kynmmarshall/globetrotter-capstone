@@ -327,6 +327,26 @@ class ApiClient {
     _throwIfNotOk(response);
   }
 
+  Future<RouteResult> getRoute(
+    String token,
+    List<RouteWaypoint> waypoints, {
+    String profile = 'driving-car',
+  }) async {
+    final response = await _client.post(
+      _uri('/route'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({
+        'waypoints': waypoints.map((w) => w.toJson()).toList(),
+        'profile': profile,
+      }),
+    );
+    _throwIfNotOk(response);
+    return RouteResult.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
+  }
+
   Future<List<Comment>> getComments(String token, String destinationId) async {
     final response = await _client.get(
       _uri('/destinations/$destinationId/comments'),

@@ -142,6 +142,21 @@ class AppLocalizationsEn extends AppLocalizations {
       'The AI assistant isn\'t set up yet. Please check back soon.';
 
   @override
+  String get aiChatSuggestionsLabel => 'Try asking';
+
+  @override
+  String get aiChatSuggestion1 => 'What\'s worth visiting in Yaoundé today?';
+
+  @override
+  String get aiChatSuggestion2 => 'Suggest a half-day culture itinerary';
+
+  @override
+  String get aiChatSuggestion3 => 'Where can I eat local Cameroonian food?';
+
+  @override
+  String get aiChatSuggestion4 => 'Best spot for a sunset view?';
+
+  @override
   String get aiExplainButton => 'Ask AI to explain';
 
   @override
@@ -173,6 +188,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String commentsLoadError(String error) {
     return 'Couldn\'t load comments.\n$error';
   }
+
+  @override
+  String get commentsNewBadge => 'New';
+
+  @override
+  String get readAloudTooltip => 'Read aloud';
+
+  @override
+  String get readAloudStopTooltip => 'Stop reading';
 
   @override
   String get destinationsTitle => 'Yaoundé Destinations';
@@ -245,6 +269,24 @@ class AppLocalizationsEn extends AppLocalizations {
   String get submitDestinationAddPhoto => 'Add a photo (optional)';
 
   @override
+  String get submitDestinationLocationPickButton => 'Set location on map';
+
+  @override
+  String submitDestinationLocationPickedLabel(String lat, String lon) {
+    return 'Location set: $lat, $lon';
+  }
+
+  @override
+  String get pickLocationTitle => 'Pick location';
+
+  @override
+  String get pickLocationHint =>
+      'Tap the map to place a pin at this destination\'s location';
+
+  @override
+  String get pickLocationConfirm => 'Use this location';
+
+  @override
   String get recommendationsTitle => 'Picked for you';
 
   @override
@@ -290,6 +332,67 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get itineraryDeletedSnackbar => 'Itinerary deleted.';
+
+  @override
+  String get navMap => 'Map';
+
+  @override
+  String get mapTitle => 'Get directions';
+
+  @override
+  String get mapFromLabel => 'From';
+
+  @override
+  String get mapToLabel => 'To';
+
+  @override
+  String get mapSwapButton => 'Swap origin and destination';
+
+  @override
+  String get mapClearRoute => 'Clear';
+
+  @override
+  String get mapSearchHint => 'Search destinations…';
+
+  @override
+  String get mapNoCoordinates => 'This destination has no location set yet';
+
+  @override
+  String get mapProfileDriving => 'Drive';
+
+  @override
+  String get mapProfileWalking => 'Walk';
+
+  @override
+  String get mapProfileCycling => 'Bike';
+
+  @override
+  String get mapRoutingNotConfigured =>
+      'Directions aren\'t set up yet. Please check back soon.';
+
+  @override
+  String get viewOnMapButton => 'View on map';
+
+  @override
+  String get mapLocationPermissionDenied =>
+      'Location access is needed to show your position on the map. Please allow it in your device settings.';
+
+  @override
+  String get mapUseMyLocation => 'Use my current location';
+
+  @override
+  String get mapMyLocationLabel => 'My current location';
+
+  @override
+  String get mapResolvingLocation => 'Finding your location…';
+
+  @override
+  String get startItineraryButton => 'Start itinerary';
+
+  @override
+  String mapRouteError(String error) {
+    return 'Couldn\'t get directions.\n$error';
+  }
 
   @override
   String get deleteItineraryButton => 'Delete';

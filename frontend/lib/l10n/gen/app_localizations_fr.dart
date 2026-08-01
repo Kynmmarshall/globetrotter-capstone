@@ -146,6 +146,25 @@ class AppLocalizationsFr extends AppLocalizations {
       'L\'assistant IA n\'est pas encore configuré. Revenez bientôt.';
 
   @override
+  String get aiChatSuggestionsLabel => 'Essayez de demander';
+
+  @override
+  String get aiChatSuggestion1 =>
+      'Que vaut-il la peine de visiter à Yaoundé aujourd\'hui ?';
+
+  @override
+  String get aiChatSuggestion2 =>
+      'Suggérez un itinéraire culturel d\'une demi-journée';
+
+  @override
+  String get aiChatSuggestion3 =>
+      'Où puis-je manger de la cuisine camerounaise locale ?';
+
+  @override
+  String get aiChatSuggestion4 =>
+      'Meilleur endroit pour un coucher de soleil ?';
+
+  @override
   String get aiExplainButton => 'Demander une explication à l\'IA';
 
   @override
@@ -178,6 +197,15 @@ class AppLocalizationsFr extends AppLocalizations {
   String commentsLoadError(String error) {
     return 'Impossible de charger les commentaires.\n$error';
   }
+
+  @override
+  String get commentsNewBadge => 'Nouveau';
+
+  @override
+  String get readAloudTooltip => 'Lire à voix haute';
+
+  @override
+  String get readAloudStopTooltip => 'Arrêter la lecture';
 
   @override
   String get destinationsTitle => 'Destinations à Yaoundé';
@@ -251,6 +279,25 @@ class AppLocalizationsFr extends AppLocalizations {
   String get submitDestinationAddPhoto => 'Ajouter une photo (facultatif)';
 
   @override
+  String get submitDestinationLocationPickButton =>
+      'Définir la position sur la carte';
+
+  @override
+  String submitDestinationLocationPickedLabel(String lat, String lon) {
+    return 'Position définie : $lat, $lon';
+  }
+
+  @override
+  String get pickLocationTitle => 'Choisir la position';
+
+  @override
+  String get pickLocationHint =>
+      'Touchez la carte pour placer une épingle à l\'emplacement de cette destination';
+
+  @override
+  String get pickLocationConfirm => 'Utiliser cette position';
+
+  @override
   String get recommendationsTitle => 'Sélectionné pour vous';
 
   @override
@@ -297,6 +344,68 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get itineraryDeletedSnackbar => 'Itinéraire supprimé.';
+
+  @override
+  String get navMap => 'Carte';
+
+  @override
+  String get mapTitle => 'Obtenir l\'itinéraire';
+
+  @override
+  String get mapFromLabel => 'Départ';
+
+  @override
+  String get mapToLabel => 'Arrivée';
+
+  @override
+  String get mapSwapButton => 'Inverser le départ et l\'arrivée';
+
+  @override
+  String get mapClearRoute => 'Effacer';
+
+  @override
+  String get mapSearchHint => 'Rechercher des destinations…';
+
+  @override
+  String get mapNoCoordinates =>
+      'Cette destination n\'a pas encore de position définie';
+
+  @override
+  String get mapProfileDriving => 'Voiture';
+
+  @override
+  String get mapProfileWalking => 'À pied';
+
+  @override
+  String get mapProfileCycling => 'Vélo';
+
+  @override
+  String get mapRoutingNotConfigured =>
+      'L\'itinéraire n\'est pas encore configuré. Revenez bientôt.';
+
+  @override
+  String get viewOnMapButton => 'Voir sur la carte';
+
+  @override
+  String get mapLocationPermissionDenied =>
+      'L\'accès à la position est nécessaire pour l\'afficher sur la carte. Veuillez l\'autoriser dans les paramètres de votre appareil.';
+
+  @override
+  String get mapUseMyLocation => 'Utiliser ma position actuelle';
+
+  @override
+  String get mapMyLocationLabel => 'Ma position actuelle';
+
+  @override
+  String get mapResolvingLocation => 'Recherche de votre position…';
+
+  @override
+  String get startItineraryButton => 'Démarrer l\'itinéraire';
+
+  @override
+  String mapRouteError(String error) {
+    return 'Impossible d\'obtenir l\'itinéraire.\n$error';
+  }
 
   @override
   String get deleteItineraryButton => 'Supprimer';

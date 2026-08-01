@@ -49,6 +49,11 @@
     "placeholders": { "error": { "type": "String" } }
   },
   "aiChatNotConfigured": "The AI assistant isn't set up yet. Please check back soon.",
+  "aiChatSuggestionsLabel": "Try asking",
+  "aiChatSuggestion1": "What's worth visiting in Yaoundé today?",
+  "aiChatSuggestion2": "Suggest a half-day culture itinerary",
+  "aiChatSuggestion3": "Where can I eat local Cameroonian food?",
+  "aiChatSuggestion4": "Best spot for a sunset view?",
   "aiExplainButton": "Ask AI to explain",
   "aiExplainTitle": "AI explanation",
   "aiExplainError": "Couldn't get an explanation right now.",
@@ -60,6 +65,9 @@
   "commentsButtonLabel": "View comments",
   "commentsEmpty": "No comments yet — be the first to share your thoughts.",
   "commentsLoadError": "Couldn't load comments.\n{error}",
+  "commentsNewBadge": "New",
+  "readAloudTooltip": "Read aloud",
+  "readAloudStopTooltip": "Stop reading",
   "@commentsLoadError": {
     "placeholders": { "error": { "type": "String" } }
   },
@@ -88,6 +96,14 @@
     "placeholders": { "error": { "type": "String" } }
   },
   "submitDestinationAddPhoto": "Add a photo (optional)",
+  "submitDestinationLocationPickButton": "Set location on map",
+  "submitDestinationLocationPickedLabel": "Location set: {lat}, {lon}",
+  "@submitDestinationLocationPickedLabel": {
+    "placeholders": { "lat": { "type": "String" }, "lon": { "type": "String" } }
+  },
+  "pickLocationTitle": "Pick location",
+  "pickLocationHint": "Tap the map to place a pin at this destination's location",
+  "pickLocationConfirm": "Use this location",
 
   "recommendationsTitle": "Picked for you",
   "recommendationsSubtitle": "A quick shortlist of Yaoundé spots worth adding to your itinerary.",
@@ -110,6 +126,29 @@
   "itinerariesFormMissing": "Add a title and pick at least one destination.",
   "itineraryCreatedSnackbar": "Itinerary created.",
   "itineraryDeletedSnackbar": "Itinerary deleted.",
+
+  "navMap": "Map",
+  "mapTitle": "Get directions",
+  "mapFromLabel": "From",
+  "mapToLabel": "To",
+  "mapSwapButton": "Swap origin and destination",
+  "mapClearRoute": "Clear",
+  "mapSearchHint": "Search destinations…",
+  "mapNoCoordinates": "This destination has no location set yet",
+  "mapProfileDriving": "Drive",
+  "mapProfileWalking": "Walk",
+  "mapProfileCycling": "Bike",
+  "mapRoutingNotConfigured": "Directions aren't set up yet. Please check back soon.",
+  "viewOnMapButton": "View on map",
+  "mapLocationPermissionDenied": "Location access is needed to show your position on the map. Please allow it in your device settings.",
+  "mapUseMyLocation": "Use my current location",
+  "mapMyLocationLabel": "My current location",
+  "mapResolvingLocation": "Finding your location…",
+  "startItineraryButton": "Start itinerary",
+  "mapRouteError": "Couldn't get directions.\n{error}",
+  "@mapRouteError": {
+    "placeholders": { "error": { "type": "String" } }
+  },
   "deleteItineraryButton": "Delete",
   "deleteItineraryConfirmTitle": "Delete this itinerary?",
   "deleteItineraryConfirmMessage": "\"{title}\" will be permanently deleted. This can't be undone.",

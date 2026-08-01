@@ -344,6 +344,36 @@ abstract class AppLocalizations {
   /// **'The AI assistant isn\'t set up yet. Please check back soon.'**
   String get aiChatNotConfigured;
 
+  /// No description provided for @aiChatSuggestionsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Try asking'**
+  String get aiChatSuggestionsLabel;
+
+  /// No description provided for @aiChatSuggestion1.
+  ///
+  /// In en, this message translates to:
+  /// **'What\'s worth visiting in Yaoundé today?'**
+  String get aiChatSuggestion1;
+
+  /// No description provided for @aiChatSuggestion2.
+  ///
+  /// In en, this message translates to:
+  /// **'Suggest a half-day culture itinerary'**
+  String get aiChatSuggestion2;
+
+  /// No description provided for @aiChatSuggestion3.
+  ///
+  /// In en, this message translates to:
+  /// **'Where can I eat local Cameroonian food?'**
+  String get aiChatSuggestion3;
+
+  /// No description provided for @aiChatSuggestion4.
+  ///
+  /// In en, this message translates to:
+  /// **'Best spot for a sunset view?'**
+  String get aiChatSuggestion4;
+
   /// No description provided for @aiExplainButton.
   ///
   /// In en, this message translates to:
@@ -403,6 +433,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Couldn\'t load comments.\n{error}'**
   String commentsLoadError(String error);
+
+  /// No description provided for @commentsNewBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'New'**
+  String get commentsNewBadge;
+
+  /// No description provided for @readAloudTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Read aloud'**
+  String get readAloudTooltip;
+
+  /// No description provided for @readAloudStopTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop reading'**
+  String get readAloudStopTooltip;
 
   /// No description provided for @destinationsTitle.
   ///
@@ -530,6 +578,36 @@ abstract class AppLocalizations {
   /// **'Add a photo (optional)'**
   String get submitDestinationAddPhoto;
 
+  /// No description provided for @submitDestinationLocationPickButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Set location on map'**
+  String get submitDestinationLocationPickButton;
+
+  /// No description provided for @submitDestinationLocationPickedLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Location set: {lat}, {lon}'**
+  String submitDestinationLocationPickedLabel(String lat, String lon);
+
+  /// No description provided for @pickLocationTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick location'**
+  String get pickLocationTitle;
+
+  /// No description provided for @pickLocationHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap the map to place a pin at this destination\'s location'**
+  String get pickLocationHint;
+
+  /// No description provided for @pickLocationConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Use this location'**
+  String get pickLocationConfirm;
+
   /// No description provided for @recommendationsTitle.
   ///
   /// In en, this message translates to:
@@ -607,6 +685,120 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Itinerary deleted.'**
   String get itineraryDeletedSnackbar;
+
+  /// No description provided for @navMap.
+  ///
+  /// In en, this message translates to:
+  /// **'Map'**
+  String get navMap;
+
+  /// No description provided for @mapTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Get directions'**
+  String get mapTitle;
+
+  /// No description provided for @mapFromLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'From'**
+  String get mapFromLabel;
+
+  /// No description provided for @mapToLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'To'**
+  String get mapToLabel;
+
+  /// No description provided for @mapSwapButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Swap origin and destination'**
+  String get mapSwapButton;
+
+  /// No description provided for @mapClearRoute.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear'**
+  String get mapClearRoute;
+
+  /// No description provided for @mapSearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search destinations…'**
+  String get mapSearchHint;
+
+  /// No description provided for @mapNoCoordinates.
+  ///
+  /// In en, this message translates to:
+  /// **'This destination has no location set yet'**
+  String get mapNoCoordinates;
+
+  /// No description provided for @mapProfileDriving.
+  ///
+  /// In en, this message translates to:
+  /// **'Drive'**
+  String get mapProfileDriving;
+
+  /// No description provided for @mapProfileWalking.
+  ///
+  /// In en, this message translates to:
+  /// **'Walk'**
+  String get mapProfileWalking;
+
+  /// No description provided for @mapProfileCycling.
+  ///
+  /// In en, this message translates to:
+  /// **'Bike'**
+  String get mapProfileCycling;
+
+  /// No description provided for @mapRoutingNotConfigured.
+  ///
+  /// In en, this message translates to:
+  /// **'Directions aren\'t set up yet. Please check back soon.'**
+  String get mapRoutingNotConfigured;
+
+  /// No description provided for @viewOnMapButton.
+  ///
+  /// In en, this message translates to:
+  /// **'View on map'**
+  String get viewOnMapButton;
+
+  /// No description provided for @mapLocationPermissionDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'Location access is needed to show your position on the map. Please allow it in your device settings.'**
+  String get mapLocationPermissionDenied;
+
+  /// No description provided for @mapUseMyLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Use my current location'**
+  String get mapUseMyLocation;
+
+  /// No description provided for @mapMyLocationLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'My current location'**
+  String get mapMyLocationLabel;
+
+  /// No description provided for @mapResolvingLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Finding your location…'**
+  String get mapResolvingLocation;
+
+  /// No description provided for @startItineraryButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Start itinerary'**
+  String get startItineraryButton;
+
+  /// No description provided for @mapRouteError.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t get directions.\n{error}'**
+  String mapRouteError(String error);
 
   /// No description provided for @deleteItineraryButton.
   ///
