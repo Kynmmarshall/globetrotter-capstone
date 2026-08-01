@@ -49,6 +49,11 @@
     "placeholders": { "error": { "type": "String" } }
   },
   "aiChatNotConfigured": "The AI assistant isn't set up yet. Please check back soon.",
+  "aiChatSuggestionsLabel": "Try asking",
+  "aiChatSuggestion1": "What's worth visiting in Yaoundé today?",
+  "aiChatSuggestion2": "Suggest a half-day culture itinerary",
+  "aiChatSuggestion3": "Where can I eat local Cameroonian food?",
+  "aiChatSuggestion4": "Best spot for a sunset view?",
   "aiExplainButton": "Ask AI to explain",
   "aiExplainTitle": "AI explanation",
   "aiExplainError": "Couldn't get an explanation right now.",

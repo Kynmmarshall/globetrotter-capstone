@@ -76,8 +76,8 @@ class _AiChatSheetState extends State<AiChatSheet> {
     _scrollToBottom();
   }
 
-  Future<void> _send() async {
-    final text = _controller.text.trim();
+  Future<void> _send({String? presetText}) async {
+    final text = (presetText ?? _controller.text).trim();
     if (text.isEmpty || _sending) return;
     setState(() {
       _messages.add(ChatMessage(role: 'user', content: text));
@@ -137,6 +137,60 @@ class _AiChatSheetState extends State<AiChatSheet> {
             border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
           ),
           child: child,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState(BuildContext context, AppLocalizations l10n) {
+    final suggestions = [
+      l10n.aiChatSuggestion1,
+      l10n.aiChatSuggestion2,
+      l10n.aiChatSuggestion3,
+      l10n.aiChatSuggestion4,
+    ];
+    return Center(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              l10n.aiChatEmptyState,
+              style: const TextStyle(color: Colors.white70, height: 1.4),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 22),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                l10n.aiChatSuggestionsLabel.toUpperCase(),
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.5),
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.6,
+                ),
+              ),
+            ),
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final suggestion in suggestions)
+                  ActionChip(
+                    label: Text(
+                      suggestion,
+                      style: const TextStyle(color: Colors.white, fontSize: 12.5),
+                    ),
+                    backgroundColor: const Color(0xFF13303B),
+                    side: BorderSide(color: Colors.white.withValues(alpha: 0.2)),
+                    onPressed: _sending ? null : () => _send(presetText: suggestion),
+                  ),
+              ],
+            ),
+          ],
         ),
       ),
     );
@@ -239,16 +293,7 @@ class _AiChatSheetState extends State<AiChatSheet> {
         Divider(color: Colors.white.withValues(alpha: 0.12), height: 1),
         Expanded(
           child: _messages.isEmpty
-              ? Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(32),
-                    child: Text(
-                      l10n.aiChatEmptyState,
-                      style: const TextStyle(color: Colors.white70, height: 1.4),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                )
+              ? _buildEmptyState(context, l10n)
               : ListView.builder(
                   controller: widget.scrollController,
                   padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),

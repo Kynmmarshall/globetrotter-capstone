@@ -344,6 +344,36 @@ abstract class AppLocalizations {
   /// **'The AI assistant isn\'t set up yet. Please check back soon.'**
   String get aiChatNotConfigured;
 
+  /// No description provided for @aiChatSuggestionsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Try asking'**
+  String get aiChatSuggestionsLabel;
+
+  /// No description provided for @aiChatSuggestion1.
+  ///
+  /// In en, this message translates to:
+  /// **'What\'s worth visiting in Yaoundé today?'**
+  String get aiChatSuggestion1;
+
+  /// No description provided for @aiChatSuggestion2.
+  ///
+  /// In en, this message translates to:
+  /// **'Suggest a half-day culture itinerary'**
+  String get aiChatSuggestion2;
+
+  /// No description provided for @aiChatSuggestion3.
+  ///
+  /// In en, this message translates to:
+  /// **'Where can I eat local Cameroonian food?'**
+  String get aiChatSuggestion3;
+
+  /// No description provided for @aiChatSuggestion4.
+  ///
+  /// In en, this message translates to:
+  /// **'Best spot for a sunset view?'**
+  String get aiChatSuggestion4;
+
   /// No description provided for @aiExplainButton.
   ///
   /// In en, this message translates to:

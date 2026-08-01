@@ -142,6 +142,21 @@ class AppLocalizationsEn extends AppLocalizations {
       'The AI assistant isn\'t set up yet. Please check back soon.';
 
   @override
+  String get aiChatSuggestionsLabel => 'Try asking';
+
+  @override
+  String get aiChatSuggestion1 => 'What\'s worth visiting in Yaoundé today?';
+
+  @override
+  String get aiChatSuggestion2 => 'Suggest a half-day culture itinerary';
+
+  @override
+  String get aiChatSuggestion3 => 'Where can I eat local Cameroonian food?';
+
+  @override
+  String get aiChatSuggestion4 => 'Best spot for a sunset view?';
+
+  @override
   String get aiExplainButton => 'Ask AI to explain';
 
   @override

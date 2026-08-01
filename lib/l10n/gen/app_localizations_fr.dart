@@ -146,6 +146,25 @@ class AppLocalizationsFr extends AppLocalizations {
       'L\'assistant IA n\'est pas encore configuré. Revenez bientôt.';
 
   @override
+  String get aiChatSuggestionsLabel => 'Essayez de demander';
+
+  @override
+  String get aiChatSuggestion1 =>
+      'Que vaut-il la peine de visiter à Yaoundé aujourd\'hui ?';
+
+  @override
+  String get aiChatSuggestion2 =>
+      'Suggérez un itinéraire culturel d\'une demi-journée';
+
+  @override
+  String get aiChatSuggestion3 =>
+      'Où puis-je manger de la cuisine camerounaise locale ?';
+
+  @override
+  String get aiChatSuggestion4 =>
+      'Meilleur endroit pour un coucher de soleil ?';
+
+  @override
   String get aiExplainButton => 'Demander une explication à l\'IA';
 
   @override

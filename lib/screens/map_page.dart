@@ -287,10 +287,22 @@ class _MapPageState extends State<MapPage> {
         setState(() => _profile = value);
         _computeRoute();
       },
-      backgroundColor: Colors.white.withValues(alpha: 0.08),
-      selectedColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.85),
+      // Material 3's default surface-tint/elevation washes a plain
+      // backgroundColor/selectedColor out to near-white against this app's
+      // light-brightness ColorScheme - `color` fully overrides that
+      // resolution instead of layering on top of it.
+      color: WidgetStateProperty.resolveWith((states) {
+        if (states.contains(WidgetState.selected)) {
+          return Theme.of(context).colorScheme.primary.withValues(alpha: 0.85);
+        }
+        return const Color(0xFF13303B);
+      }),
       side: BorderSide(color: Colors.white.withValues(alpha: 0.2)),
       showCheckmark: false,
+      surfaceTintColor: Colors.transparent,
+      shadowColor: Colors.transparent,
+      elevation: 0,
+      pressElevation: 0,
     );
   }
 
