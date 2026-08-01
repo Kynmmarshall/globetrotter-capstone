@@ -15,6 +15,7 @@ class TripMapFlutterMapView extends StatelessWidget {
     required this.markers,
     this.routeGeometry,
     this.onMarkerTap,
+    this.onMapTapped,
     required this.initialLat,
     required this.initialLon,
     required this.initialZoom,
@@ -24,6 +25,7 @@ class TripMapFlutterMapView extends StatelessWidget {
   final List<TripMapMarker> markers;
   final List<RouteWaypoint>? routeGeometry;
   final void Function(String markerId)? onMarkerTap;
+  final void Function(double lat, double lon)? onMapTapped;
   final double initialLat;
   final double initialLon;
   final double initialZoom;
@@ -85,6 +87,7 @@ class TripMapFlutterMapView extends StatelessWidget {
       options: MapOptions(
         initialCenter: ll.LatLng(initialLat, initialLon),
         initialZoom: initialZoom,
+        onTap: onMapTapped == null ? null : (_, point) => onMapTapped!(point.latitude, point.longitude),
       ),
       children: [
         TileLayer(

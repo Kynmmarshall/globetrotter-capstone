@@ -190,6 +190,9 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get commentsNewBadge => 'New';
+
+  @override
   String get destinationsTitle => 'Yaoundé Destinations';
 
   @override
@@ -258,6 +261,24 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get submitDestinationAddPhoto => 'Add a photo (optional)';
+
+  @override
+  String get submitDestinationLocationPickButton => 'Set location on map';
+
+  @override
+  String submitDestinationLocationPickedLabel(String lat, String lon) {
+    return 'Location set: $lat, $lon';
+  }
+
+  @override
+  String get pickLocationTitle => 'Pick location';
+
+  @override
+  String get pickLocationHint =>
+      'Tap the map to place a pin at this destination\'s location';
+
+  @override
+  String get pickLocationConfirm => 'Use this location';
 
   @override
   String get recommendationsTitle => 'Picked for you';

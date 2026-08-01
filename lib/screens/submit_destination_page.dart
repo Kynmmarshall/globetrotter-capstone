@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:trip_io/l10n/gen/app_localizations.dart';
 import 'package:trip_io/models/interest_tags.dart';
+import 'package:trip_io/screens/location_picker_page.dart';
 import 'package:trip_io/services/session_controller.dart';
 
 /// Lets any signed-in user propose a new destination. It never touches the
@@ -30,6 +31,8 @@ class _SubmitDestinationPageState extends State<SubmitDestinationPage> {
   bool _pickingImage = false;
   XFile? _pickedImage;
   Uint8List? _pickedImageBytes;
+  double? _lat;
+  double? _lon;
 
   static const double _backgroundBreakpoint = 700;
 
@@ -64,6 +67,20 @@ class _SubmitDestinationPageState extends State<SubmitDestinationPage> {
     }
   }
 
+  Future<void> _pickLocation() async {
+    final result = await Navigator.of(context).push<({double lat, double lon})>(
+      MaterialPageRoute(
+        builder: (_) => LocationPickerPage(initialLat: _lat, initialLon: _lon),
+      ),
+    );
+    if (result != null && mounted) {
+      setState(() {
+        _lat = result.lat;
+        _lon = result.lon;
+      });
+    }
+  }
+
   Future<void> _submit() async {
     final l10n = AppLocalizations.of(context)!;
     if (!_formKey.currentState!.validate() || _submitting) return;
@@ -73,6 +90,8 @@ class _SubmitDestinationPageState extends State<SubmitDestinationPage> {
         name: _nameController.text.trim(),
         description: _descriptionController.text.trim().isEmpty ? null : _descriptionController.text.trim(),
         location: _locationController.text.trim().isEmpty ? null : _locationController.text.trim(),
+        lat: _lat,
+        lon: _lon,
         tags: _selectedTags.toList(),
       );
 
@@ -149,6 +168,52 @@ class _SubmitDestinationPageState extends State<SubmitDestinationPage> {
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide: const BorderSide(color: Colors.white),
+      ),
+    );
+  }
+
+  Widget _buildLocationPicker(AppLocalizations l10n) {
+    final hasPoint = _lat != null && _lon != null;
+    return InkWell(
+      borderRadius: BorderRadius.circular(12),
+      onTap: _pickLocation,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+        ),
+        child: Row(
+          children: [
+            Icon(hasPoint ? Icons.place : Icons.add_location_alt_outlined, size: 18, color: Colors.white70),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                hasPoint
+                    ? l10n.submitDestinationLocationPickedLabel(
+                        _lat!.toStringAsFixed(5),
+                        _lon!.toStringAsFixed(5),
+                      )
+                    : l10n.submitDestinationLocationPickButton,
+                style: TextStyle(
+                  color: hasPoint ? Colors.white : Colors.white60,
+                  fontSize: 13.5,
+                  fontWeight: hasPoint ? FontWeight.w700 : FontWeight.w500,
+                ),
+              ),
+            ),
+            if (hasPoint)
+              IconButton(
+                icon: const Icon(Icons.close, size: 16, color: Colors.white54),
+                onPressed: () => setState(() {
+                  _lat = null;
+                  _lon = null;
+                }),
+                visualDensity: VisualDensity.compact,
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -302,6 +367,8 @@ class _SubmitDestinationPageState extends State<SubmitDestinationPage> {
                                         hint: l10n.submitDestinationLocationHint,
                                       ),
                                     ),
+                                    const SizedBox(height: 14),
+                                    _buildLocationPicker(l10n),
                                     const SizedBox(height: 14),
                                     TextFormField(
                                       controller: _descriptionController,

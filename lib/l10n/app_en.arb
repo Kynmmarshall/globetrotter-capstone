@@ -65,6 +65,7 @@
   "commentsButtonLabel": "View comments",
   "commentsEmpty": "No comments yet — be the first to share your thoughts.",
   "commentsLoadError": "Couldn't load comments.\n{error}",
+  "commentsNewBadge": "New",
   "@commentsLoadError": {
     "placeholders": { "error": { "type": "String" } }
   },
@@ -93,6 +94,14 @@
     "placeholders": { "error": { "type": "String" } }
   },
   "submitDestinationAddPhoto": "Add a photo (optional)",
+  "submitDestinationLocationPickButton": "Set location on map",
+  "submitDestinationLocationPickedLabel": "Location set: {lat}, {lon}",
+  "@submitDestinationLocationPickedLabel": {
+    "placeholders": { "lat": { "type": "String" }, "lon": { "type": "String" } }
+  },
+  "pickLocationTitle": "Pick location",
+  "pickLocationHint": "Tap the map to place a pin at this destination's location",
+  "pickLocationConfirm": "Use this location",
 
   "recommendationsTitle": "Picked for you",
   "recommendationsSubtitle": "A quick shortlist of Yaoundé spots worth adding to your itinerary.",

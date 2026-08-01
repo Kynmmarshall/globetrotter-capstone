@@ -55,6 +55,7 @@ class TripMap extends StatefulWidget {
     required this.markers,
     this.routeGeometry,
     this.onMarkerTap,
+    this.onMapTapped,
     this.initialLat = yaoundeCenterLat,
     this.initialLon = yaoundeCenterLon,
     this.initialZoom = 12.5,
@@ -63,6 +64,11 @@ class TripMap extends StatefulWidget {
   final List<TripMapMarker> markers;
   final List<RouteWaypoint>? routeGeometry;
   final void Function(String markerId)? onMarkerTap;
+
+  /// Fires with the tapped coordinates whenever the map itself (not an
+  /// existing marker) is tapped - used for "pick a location on the map"
+  /// pickers rather than the usual browse/route views.
+  final void Function(double lat, double lon)? onMapTapped;
   final double initialLat;
   final double initialLon;
   final double initialZoom;
@@ -171,6 +177,7 @@ class _TripMapState extends State<TripMap> {
             markers: widget.markers,
             routeGeometry: widget.routeGeometry,
             onMarkerTap: widget.onMarkerTap,
+            onMapTapped: widget.onMapTapped,
             initialLat: widget.initialLat,
             initialLon: widget.initialLon,
             initialZoom: widget.initialZoom,
@@ -180,6 +187,7 @@ class _TripMapState extends State<TripMap> {
             markers: widget.markers,
             routeGeometry: widget.routeGeometry,
             onMarkerTap: widget.onMarkerTap,
+            onMapTapped: widget.onMapTapped,
             initialLat: widget.initialLat,
             initialLon: widget.initialLon,
             initialZoom: widget.initialZoom,

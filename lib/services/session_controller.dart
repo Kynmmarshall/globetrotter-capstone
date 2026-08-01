@@ -315,6 +315,8 @@ class SessionController extends ChangeNotifier {
     required String name,
     String? description,
     String? location,
+    double? lat,
+    double? lon,
     List<String>? tags,
   }) async {
     final token = _requireToken();
@@ -322,6 +324,8 @@ class SessionController extends ChangeNotifier {
       'name': name,
       'description': description,
       'location': location,
+      'lat': lat,
+      'lon': lon,
       'tags': tags ?? const [],
     });
     Analytics.instance.trackEvent('destination', 'submitted', name: result.id);

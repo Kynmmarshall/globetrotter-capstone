@@ -434,6 +434,12 @@ abstract class AppLocalizations {
   /// **'Couldn\'t load comments.\n{error}'**
   String commentsLoadError(String error);
 
+  /// No description provided for @commentsNewBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'New'**
+  String get commentsNewBadge;
+
   /// No description provided for @destinationsTitle.
   ///
   /// In en, this message translates to:
@@ -559,6 +565,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Add a photo (optional)'**
   String get submitDestinationAddPhoto;
+
+  /// No description provided for @submitDestinationLocationPickButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Set location on map'**
+  String get submitDestinationLocationPickButton;
+
+  /// No description provided for @submitDestinationLocationPickedLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Location set: {lat}, {lon}'**
+  String submitDestinationLocationPickedLabel(String lat, String lon);
+
+  /// No description provided for @pickLocationTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick location'**
+  String get pickLocationTitle;
+
+  /// No description provided for @pickLocationHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap the map to place a pin at this destination\'s location'**
+  String get pickLocationHint;
+
+  /// No description provided for @pickLocationConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Use this location'**
+  String get pickLocationConfirm;
 
   /// No description provided for @recommendationsTitle.
   ///

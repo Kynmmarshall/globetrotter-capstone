@@ -15,6 +15,7 @@ class TripMapLibreView extends StatefulWidget {
     required this.markers,
     this.routeGeometry,
     this.onMarkerTap,
+    this.onMapTapped,
     required this.initialLat,
     required this.initialLon,
     required this.initialZoom,
@@ -24,6 +25,7 @@ class TripMapLibreView extends StatefulWidget {
   final List<TripMapMarker> markers;
   final List<RouteWaypoint>? routeGeometry;
   final void Function(String markerId)? onMarkerTap;
+  final void Function(double lat, double lon)? onMapTapped;
   final double initialLat;
   final double initialLon;
   final double initialZoom;
@@ -162,6 +164,9 @@ class _TripMapLibreViewState extends State<TripMapLibreView> {
           ),
           onMapCreated: _onMapCreated,
           onStyleLoadedCallback: _syncAnnotations,
+          onMapClick: widget.onMapTapped == null
+              ? null
+              : (point, coordinates) => widget.onMapTapped!(coordinates.latitude, coordinates.longitude),
           compassEnabled: false,
           logoEnabled: false,
           myLocationEnabled: widget.showMyLocation,

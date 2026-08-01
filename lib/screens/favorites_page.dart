@@ -9,6 +9,7 @@ import 'package:trip_io/services/api_client.dart';
 import 'package:trip_io/services/session_controller.dart';
 import 'package:trip_io/widgets/favorite_toggle_button.dart';
 import 'package:trip_io/widgets/feature_pill.dart';
+import 'package:trip_io/widgets/new_comments_badge.dart';
 import 'package:trip_io/widgets/session_expired_card.dart';
 import 'package:trip_io/widgets/star_rating.dart';
 
@@ -130,6 +131,8 @@ class _FavoritesPageState extends State<FavoritesPage> {
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
+                      NewCommentsBadge(session: widget.session, destination: item),
+                      const SizedBox(width: 6),
                       FavoriteToggleButton(session: widget.session, destinationId: item.id, size: 18),
                     ],
                   ),

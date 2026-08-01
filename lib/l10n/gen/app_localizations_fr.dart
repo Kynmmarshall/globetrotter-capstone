@@ -199,6 +199,9 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
+  String get commentsNewBadge => 'Nouveau';
+
+  @override
   String get destinationsTitle => 'Destinations à Yaoundé';
 
   @override
@@ -268,6 +271,25 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get submitDestinationAddPhoto => 'Ajouter une photo (facultatif)';
+
+  @override
+  String get submitDestinationLocationPickButton =>
+      'Définir la position sur la carte';
+
+  @override
+  String submitDestinationLocationPickedLabel(String lat, String lon) {
+    return 'Position définie : $lat, $lon';
+  }
+
+  @override
+  String get pickLocationTitle => 'Choisir la position';
+
+  @override
+  String get pickLocationHint =>
+      'Touchez la carte pour placer une épingle à l\'emplacement de cette destination';
+
+  @override
+  String get pickLocationConfirm => 'Utiliser cette position';
 
   @override
   String get recommendationsTitle => 'Sélectionné pour vous';

@@ -61,6 +61,7 @@
   "commentsButtonLabel": "Voir les commentaires",
   "commentsEmpty": "Aucun commentaire pour l'instant — soyez le premier à partager votre avis.",
   "commentsLoadError": "Impossible de charger les commentaires.\n{error}",
+  "commentsNewBadge": "Nouveau",
 
   "destinationsTitle": "Destinations à Yaoundé",
   "destinationsSubtitle": "Explorez les monuments, la culture et la nature de la capitale du Cameroun.",
@@ -83,6 +84,11 @@
   "submitDestinationSuccess": "Merci ! Votre suggestion a été envoyée pour examen.",
   "submitDestinationSuccessImageFailed": "Votre suggestion a été envoyée, mais l'envoi de la photo a échoué : {error}",
   "submitDestinationAddPhoto": "Ajouter une photo (facultatif)",
+  "submitDestinationLocationPickButton": "Définir la position sur la carte",
+  "submitDestinationLocationPickedLabel": "Position définie : {lat}, {lon}",
+  "pickLocationTitle": "Choisir la position",
+  "pickLocationHint": "Touchez la carte pour placer une épingle à l'emplacement de cette destination",
+  "pickLocationConfirm": "Utiliser cette position",
 
   "recommendationsTitle": "Sélectionné pour vous",
   "recommendationsSubtitle": "Une courte liste de lieux à Yaoundé à ajouter à votre itinéraire.",

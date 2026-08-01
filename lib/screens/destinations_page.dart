@@ -10,6 +10,7 @@ import 'package:trip_io/services/analytics.dart';
 import 'package:trip_io/services/api_client.dart';
 import 'package:trip_io/services/session_controller.dart';
 import 'package:trip_io/widgets/favorite_toggle_button.dart';
+import 'package:trip_io/widgets/new_comments_badge.dart';
 import 'package:trip_io/widgets/session_expired_card.dart';
 import 'package:trip_io/widgets/star_rating.dart';
 
@@ -58,10 +59,11 @@ class _DestinationsPageState extends State<DestinationsPage> {
   }
 
   List<Destination> _applyFilters(List<Destination> items) {
-    if (_selectedTags.isEmpty) return items;
-    return items
-        .where((d) => d.tags.any(_selectedTags.contains))
-        .toList();
+    final filtered = _selectedTags.isEmpty
+        ? items
+        : items.where((d) => d.tags.any(_selectedTags.contains)).toList();
+    return [...filtered]
+      ..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
   }
 
   String _capitalize(String s) =>
@@ -217,6 +219,11 @@ class _DestinationsPageState extends State<DestinationsPage> {
                     ),
                     child: FavoriteToggleButton(session: widget.session, destinationId: d.id),
                   ),
+                ),
+                Positioned(
+                  top: 8,
+                  left: 8,
+                  child: NewCommentsBadge(session: widget.session, destination: d),
                 ),
               ],
             ),

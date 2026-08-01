@@ -48,6 +48,7 @@ class Destination {
     this.ratingAverage,
     this.ratingCount = 0,
     this.userRating,
+    this.commentCount = 0,
   });
 
   final String id;
@@ -68,6 +69,7 @@ class Destination {
   final double? ratingAverage;
   final int ratingCount;
   final int? userRating; // 1-5, this viewer's own rating if any
+  final int commentCount; // total comments + replies
 
   /// Whether the backend supplied enough content to show this as a
   /// featured, photo-led card rather than a plain search result.
@@ -109,6 +111,7 @@ class Destination {
       ratingAverage: (json['rating_average'] as num?)?.toDouble(),
       ratingCount: (json['rating_count'] as num?)?.toInt() ?? 0,
       userRating: (json['user_rating'] as num?)?.toInt(),
+      commentCount: (json['comment_count'] as num?)?.toInt() ?? 0,
     );
   }
 
@@ -134,6 +137,7 @@ class Destination {
       ratingAverage: ratingAverage,
       ratingCount: ratingCount,
       userRating: userRating,
+      commentCount: commentCount,
     );
   }
 }
