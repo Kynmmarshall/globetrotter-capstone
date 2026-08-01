@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_tts/flutter_tts.dart';
 import 'package:trip_io/l10n/gen/app_localizations.dart';
 import 'package:trip_io/models/models.dart';
 import 'package:trip_io/screens/map_page.dart';
@@ -39,6 +40,13 @@ class _DestinationDetailPageState extends State<DestinationDetailPage> {
   int? _commentCount;
   bool _hasUnseenComments = false;
 
+  final FlutterTts _tts = FlutterTts();
+  bool _speaking = false;
+  // Which text is currently being read - 'details' (name/description/tips)
+  // or 'explanation' (the AI-generated one) - so each button only shows
+  // itself as active while it's the one actually playing.
+  String? _speakingSource;
+
   Destination get destination => _destination;
   String get heroTag => widget.heroTag;
 
@@ -47,6 +55,58 @@ class _DestinationDetailPageState extends State<DestinationDetailPage> {
     super.initState();
     _destination = widget.destination;
     unawaited(_checkUnseenComments());
+    _initTts();
+  }
+
+  void _initTts() {
+    // Destination content is authored in English regardless of the app's
+    // UI language, so the reader always uses an English voice - matching
+    // the text rather than whatever locale the interface happens to be in.
+    unawaited(_tts.setLanguage('en-US'));
+    _tts.setStartHandler(() {
+      if (mounted) setState(() => _speaking = true);
+    });
+    void resetSpeakingState() {
+      if (mounted) {
+        setState(() {
+          _speaking = false;
+          _speakingSource = null;
+        });
+      }
+    }
+
+    _tts.setCompletionHandler(resetSpeakingState);
+    _tts.setCancelHandler(resetSpeakingState);
+    _tts.setErrorHandler((_) => resetSpeakingState());
+  }
+
+  Future<void> _toggleReadAloud(String source, String text) async {
+    if (_speaking && _speakingSource == source) {
+      await _tts.stop();
+      return;
+    }
+    if (_speaking) {
+      // Switching source mid-playback - stop whatever's currently reading
+      // before starting the other one, rather than letting them overlap.
+      await _tts.stop();
+    }
+    _speakingSource = source;
+    await _tts.speak(text);
+  }
+
+  String _detailsSpokenText() {
+    final parts = <String>[
+      destination.name,
+      if ((destination.description ?? '').isNotEmpty) destination.description!,
+      if ((destination.tips ?? '').isNotEmpty) destination.tips!,
+    ];
+    return parts.join('. ');
+  }
+
+  @override
+  void dispose() {
+    unawaited(_tts.stop());
+    super.dispose();
   }
 
   int _countComments(List<Comment> nodes) {
@@ -351,6 +411,21 @@ class _DestinationDetailPageState extends State<DestinationDetailPage> {
                     ),
                   ),
                 ),
+              if (_explanation != null)
+                IconButton(
+                  onPressed: () =>
+                      _toggleReadAloud('explanation', _explanation!),
+                  icon: Icon(
+                    _speaking && _speakingSource == 'explanation'
+                        ? Icons.stop_circle
+                        : Icons.volume_up,
+                    color: Colors.white,
+                    size: 20,
+                  ),
+                  tooltip: _speaking && _speakingSource == 'explanation'
+                      ? l10n.readAloudStopTooltip
+                      : l10n.readAloudTooltip,
+                ),
             ],
           ),
           if (_explainError != null) ...[
@@ -597,6 +672,28 @@ class _DestinationDetailPageState extends State<DestinationDetailPage> {
                                             fontSize: 22,
                                           ),
                                         ),
+                                      ),
+                                      IconButton(
+                                        onPressed: () => _toggleReadAloud(
+                                          'details',
+                                          _detailsSpokenText(),
+                                        ),
+                                        icon: Icon(
+                                          _speaking &&
+                                                  _speakingSource == 'details'
+                                              ? Icons.stop_circle
+                                              : Icons.volume_up,
+                                          color: Colors.white,
+                                        ),
+                                        tooltip:
+                                            _speaking &&
+                                                _speakingSource == 'details'
+                                            ? AppLocalizations.of(
+                                                context,
+                                              )!.readAloudStopTooltip
+                                            : AppLocalizations.of(
+                                                context,
+                                              )!.readAloudTooltip,
                                       ),
                                       FavoriteToggleButton(
                                         session: widget.session,

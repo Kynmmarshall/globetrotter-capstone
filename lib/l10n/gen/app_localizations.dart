@@ -440,6 +440,18 @@ abstract class AppLocalizations {
   /// **'New'**
   String get commentsNewBadge;
 
+  /// No description provided for @readAloudTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Read aloud'**
+  String get readAloudTooltip;
+
+  /// No description provided for @readAloudStopTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop reading'**
+  String get readAloudStopTooltip;
+
   /// No description provided for @destinationsTitle.
   ///
   /// In en, this message translates to:

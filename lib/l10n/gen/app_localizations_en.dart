@@ -193,6 +193,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get commentsNewBadge => 'New';
 
   @override
+  String get readAloudTooltip => 'Read aloud';
+
+  @override
+  String get readAloudStopTooltip => 'Stop reading';
+
+  @override
   String get destinationsTitle => 'Yaoundé Destinations';
 
   @override

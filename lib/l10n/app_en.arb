@@ -66,6 +66,8 @@
   "commentsEmpty": "No comments yet — be the first to share your thoughts.",
   "commentsLoadError": "Couldn't load comments.\n{error}",
   "commentsNewBadge": "New",
+  "readAloudTooltip": "Read aloud",
+  "readAloudStopTooltip": "Stop reading",
   "@commentsLoadError": {
     "placeholders": { "error": { "type": "String" } }
   },

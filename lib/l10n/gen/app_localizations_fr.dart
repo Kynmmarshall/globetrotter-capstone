@@ -202,6 +202,12 @@ class AppLocalizationsFr extends AppLocalizations {
   String get commentsNewBadge => 'Nouveau';
 
   @override
+  String get readAloudTooltip => 'Lire à voix haute';
+
+  @override
+  String get readAloudStopTooltip => 'Arrêter la lecture';
+
+  @override
   String get destinationsTitle => 'Destinations à Yaoundé';
 
   @override

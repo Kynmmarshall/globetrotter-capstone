@@ -62,6 +62,8 @@
   "commentsEmpty": "Aucun commentaire pour l'instant — soyez le premier à partager votre avis.",
   "commentsLoadError": "Impossible de charger les commentaires.\n{error}",
   "commentsNewBadge": "Nouveau",
+  "readAloudTooltip": "Lire à voix haute",
+  "readAloudStopTooltip": "Arrêter la lecture",
 
   "destinationsTitle": "Destinations à Yaoundé",
   "destinationsSubtitle": "Explorez les monuments, la culture et la nature de la capitale du Cameroun.",
