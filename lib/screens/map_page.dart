@@ -1,6 +1,7 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:trip_io/l10n/gen/app_localizations.dart';
 import 'package:trip_io/models/models.dart';
 import 'package:trip_io/screens/destination_detail_page.dart';
@@ -10,8 +11,17 @@ import 'package:trip_io/services/session_controller.dart';
 import 'package:trip_io/widgets/session_expired_card.dart';
 import 'package:trip_io/widgets/trip_map.dart';
 
+/// Sentinel [Destination.id] marking the synthetic "my current location"
+/// entry a user can pick as a route start point - never a real destination.
+const String _myLocationDestinationId = '__my_location__';
+
 class MapPage extends StatefulWidget {
-  const MapPage({super.key, required this.session, this.focusDestination});
+  const MapPage({
+    super.key,
+    required this.session,
+    this.focusDestination,
+    this.showAppBar = false,
+  });
 
   final SessionController session;
 
@@ -19,6 +29,11 @@ class MapPage extends StatefulWidget {
   /// map centers on this destination and highlights it as the "to" point
   /// instead of the generic Yaoundé city-center default.
   final Destination? focusDestination;
+
+  /// True when this page is pushed as its own standalone route rather than
+  /// embedded as a dashboard tab - it then needs its own back button, since
+  /// there's no dashboard AppBar/Scaffold around it to provide one.
+  final bool showAppBar;
 
   @override
   State<MapPage> createState() => _MapPageState();
@@ -48,7 +63,11 @@ class _MapPageState extends State<MapPage> {
     super.dispose();
   }
 
-  Widget _glassPanel({required Widget child, EdgeInsets? padding, BorderRadius? borderRadius}) {
+  Widget _glassPanel({
+    required Widget child,
+    EdgeInsets? padding,
+    BorderRadius? borderRadius,
+  }) {
     final radius = borderRadius ?? BorderRadius.circular(18);
     return ClipRRect(
       borderRadius: radius,
@@ -67,7 +86,10 @@ class _MapPageState extends State<MapPage> {
     );
   }
 
-  Future<Destination?> _pickDestination(List<Destination> options, String title) async {
+  Future<Destination?> _pickDestination(
+    List<Destination> options,
+    String title,
+  ) async {
     _searchController.clear();
     return showModalBottomSheet<Destination>(
       context: context,
@@ -81,20 +103,30 @@ class _MapPageState extends State<MapPage> {
           expand: false,
           builder: (context, scrollController) {
             return ClipRRect(
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(24),
+              ),
               child: BackdropFilter(
                 filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
                 child: Container(
                   decoration: BoxDecoration(
                     color: const Color(0xFF0B1A24).withValues(alpha: 0.96),
-                    border: Border(top: BorderSide(color: Colors.white.withValues(alpha: 0.14))),
+                    border: Border(
+                      top: BorderSide(
+                        color: Colors.white.withValues(alpha: 0.14),
+                      ),
+                    ),
                   ),
                   child: StatefulBuilder(
                     builder: (context, setSheetState) {
                       final query = _searchController.text.trim().toLowerCase();
                       final filtered = query.isEmpty
                           ? options
-                          : options.where((d) => d.name.toLowerCase().contains(query)).toList();
+                          : options
+                                .where(
+                                  (d) => d.name.toLowerCase().contains(query),
+                                )
+                                .toList();
                       return Column(
                         children: [
                           Center(
@@ -112,7 +144,11 @@ class _MapPageState extends State<MapPage> {
                             padding: const EdgeInsets.fromLTRB(16, 4, 16, 10),
                             child: Text(
                               title,
-                              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 16),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w800,
+                                fontSize: 16,
+                              ),
                             ),
                           ),
                           Padding(
@@ -123,9 +159,17 @@ class _MapPageState extends State<MapPage> {
                               style: const TextStyle(color: Colors.white),
                               cursorColor: Colors.white,
                               decoration: InputDecoration(
-                                prefixIcon: const Icon(Icons.search, color: Colors.white54, size: 20),
-                                hintText: AppLocalizations.of(context)!.mapSearchHint,
-                                hintStyle: const TextStyle(color: Colors.white54),
+                                prefixIcon: const Icon(
+                                  Icons.search,
+                                  color: Colors.white54,
+                                  size: 20,
+                                ),
+                                hintText: AppLocalizations.of(
+                                  context,
+                                )!.mapSearchHint,
+                                hintStyle: const TextStyle(
+                                  color: Colors.white54,
+                                ),
                                 filled: true,
                                 fillColor: Colors.white.withValues(alpha: 0.08),
                                 border: OutlineInputBorder(
@@ -145,10 +189,22 @@ class _MapPageState extends State<MapPage> {
                               itemBuilder: (context, index) {
                                 final d = filtered[index];
                                 return ListTile(
-                                  leading: const Icon(Icons.place, color: Colors.white70),
-                                  title: Text(d.name, style: const TextStyle(color: Colors.white)),
+                                  leading: const Icon(
+                                    Icons.place,
+                                    color: Colors.white70,
+                                  ),
+                                  title: Text(
+                                    d.name,
+                                    style: const TextStyle(color: Colors.white),
+                                  ),
                                   subtitle: (d.location ?? '').isNotEmpty
-                                      ? Text(d.location!, style: const TextStyle(color: Colors.white54, fontSize: 12))
+                                      ? Text(
+                                          d.location!,
+                                          style: const TextStyle(
+                                            color: Colors.white54,
+                                            fontSize: 12,
+                                          ),
+                                        )
                                       : null,
                                   onTap: () => Navigator.of(context).pop(d),
                                 );
@@ -211,7 +267,11 @@ class _MapPageState extends State<MapPage> {
             if (value != null && !value.hasCoordinates)
               Tooltip(
                 message: l10n.mapNoCoordinates,
-                child: const Icon(Icons.warning_amber_rounded, size: 16, color: Colors.amber),
+                child: const Icon(
+                  Icons.warning_amber_rounded,
+                  size: 16,
+                  color: Colors.amber,
+                ),
               ),
           ],
         ),
@@ -246,18 +306,17 @@ class _MapPageState extends State<MapPage> {
       _routeError = null;
     });
     try {
-      final result = await widget.session.getRoute(
-        [
-          RouteWaypoint(lat: origin.lat!, lon: origin.lon!),
-          RouteWaypoint(lat: destination.lat!, lon: destination.lon!),
-        ],
-        profile: _profile,
-      );
+      final result = await widget.session.getRoute([
+        RouteWaypoint(lat: origin.lat!, lon: origin.lon!),
+        RouteWaypoint(lat: destination.lat!, lon: destination.lon!),
+      ], profile: _profile);
       if (!mounted) return;
       setState(() => _route = result);
     } catch (e) {
       if (!mounted) return;
-      setState(() => _routeError = e.toString().replaceFirst('Exception: ', ''));
+      setState(
+        () => _routeError = e.toString().replaceFirst('Exception: ', ''),
+      );
     } finally {
       if (mounted) setState(() => _routeLoading = false);
     }
@@ -285,7 +344,13 @@ class _MapPageState extends State<MapPage> {
         children: [
           Icon(icon, size: 15, color: selected ? Colors.white : Colors.white70),
           const SizedBox(width: 5),
-          Text(label, style: TextStyle(color: selected ? Colors.white : Colors.white70, fontSize: 12.5)),
+          Text(
+            label,
+            style: TextStyle(
+              color: selected ? Colors.white : Colors.white70,
+              fontSize: 12.5,
+            ),
+          ),
         ],
       ),
       selected: selected,
@@ -330,156 +395,268 @@ class _MapPageState extends State<MapPage> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    return FutureBuilder<List<Destination>>(
-      future: _future,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        }
-        if (snapshot.hasError) {
-          if (isAuthError(snapshot.error!)) {
-            return SessionExpiredCard(session: widget.session);
-          }
-          return ErrorStateCard(message: l10n.destinationsLoadError(snapshot.error.toString()));
-        }
-        final all = snapshot.data ?? <Destination>[];
-        final withCoords = all.where((d) => d.hasCoordinates).toList();
-        final markers = [
-          for (final d in withCoords)
-            TripMapMarker(
-              id: d.id,
-              name: d.name,
-              lat: d.lat!,
-              lon: d.lon!,
-              selected: d.id == _origin?.id || d.id == _destination?.id,
-            ),
-        ];
-        final focus = widget.focusDestination;
-
-        return Column(
+    final scaffold = _buildScaffold(context, l10n);
+    if (!widget.showAppBar) {
+      // Embedded as a dashboard tab - the dashboard's own Stack already
+      // paints the photo background behind this page's Scaffold.
+      return scaffold;
+    }
+    // Pushed as its own standalone route (e.g. "View on map") - there's no
+    // dashboard Stack behind it here, so without this the glass panels'
+    // translucent white would sit on the default white Material background,
+    // making their white text unreadable.
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isCompactBackground = constraints.maxWidth < 700;
+        return Stack(
+          fit: StackFit.expand,
           children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 10),
-              child: _glassPanel(
-                borderRadius: BorderRadius.circular(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(Icons.alt_route, color: Colors.white, size: 20),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            l10n.mapTitle,
-                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 16),
-                          ),
-                        ),
-                        if (_origin != null || _destination != null)
-                          TextButton(
-                            onPressed: _clearRoute,
-                            style: TextButton.styleFrom(
-                              padding: EdgeInsets.zero,
-                              minimumSize: Size.zero,
-                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                            ),
-                            child: Text(l10n.mapClearRoute, style: const TextStyle(color: Colors.white70, fontSize: 12.5)),
-                          ),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: Column(
-                            children: [
-                              _pointField(
-                                icon: Icons.trip_origin,
-                                label: l10n.mapFromLabel,
-                                value: _origin,
-                                options: withCoords,
-                                onPicked: (d) => setState(() => _origin = d),
-                              ),
-                              const SizedBox(height: 8),
-                              _pointField(
-                                icon: Icons.flag,
-                                label: l10n.mapToLabel,
-                                value: _destination,
-                                options: withCoords,
-                                onPicked: (d) => setState(() => _destination = d),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 6),
-                        IconButton(
-                          onPressed: (_origin == null && _destination == null) ? null : _swapPoints,
-                          icon: const Icon(Icons.swap_vert, color: Colors.white70),
-                          tooltip: l10n.mapSwapButton,
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-                    Wrap(
-                      spacing: 8,
-                      children: [
-                        _profileChip('driving-car', Icons.directions_car, l10n.mapProfileDriving),
-                        _profileChip('foot-walking', Icons.directions_walk, l10n.mapProfileWalking),
-                        _profileChip('cycling-regular', Icons.directions_bike, l10n.mapProfileCycling),
-                      ],
-                    ),
-                    if (_routeLoading) ...[
-                      const SizedBox(height: 10),
-                      const Center(child: SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))),
-                    ],
-                    if (_routeError != null) ...[
-                      const SizedBox(height: 8),
-                      Text(
-                        _routeError!.contains('not configured') ? l10n.mapRoutingNotConfigured : l10n.mapRouteError(_routeError!),
-                        style: TextStyle(color: Colors.red.shade100, fontSize: 12.5),
-                      ),
-                    ],
-                    if (_route != null) ...[
-                      const SizedBox(height: 10),
-                      Row(
-                        children: [
-                          const Icon(Icons.straighten, size: 15, color: Colors.white70),
-                          const SizedBox(width: 6),
-                          Text(_formatDistance(_route!.distanceMeters), style: const TextStyle(color: Colors.white, fontSize: 12.5, fontWeight: FontWeight.w600)),
-                          const SizedBox(width: 16),
-                          const Icon(Icons.schedule, size: 15, color: Colors.white70),
-                          const SizedBox(width: 6),
-                          Text(
-                            formatDuration(Duration(seconds: _route!.durationSeconds.round())),
-                            style: const TextStyle(color: Colors.white, fontSize: 12.5, fontWeight: FontWeight.w600),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ],
-                ),
+            Image.asset(
+              isCompactBackground
+                  ? 'assets/backgrounds/mobile.png'
+                  : 'assets/backgrounds/pc.png',
+              fit: BoxFit.cover,
+              alignment: Alignment.topCenter,
+            ),
+            DecoratedBox(
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: 0.58),
               ),
             ),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(20),
-                  child: TripMap(
-                    markers: markers,
-                    routeGeometry: _route?.geometry,
-                    onMarkerTap: (id) => _onMarkerTap(id, withCoords),
-                    initialLat: focus?.lat ?? yaoundeCenterLat,
-                    initialLon: focus?.lon ?? yaoundeCenterLon,
-                    initialZoom: focus != null ? 15 : 12.5,
-                  ),
-                ),
-              ),
-            ),
+            scaffold,
           ],
         );
       },
+    );
+  }
+
+  Widget _buildScaffold(BuildContext context, AppLocalizations l10n) {
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      appBar: widget.showAppBar
+          ? AppBar(
+              title: Text(l10n.navMap),
+              backgroundColor: Colors.transparent,
+              foregroundColor: Colors.white,
+              elevation: 0,
+              scrolledUnderElevation: 0,
+            )
+          : null,
+      body: FutureBuilder<List<Destination>>(
+        future: _future,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (snapshot.hasError) {
+            if (isAuthError(snapshot.error!)) {
+              return SessionExpiredCard(session: widget.session);
+            }
+            return ErrorStateCard(
+              message: l10n.destinationsLoadError(snapshot.error.toString()),
+            );
+          }
+          final all = snapshot.data ?? <Destination>[];
+          final withCoords = all.where((d) => d.hasCoordinates).toList();
+          final markers = [
+            for (final d in withCoords)
+              TripMapMarker(
+                id: d.id,
+                name: d.name,
+                lat: d.lat!,
+                lon: d.lon!,
+                selected: d.id == _origin?.id || d.id == _destination?.id,
+              ),
+          ];
+          final focus = widget.focusDestination;
+
+          return Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 10),
+                child: _glassPanel(
+                  borderRadius: BorderRadius.circular(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(Icons.alt_route, color: Colors.white, size: 20),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              l10n.mapTitle,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w800,
+                                fontSize: 16,
+                              ),
+                            ),
+                          ),
+                          if (_origin != null || _destination != null)
+                            TextButton(
+                              onPressed: _clearRoute,
+                              style: TextButton.styleFrom(
+                                padding: EdgeInsets.zero,
+                                minimumSize: Size.zero,
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              ),
+                              child: Text(
+                                l10n.mapClearRoute,
+                                style: const TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 12.5,
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: Column(
+                              children: [
+                                _pointField(
+                                  icon: Icons.trip_origin,
+                                  label: l10n.mapFromLabel,
+                                  value: _origin,
+                                  options: withCoords,
+                                  onPicked: (d) => setState(() => _origin = d),
+                                ),
+                                const SizedBox(height: 8),
+                                _pointField(
+                                  icon: Icons.flag,
+                                  label: l10n.mapToLabel,
+                                  value: _destination,
+                                  options: withCoords,
+                                  onPicked: (d) =>
+                                      setState(() => _destination = d),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          IconButton(
+                            onPressed: (_origin == null && _destination == null)
+                                ? null
+                                : _swapPoints,
+                            icon: const Icon(
+                              Icons.swap_vert,
+                              color: Colors.white70,
+                            ),
+                            tooltip: l10n.mapSwapButton,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      Wrap(
+                        spacing: 8,
+                        children: [
+                          _profileChip(
+                            'driving-car',
+                            Icons.directions_car,
+                            l10n.mapProfileDriving,
+                          ),
+                          _profileChip(
+                            'foot-walking',
+                            Icons.directions_walk,
+                            l10n.mapProfileWalking,
+                          ),
+                          _profileChip(
+                            'cycling-regular',
+                            Icons.directions_bike,
+                            l10n.mapProfileCycling,
+                          ),
+                        ],
+                      ),
+                      if (_routeLoading) ...[
+                        const SizedBox(height: 10),
+                        const Center(
+                          child: SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                        ),
+                      ],
+                      if (_routeError != null) ...[
+                        const SizedBox(height: 8),
+                        Text(
+                          _routeError!.contains('not configured')
+                              ? l10n.mapRoutingNotConfigured
+                              : l10n.mapRouteError(_routeError!),
+                          style: TextStyle(
+                            color: Colors.red.shade100,
+                            fontSize: 12.5,
+                          ),
+                        ),
+                      ],
+                      if (_route != null) ...[
+                        const SizedBox(height: 10),
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.straighten,
+                              size: 15,
+                              color: Colors.white70,
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              _formatDistance(_route!.distanceMeters),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 12.5,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            const Icon(
+                              Icons.schedule,
+                              size: 15,
+                              color: Colors.white70,
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              formatDuration(
+                                Duration(
+                                  seconds: _route!.durationSeconds.round(),
+                                ),
+                              ),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 12.5,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(20),
+                    child: TripMap(
+                      markers: markers,
+                      routeGeometry: _route?.geometry,
+                      onMarkerTap: (id) => _onMarkerTap(id, withCoords),
+                      initialLat: focus?.lat ?? yaoundeCenterLat,
+                      initialLon: focus?.lon ?? yaoundeCenterLon,
+                      initialZoom: focus != null ? 15 : 12.5,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
+      ),
     );
   }
 }

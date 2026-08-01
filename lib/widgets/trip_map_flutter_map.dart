@@ -16,6 +16,7 @@ class TripMapFlutterMapView extends StatelessWidget {
     required this.initialLat,
     required this.initialLon,
     required this.initialZoom,
+    this.myLocation,
   });
 
   final List<TripMapMarker> markers;
@@ -24,6 +25,12 @@ class TripMapFlutterMapView extends StatelessWidget {
   final double initialLat;
   final double initialLon;
   final double initialZoom;
+
+  /// The device's current GPS position, if the user has granted permission -
+  /// rendered as a plain dot. Unlike the MapLibre backend there's no native
+  /// puck to lean on here, and Windows desktops have no compass hardware, so
+  /// there's no heading arrow to draw.
+  final ({double lat, double lon})? myLocation;
 
   Widget _pin({required bool selected}) {
     return Container(
@@ -79,6 +86,24 @@ class TripMapFlutterMapView extends StatelessWidget {
             );
           }).toList(),
         ),
+        if (myLocation != null)
+          MarkerLayer(
+            markers: [
+              Marker(
+                point: ll.LatLng(myLocation!.lat, myLocation!.lon),
+                width: 22,
+                height: 22,
+                child: Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: const Color(0xFF1E88E5),
+                    border: Border.all(color: Colors.white, width: 3),
+                    boxShadow: const [BoxShadow(color: Colors.black45, blurRadius: 5)],
+                  ),
+                ),
+              ),
+            ],
+          ),
       ],
     );
   }

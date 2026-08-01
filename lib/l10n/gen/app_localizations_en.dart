@@ -347,6 +347,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get viewOnMapButton => 'View on map';
 
   @override
+  String get mapLocationPermissionDenied =>
+      'Location access is needed to show your position on the map. Please allow it in your device settings.';
+
+  @override
   String mapRouteError(String error) {
     return 'Couldn\'t get directions.\n$error';
   }

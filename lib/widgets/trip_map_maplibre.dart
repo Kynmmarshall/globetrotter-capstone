@@ -18,6 +18,7 @@ class TripMapLibreView extends StatefulWidget {
     required this.initialLat,
     required this.initialLon,
     required this.initialZoom,
+    this.showMyLocation = false,
   });
 
   final List<TripMapMarker> markers;
@@ -26,6 +27,11 @@ class TripMapLibreView extends StatefulWidget {
   final double initialLat;
   final double initialLon;
   final double initialZoom;
+
+  /// Shows the native blue dot + heading arrow at the device's GPS position,
+  /// driven entirely by the platform SDK (Android sensors / browser
+  /// Geolocation API) once location permission has been granted.
+  final bool showMyLocation;
 
   @override
   State<TripMapLibreView> createState() => _TripMapLibreViewState();
@@ -158,6 +164,9 @@ class _TripMapLibreViewState extends State<TripMapLibreView> {
           onStyleLoadedCallback: _syncAnnotations,
           compassEnabled: false,
           logoEnabled: false,
+          myLocationEnabled: widget.showMyLocation,
+          myLocationTrackingMode: widget.showMyLocation ? MyLocationTrackingMode.tracking : MyLocationTrackingMode.none,
+          myLocationRenderMode: widget.showMyLocation ? MyLocationRenderMode.compass : MyLocationRenderMode.normal,
         ),
         _hoverLabel(),
       ],

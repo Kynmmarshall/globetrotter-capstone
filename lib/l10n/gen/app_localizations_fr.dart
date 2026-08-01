@@ -359,6 +359,10 @@ class AppLocalizationsFr extends AppLocalizations {
   String get viewOnMapButton => 'Voir sur la carte';
 
   @override
+  String get mapLocationPermissionDenied =>
+      'L\'accès à la position est nécessaire pour l\'afficher sur la carte. Veuillez l\'autoriser dans les paramètres de votre appareil.';
+
+  @override
   String mapRouteError(String error) {
     return 'Impossible d\'obtenir l\'itinéraire.\n$error';
   }

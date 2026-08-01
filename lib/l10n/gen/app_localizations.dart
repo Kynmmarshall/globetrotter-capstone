@@ -716,6 +716,12 @@ abstract class AppLocalizations {
   /// **'View on map'**
   String get viewOnMapButton;
 
+  /// No description provided for @mapLocationPermissionDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'Location access is needed to show your position on the map. Please allow it in your device settings.'**
+  String get mapLocationPermissionDenied;
+
   /// No description provided for @mapRouteError.
   ///
   /// In en, this message translates to:

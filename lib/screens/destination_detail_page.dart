@@ -315,7 +315,11 @@ class _DestinationDetailPageState extends State<DestinationDetailPage> {
       child: InkWell(
         onTap: () => Navigator.of(context).push(
           MaterialPageRoute(
-            builder: (_) => MapPage(session: widget.session, focusDestination: destination),
+            builder: (_) => MapPage(
+              session: widget.session,
+              focusDestination: destination,
+              showAppBar: true,
+            ),
           ),
         ),
         child: _glassPanel(
