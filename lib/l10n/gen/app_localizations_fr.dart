@@ -299,6 +299,49 @@ class AppLocalizationsFr extends AppLocalizations {
   String get itineraryDeletedSnackbar => 'Itinéraire supprimé.';
 
   @override
+  String get navMap => 'Carte';
+
+  @override
+  String get mapTitle => 'Obtenir l\'itinéraire';
+
+  @override
+  String get mapFromLabel => 'Départ';
+
+  @override
+  String get mapToLabel => 'Arrivée';
+
+  @override
+  String get mapSwapButton => 'Inverser le départ et l\'arrivée';
+
+  @override
+  String get mapClearRoute => 'Effacer';
+
+  @override
+  String get mapSearchHint => 'Rechercher des destinations…';
+
+  @override
+  String get mapNoCoordinates =>
+      'Cette destination n\'a pas encore de position définie';
+
+  @override
+  String get mapProfileDriving => 'Voiture';
+
+  @override
+  String get mapProfileWalking => 'À pied';
+
+  @override
+  String get mapProfileCycling => 'Vélo';
+
+  @override
+  String get mapRoutingNotConfigured =>
+      'L\'itinéraire n\'est pas encore configuré. Revenez bientôt.';
+
+  @override
+  String mapRouteError(String error) {
+    return 'Impossible d\'obtenir l\'itinéraire.\n$error';
+  }
+
+  @override
   String get deleteItineraryButton => 'Supprimer';
 
   @override

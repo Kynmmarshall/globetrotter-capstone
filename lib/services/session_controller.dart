@@ -371,6 +371,13 @@ class SessionController extends ChangeNotifier {
     Analytics.instance.trackEvent('itinerary', 'deleted', name: itineraryId);
   }
 
+  Future<RouteResult> getRoute(List<RouteWaypoint> waypoints, {String profile = 'driving-car'}) async {
+    final token = _requireToken();
+    final result = await ApiClient().getRoute(token, waypoints, profile: profile);
+    Analytics.instance.trackEvent('map', 'route_requested', name: profile);
+    return result;
+  }
+
   Future<String> aiChat(List<ChatMessage> messages) async {
     final token = _requireToken();
     final reply = await ApiClient().aiChat(token, messages);

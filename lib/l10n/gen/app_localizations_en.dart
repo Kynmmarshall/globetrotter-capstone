@@ -292,6 +292,48 @@ class AppLocalizationsEn extends AppLocalizations {
   String get itineraryDeletedSnackbar => 'Itinerary deleted.';
 
   @override
+  String get navMap => 'Map';
+
+  @override
+  String get mapTitle => 'Get directions';
+
+  @override
+  String get mapFromLabel => 'From';
+
+  @override
+  String get mapToLabel => 'To';
+
+  @override
+  String get mapSwapButton => 'Swap origin and destination';
+
+  @override
+  String get mapClearRoute => 'Clear';
+
+  @override
+  String get mapSearchHint => 'Search destinations…';
+
+  @override
+  String get mapNoCoordinates => 'This destination has no location set yet';
+
+  @override
+  String get mapProfileDriving => 'Drive';
+
+  @override
+  String get mapProfileWalking => 'Walk';
+
+  @override
+  String get mapProfileCycling => 'Bike';
+
+  @override
+  String get mapRoutingNotConfigured =>
+      'Directions aren\'t set up yet. Please check back soon.';
+
+  @override
+  String mapRouteError(String error) {
+    return 'Couldn\'t get directions.\n$error';
+  }
+
+  @override
   String get deleteItineraryButton => 'Delete';
 
   @override

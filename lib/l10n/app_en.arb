@@ -110,6 +110,23 @@
   "itinerariesFormMissing": "Add a title and pick at least one destination.",
   "itineraryCreatedSnackbar": "Itinerary created.",
   "itineraryDeletedSnackbar": "Itinerary deleted.",
+
+  "navMap": "Map",
+  "mapTitle": "Get directions",
+  "mapFromLabel": "From",
+  "mapToLabel": "To",
+  "mapSwapButton": "Swap origin and destination",
+  "mapClearRoute": "Clear",
+  "mapSearchHint": "Search destinations…",
+  "mapNoCoordinates": "This destination has no location set yet",
+  "mapProfileDriving": "Drive",
+  "mapProfileWalking": "Walk",
+  "mapProfileCycling": "Bike",
+  "mapRoutingNotConfigured": "Directions aren't set up yet. Please check back soon.",
+  "mapRouteError": "Couldn't get directions.\n{error}",
+  "@mapRouteError": {
+    "placeholders": { "error": { "type": "String" } }
+  },
   "deleteItineraryButton": "Delete",
   "deleteItineraryConfirmTitle": "Delete this itinerary?",
   "deleteItineraryConfirmMessage": "\"{title}\" will be permanently deleted. This can't be undone.",
