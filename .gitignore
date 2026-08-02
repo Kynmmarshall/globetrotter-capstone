@@ -3,7 +3,7 @@ __pycache__/
 *.pyc
 data/
 .claude/
-
+.env
 # Release artifacts are uploaded straight to the VPS, not committed —
 # keep the folders in git via .gitkeep but not their (large) contents.
 website/downloads/*
