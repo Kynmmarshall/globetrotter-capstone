@@ -86,3 +86,22 @@ async def test_internal_endpoint_requires_service_token(tmp_path):
         assert authorized.status_code == 200
         assert authorized.json()["username"] == "dave"
         assert authorized.json()["is_admin"] is False
+
+
+@pytest.mark.asyncio
+async def test_internal_user_count_route_not_shadowed_by_username_route(tmp_path):
+    # Regression test: /internal/users/count must be registered before
+    # /internal/users/{username} in main.py, or FastAPI matches "count" as
+    # a literal username instead and this 404s.
+    _use_temp_data(tmp_path)
+    from app.auth import INTERNAL_SERVICE_TOKEN
+
+    async with AsyncClient(app=app, base_url="http://test") as ac:
+        await ac.post("/register", json={"username": "alice", "password": "secret"})
+        await ac.post("/register", json={"username": "bob", "password": "secret"})
+
+        r = await ac.get(
+            "/internal/users/count", headers={"X-Internal-Token": INTERNAL_SERVICE_TOKEN}
+        )
+        assert r.status_code == 200
+        assert r.json() == {"count": 2}

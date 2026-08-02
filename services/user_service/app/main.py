@@ -151,6 +151,14 @@ def remove_favorite(destination_id: str, user: str = Depends(get_current_user)):
 # ---------- Internal (service-to-service only, never through the Gateway) ----------
 
 
+@app.get("/internal/users/count")
+def internal_user_count(_=Depends(require_internal)):
+    return {"count": len(crud.read_data().get("users", []))}
+
+
+# Registered after /internal/users/count on purpose - FastAPI matches
+# routes in registration order, and {username} would otherwise swallow
+# literal "count" as a username, since a path parameter matches any string.
 @app.get("/internal/users/{username}", response_model=InternalUserProfile)
 def internal_get_user(username: str, _=Depends(require_internal)):
     profile = crud.get_user(username)
@@ -161,8 +169,3 @@ def internal_get_user(username: str, _=Depends(require_internal)):
         "interests": profile.get("interests") or [],
         "is_admin": profile.get("role") == "admin",
     }
-
-
-@app.get("/internal/users/count")
-def internal_user_count(_=Depends(require_internal)):
-    return {"count": len(crud.read_data().get("users", []))}
