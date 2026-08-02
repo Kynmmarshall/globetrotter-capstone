@@ -90,6 +90,85 @@ async def test_comments_thread(tmp_path):
 
 
 @pytest.mark.asyncio
+async def test_edit_and_delete_own_comment_within_window(tmp_path):
+    _use_temp_data(tmp_path, destinations=[_seed_destination()])
+    token = create_access_token("alice")
+    headers = {"Authorization": f"Bearer {token}"}
+    async with AsyncClient(app=app, base_url="http://test") as ac:
+        posted = await ac.post("/destinations/d1/comments", json={"text": "Nice!"}, headers=headers)
+        comment_id = posted.json()["id"]
+
+        edited = await ac.patch(f"/comments/{comment_id}", json={"text": "Actually, amazing!"}, headers=headers)
+        assert edited.status_code == 200
+        assert edited.json()["text"] == "Actually, amazing!"
+
+        deleted = await ac.delete(f"/comments/{comment_id}", headers=headers)
+        assert deleted.status_code == 200
+
+        remaining = await ac.get("/destinations/d1/comments", headers=headers)
+        assert remaining.json() == []
+
+
+@pytest.mark.asyncio
+async def test_cannot_edit_or_delete_someone_elses_comment(tmp_path):
+    _use_temp_data(tmp_path, destinations=[_seed_destination()])
+    alice_headers = {"Authorization": f"Bearer {create_access_token('alice')}"}
+    bob_headers = {"Authorization": f"Bearer {create_access_token('bob')}"}
+    async with AsyncClient(app=app, base_url="http://test") as ac:
+        posted = await ac.post("/destinations/d1/comments", json={"text": "Mine"}, headers=alice_headers)
+        comment_id = posted.json()["id"]
+
+        edited = await ac.patch(f"/comments/{comment_id}", json={"text": "Hijacked"}, headers=bob_headers)
+        assert edited.status_code == 403
+
+        deleted = await ac.delete(f"/comments/{comment_id}", headers=bob_headers)
+        assert deleted.status_code == 403
+
+
+@pytest.mark.asyncio
+async def test_cannot_delete_comment_with_replies(tmp_path):
+    _use_temp_data(tmp_path, destinations=[_seed_destination()])
+    headers = {"Authorization": f"Bearer {create_access_token('alice')}"}
+    async with AsyncClient(app=app, base_url="http://test") as ac:
+        posted = await ac.post("/destinations/d1/comments", json={"text": "Parent"}, headers=headers)
+        comment_id = posted.json()["id"]
+        await ac.post(
+            "/destinations/d1/comments",
+            json={"text": "Reply", "parent_id": comment_id},
+            headers=headers,
+        )
+
+        deleted = await ac.delete(f"/comments/{comment_id}", headers=headers)
+        assert deleted.status_code == 409
+
+
+@pytest.mark.asyncio
+async def test_edit_and_delete_blocked_after_window_expires(tmp_path):
+    _use_temp_data(tmp_path, destinations=[_seed_destination()])
+    headers = {"Authorization": f"Bearer {create_access_token('alice')}"}
+    async with AsyncClient(app=app, base_url="http://test") as ac:
+        posted = await ac.post("/destinations/d1/comments", json={"text": "Old news"}, headers=headers)
+        comment_id = posted.json()["id"]
+
+    # Back-date the comment past the 5-minute window directly in storage,
+    # rather than waiting 5 real minutes for the test to run.
+    data_path = os.environ["RECOMMENDATION_SERVICE_DATA_PATH"]
+    data = json.loads(open(data_path, encoding="utf-8").read())
+    from datetime import datetime, timedelta, timezone
+
+    stale = (datetime.now(timezone.utc) - timedelta(minutes=10)).isoformat()
+    data["comments"][0]["created_at"] = stale
+    open(data_path, "w", encoding="utf-8").write(json.dumps(data))
+
+    async with AsyncClient(app=app, base_url="http://test") as ac:
+        edited = await ac.patch(f"/comments/{comment_id}", json={"text": "Too late"}, headers=headers)
+        assert edited.status_code == 403
+
+        deleted = await ac.delete(f"/comments/{comment_id}", headers=headers)
+        assert deleted.status_code == 403
+
+
+@pytest.mark.asyncio
 async def test_admin_endpoints_require_admin_role(tmp_path, monkeypatch):
     _use_temp_data(tmp_path, destinations=[_seed_destination(status="pending")])
     token = create_access_token("regular_user")

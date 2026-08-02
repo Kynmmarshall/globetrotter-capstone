@@ -17,6 +17,7 @@ from .schemas import (
     ChatResponse,
     Comment,
     CommentCreate,
+    CommentUpdate,
     VoteRequest,
     RouteRequest,
     RouteResponse,
@@ -230,6 +231,39 @@ def vote_comment(comment_id: str, payload: VoteRequest, user: str = Depends(get_
     if comment is None:
         raise HTTPException(status_code=404, detail="Comment not found")
     return comment
+
+
+@app.patch("/comments/{comment_id}", response_model=Comment)
+def edit_comment(comment_id: str, payload: CommentUpdate, user: str = Depends(get_current_user)):
+    text = payload.text.strip()
+    if not text:
+        raise HTTPException(status_code=400, detail="Comment text is required")
+    if len(text) > _COMMENT_MAX_CHARS:
+        raise HTTPException(status_code=400, detail=f"Comment must be under {_COMMENT_MAX_CHARS} characters")
+    try:
+        updated = crud.update_comment(comment_id, user, text)
+    except crud.CommentNotOwnedError:
+        raise HTTPException(status_code=403, detail="You can only edit your own comment")
+    except crud.CommentEditWindowExpiredError:
+        raise HTTPException(status_code=403, detail="Comments can only be edited within 5 minutes of posting")
+    if updated is None:
+        raise HTTPException(status_code=404, detail="Comment not found")
+    return updated
+
+
+@app.delete("/comments/{comment_id}")
+def delete_comment(comment_id: str, user: str = Depends(get_current_user)):
+    try:
+        deleted = crud.delete_comment(comment_id, user)
+    except crud.CommentNotOwnedError:
+        raise HTTPException(status_code=403, detail="You can only delete your own comment")
+    except crud.CommentEditWindowExpiredError:
+        raise HTTPException(status_code=403, detail="Comments can only be deleted within 5 minutes of posting")
+    except crud.CommentHasRepliesError:
+        raise HTTPException(status_code=409, detail="Can't delete a comment that already has replies")
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Comment not found")
+    return {"deleted": comment_id}
 
 
 # ---------- Recommendations (the sync inter-service calls happen here) ----------

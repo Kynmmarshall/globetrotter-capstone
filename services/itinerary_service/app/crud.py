@@ -16,6 +16,16 @@ def get_itineraries_for(user: str):
     return [i for i in data.get("itineraries", []) if i.get("user") == user]
 
 
+def update_itinerary(itinerary_id: str, username: str, updates: dict) -> dict | None:
+    data = read_data()
+    for i in data.get("itineraries", []):
+        if i.get("id") == itinerary_id and i.get("user") == username:
+            i.update({k: v for k, v in updates.items() if v is not None})
+            write_data(data)
+            return i
+    return None
+
+
 def delete_itinerary(itinerary_id: str, username: str) -> bool:
     data = read_data()
     itineraries = data.get("itineraries", [])

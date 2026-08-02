@@ -106,6 +106,10 @@ class CommentCreate(BaseModel):
     parent_id: Optional[str] = None
 
 
+class CommentUpdate(BaseModel):
+    text: str
+
+
 class VoteRequest(BaseModel):
     direction: str  # "up" | "down" | "none"
 
