@@ -65,6 +65,10 @@
   "commentsButtonLabel": "View comments",
   "commentsEmpty": "No comments yet — be the first to share your thoughts.",
   "commentsLoadError": "Couldn't load comments.\n{error}",
+  "commentEditButton": "Edit",
+  "commentDeleteButton": "Delete",
+  "commentDeleteConfirmTitle": "Delete this comment?",
+  "commentDeleteConfirmMessage": "This can't be undone.",
   "commentsNewBadge": "New",
   "readAloudTooltip": "Read aloud",
   "readAloudStopTooltip": "Stop reading",
@@ -126,6 +130,38 @@
   "itinerariesFormMissing": "Add a title and pick at least one destination.",
   "itineraryCreatedSnackbar": "Itinerary created.",
   "itineraryDeletedSnackbar": "Itinerary deleted.",
+
+  "addToItineraryTooltip": "Add to itinerary",
+  "addToItinerarySheetTitle": "Add to itinerary",
+  "addToItineraryCreateNew": "Create new itinerary",
+  "addToItineraryEmpty": "You don't have any itineraries yet.",
+  "addToItineraryAdded": "Added to \"{title}\".",
+  "@addToItineraryAdded": {
+    "placeholders": { "title": { "type": "String" } }
+  },
+  "addToItineraryAlready": "Already in \"{title}\".",
+  "@addToItineraryAlready": {
+    "placeholders": { "title": { "type": "String" } }
+  },
+  "addToItineraryAlreadyAdded": "Already added",
+  "addToItineraryNewDialogTitle": "New itinerary",
+
+  "orderDestinationsSheetTitle": "Order your visit",
+  "orderDestinationsSheetSubtitle": "Drag to set the order you want to visit these in.",
+  "orderDestinationsConfirmButton": "Confirm order",
+
+  "mapOptionsToggleTooltip": "Map options",
+  "mapSelectItineraryButton": "Select itinerary",
+  "mapSelectItinerarySheetTitle": "Choose an itinerary",
+  "mapLeaveItineraryButton": "Leave itinerary",
+  "mapNoItinerariesAvailable": "You don't have any itineraries yet.",
+  "mapItineraryProgress": "{visited} of {total} visited",
+  "@mapItineraryProgress": {
+    "placeholders": {
+      "visited": { "type": "int" },
+      "total": { "type": "int" }
+    }
+  },
 
   "navMap": "Map",
   "mapTitle": "Get directions",

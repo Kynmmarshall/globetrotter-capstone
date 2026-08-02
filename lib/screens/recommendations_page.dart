@@ -7,6 +7,7 @@ import 'package:trip_io/screens/destination_detail_page.dart';
 import 'package:trip_io/services/analytics.dart';
 import 'package:trip_io/services/api_client.dart';
 import 'package:trip_io/services/session_controller.dart';
+import 'package:trip_io/widgets/add_to_itinerary_button.dart';
 import 'package:trip_io/widgets/favorite_toggle_button.dart';
 import 'package:trip_io/widgets/feature_pill.dart';
 import 'package:trip_io/widgets/new_comments_badge.dart';
@@ -148,14 +149,31 @@ class _RecommendationsPageState extends State<RecommendationsPage> {
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      NewCommentsBadge(session: widget.session, destination: item),
+                      NewCommentsBadge(
+                        session: widget.session,
+                        destination: item,
+                      ),
                       const SizedBox(width: 6),
-                      FavoriteToggleButton(session: widget.session, destinationId: item.id, size: 18),
+                      AddToItineraryButton(
+                        session: widget.session,
+                        destinationId: item.id,
+                        size: 18,
+                      ),
+                      const SizedBox(width: 2),
+                      FavoriteToggleButton(
+                        session: widget.session,
+                        destinationId: item.id,
+                        size: 18,
+                      ),
                     ],
                   ),
                   if (item.hasRatings) ...[
                     const SizedBox(height: 2),
-                    StarRating(average: item.ratingAverage, count: item.ratingCount, size: 12.5),
+                    StarRating(
+                      average: item.ratingAverage,
+                      count: item.ratingCount,
+                      size: 12.5,
+                    ),
                   ],
                   const SizedBox(height: 2),
                   Row(

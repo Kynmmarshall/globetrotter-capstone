@@ -236,9 +236,11 @@ class _ProfilePageState extends State<ProfilePage> {
                 ),
                 selected: selected,
                 showCheckmark: false,
-                avatar: selected
-                    ? const Icon(Icons.check, size: 16, color: Colors.white)
-                    : null,
+                avatar: Icon(
+                  interestTagIcon(tag),
+                  size: 16,
+                  color: selected ? Colors.white : const Color(0xFF1A2530),
+                ),
                 backgroundColor: Colors.white.withValues(alpha: 0.88),
                 selectedColor: colors.primary.withValues(alpha: 0.85),
                 side: BorderSide(color: Colors.white.withValues(alpha: 0.4)),

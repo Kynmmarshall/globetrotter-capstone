@@ -8,6 +8,7 @@ import 'package:trip_io/services/api_client.dart';
 import 'package:trip_io/services/itinerary_scheduler.dart';
 import 'package:trip_io/services/session_controller.dart';
 import 'package:trip_io/screens/itineraries_page.dart' show formatDuration;
+import 'package:trip_io/widgets/order_destinations_sheet.dart';
 
 class ItineraryDetailPage extends StatelessWidget {
   const ItineraryDetailPage({
@@ -22,6 +23,25 @@ class ItineraryDetailPage extends StatelessWidget {
   final SessionController session;
 
   static const double _backgroundBreakpoint = 700;
+
+  Future<void> _startItinerary(BuildContext context) async {
+    final orderedIds = await showOrderDestinationsSheet(
+      context,
+      destinationIds: itinerary.destinations,
+      destinationsById: destinationsById,
+    );
+    if (orderedIds == null || !context.mounted) return;
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => MapPage(
+          session: session,
+          showAppBar: true,
+          itineraryTitle: itinerary.title,
+          itineraryDestinationIds: orderedIds,
+        ),
+      ),
+    );
+  }
 
   Widget _glassPanel({
     required Widget child,
@@ -94,10 +114,7 @@ class ItineraryDetailPage extends StatelessWidget {
                 const SizedBox(width: 6),
                 Text(
                   dateRangeLabel,
-                  style: const TextStyle(
-                    color: Colors.white70,
-                    fontSize: 13.5,
-                  ),
+                  style: const TextStyle(color: Colors.white70, fontSize: 13.5),
                 ),
               ],
             ),
@@ -107,16 +124,7 @@ class ItineraryDetailPage extends StatelessWidget {
             SizedBox(
               width: double.infinity,
               child: FilledButton.icon(
-                onPressed: () => Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => MapPage(
-                      session: session,
-                      showAppBar: true,
-                      itineraryTitle: itinerary.title,
-                      itineraryDestinationIds: itinerary.destinations,
-                    ),
-                  ),
-                ),
+                onPressed: () => _startItinerary(context),
                 icon: const Icon(Icons.navigation),
                 label: Text(l10n.startItineraryButton),
               ),
@@ -220,13 +228,16 @@ class ItineraryDetailPage extends StatelessWidget {
     final timeFormat = MaterialLocalizations.of(context);
     bool isSameDay(DateTime a, DateTime b) =>
         a.year == b.year && a.month == b.month && a.day == b.day;
-    final multiDay = schedule.isNotEmpty &&
+    final multiDay =
+        schedule.isNotEmpty &&
         !isSameDay(schedule.first.start, schedule.last.start);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         for (var i = 0; i < schedule.length; i++) ...[
-          if (multiDay && (i == 0 || !isSameDay(schedule[i].start, schedule[i - 1].start))) ...[
+          if (multiDay &&
+              (i == 0 ||
+                  !isSameDay(schedule[i].start, schedule[i - 1].start))) ...[
             if (i > 0) const SizedBox(height: 18),
             Padding(
               padding: const EdgeInsets.only(bottom: 10),

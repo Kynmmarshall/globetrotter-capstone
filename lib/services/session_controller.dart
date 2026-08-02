@@ -410,6 +410,24 @@ class SessionController extends ChangeNotifier {
     return ApiClient().getItineraries(token);
   }
 
+  Future<Itinerary> updateItinerary(
+    String itineraryId, {
+    String? title,
+    List<String>? destinations,
+    List<ScheduleEntry>? schedule,
+  }) async {
+    final token = _requireToken();
+    final itinerary = await ApiClient().updateItinerary(
+      token,
+      itineraryId,
+      title: title,
+      destinations: destinations,
+      schedule: schedule,
+    );
+    Analytics.instance.trackEvent('itinerary', 'updated', name: itineraryId);
+    return itinerary;
+  }
+
   Future<void> deleteItinerary(String itineraryId) async {
     final token = _requireToken();
     await ApiClient().deleteItinerary(token, itineraryId);
@@ -488,6 +506,19 @@ class SessionController extends ChangeNotifier {
     final comment = await ApiClient().voteComment(token, commentId, direction);
     Analytics.instance.trackEvent('comment', 'voted_$direction');
     return comment;
+  }
+
+  Future<Comment> editComment(String commentId, String text) async {
+    final token = _requireToken();
+    final comment = await ApiClient().editComment(token, commentId, text);
+    Analytics.instance.trackEvent('comment', 'edited');
+    return comment;
+  }
+
+  Future<void> deleteComment(String commentId) async {
+    final token = _requireToken();
+    await ApiClient().deleteComment(token, commentId);
+    Analytics.instance.trackEvent('comment', 'deleted');
   }
 
   Future<void> _saveAuth(

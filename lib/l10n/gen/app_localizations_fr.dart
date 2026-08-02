@@ -199,6 +199,18 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
+  String get commentEditButton => 'Modifier';
+
+  @override
+  String get commentDeleteButton => 'Supprimer';
+
+  @override
+  String get commentDeleteConfirmTitle => 'Supprimer ce commentaire ?';
+
+  @override
+  String get commentDeleteConfirmMessage => 'Cette action est irréversible.';
+
+  @override
   String get commentsNewBadge => 'Nouveau';
 
   @override
@@ -344,6 +356,65 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get itineraryDeletedSnackbar => 'Itinéraire supprimé.';
+
+  @override
+  String get addToItineraryTooltip => 'Ajouter à un itinéraire';
+
+  @override
+  String get addToItinerarySheetTitle => 'Ajouter à un itinéraire';
+
+  @override
+  String get addToItineraryCreateNew => 'Créer un nouvel itinéraire';
+
+  @override
+  String get addToItineraryEmpty => 'Vous n\'avez pas encore d\'itinéraire.';
+
+  @override
+  String addToItineraryAdded(String title) {
+    return 'Ajouté à « $title ».';
+  }
+
+  @override
+  String addToItineraryAlready(String title) {
+    return 'Déjà dans « $title ».';
+  }
+
+  @override
+  String get addToItineraryAlreadyAdded => 'Déjà ajouté';
+
+  @override
+  String get addToItineraryNewDialogTitle => 'Nouvel itinéraire';
+
+  @override
+  String get orderDestinationsSheetTitle => 'Ordonnez votre visite';
+
+  @override
+  String get orderDestinationsSheetSubtitle =>
+      'Faites glisser pour définir l\'ordre de visite souhaité.';
+
+  @override
+  String get orderDestinationsConfirmButton => 'Confirmer l\'ordre';
+
+  @override
+  String get mapOptionsToggleTooltip => 'Options de la carte';
+
+  @override
+  String get mapSelectItineraryButton => 'Choisir un itinéraire';
+
+  @override
+  String get mapSelectItinerarySheetTitle => 'Choisissez un itinéraire';
+
+  @override
+  String get mapLeaveItineraryButton => 'Quitter l\'itinéraire';
+
+  @override
+  String get mapNoItinerariesAvailable =>
+      'Vous n\'avez pas encore d\'itinéraire.';
+
+  @override
+  String mapItineraryProgress(int visited, int total) {
+    return '$visited sur $total visités';
+  }
 
   @override
   String get navMap => 'Carte';

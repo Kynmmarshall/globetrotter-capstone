@@ -17,6 +17,7 @@ class TripMapMarker {
     required this.lat,
     required this.lon,
     this.selected = false,
+    this.label,
   });
 
   final String id;
@@ -24,6 +25,11 @@ class TripMapMarker {
   final double lat;
   final double lon;
   final bool selected;
+
+  /// Shown as a small number badge on the pin - the stop's position in an
+  /// itinerary's visiting order. Null for markers with no assigned order
+  /// (browsing mode, or the "my location" origin pin).
+  final String? label;
 }
 
 /// Yaoundé city-center default, used whenever there's nothing more specific
@@ -59,6 +65,7 @@ class TripMap extends StatefulWidget {
     this.initialLat = yaoundeCenterLat,
     this.initialLon = yaoundeCenterLon,
     this.initialZoom = 12.5,
+    this.alwaysShowMyLocation = false,
   });
 
   final List<TripMapMarker> markers;
@@ -72,6 +79,12 @@ class TripMap extends StatefulWidget {
   final double initialLat;
   final double initialLon;
   final double initialZoom;
+
+  /// Shows the heading-aware "my location" puck from the start instead of
+  /// waiting for the user to tap the locate button - used while following
+  /// an itinerary, where knowing which way the user is facing matters right
+  /// away rather than after an extra tap.
+  final bool alwaysShowMyLocation;
 
   static bool get usesMapLibre =>
       kIsWeb || defaultTargetPlatform == TargetPlatform.android;
@@ -93,6 +106,15 @@ class _TripMapState extends State<TripMap> {
   StreamSubscription<Position>? _positionSub;
 
   @override
+  void initState() {
+    super.initState();
+    _showMyLocation = widget.alwaysShowMyLocation;
+    if (widget.alwaysShowMyLocation) {
+      unawaited(_startLocating());
+    }
+  }
+
+  @override
   void dispose() {
     _positionSub?.cancel();
     super.dispose();
@@ -100,6 +122,10 @@ class _TripMapState extends State<TripMap> {
 
   Future<void> _onLocatePressed() async {
     if (_locating) return;
+    await _startLocating();
+  }
+
+  Future<void> _startLocating() async {
     setState(() => _locating = true);
     final granted = await ensureLocationPermission();
     if (!mounted) return;

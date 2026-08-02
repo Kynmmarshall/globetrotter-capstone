@@ -68,14 +68,26 @@ class TripMapFlutterMapView extends StatelessWidget {
     );
   }
 
-  Widget _pin({required bool selected}) {
+  Widget _pin({required bool selected, String? label}) {
     return Container(
+      alignment: Alignment.center,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         color: selected ? const Color(0xFFF2A93B) : const Color(0xFF0A7E8C),
         border: Border.all(color: Colors.white, width: 2),
         boxShadow: const [BoxShadow(color: Colors.black38, blurRadius: 4)],
       ),
+      child: label == null
+          ? null
+          : Text(
+              label,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 10,
+                fontWeight: FontWeight.w800,
+                shadows: [Shadow(color: Colors.black54, blurRadius: 2)],
+              ),
+            ),
     );
   }
 
@@ -87,7 +99,9 @@ class TripMapFlutterMapView extends StatelessWidget {
       options: MapOptions(
         initialCenter: ll.LatLng(initialLat, initialLon),
         initialZoom: initialZoom,
-        onTap: onMapTapped == null ? null : (_, point) => onMapTapped!(point.latitude, point.longitude),
+        onTap: onMapTapped == null
+            ? null
+            : (_, point) => onMapTapped!(point.latitude, point.longitude),
       ),
       children: [
         TileLayer(
@@ -106,7 +120,9 @@ class TripMapFlutterMapView extends StatelessWidget {
           ),
         MarkerLayer(
           markers: markers.map((marker) {
-            final size = marker.selected ? 22.0 : 16.0;
+            final size = marker.label != null
+                ? 24.0
+                : (marker.selected ? 22.0 : 16.0);
             return Marker(
               point: ll.LatLng(marker.lat, marker.lon),
               width: size,
@@ -116,8 +132,10 @@ class TripMapFlutterMapView extends StatelessWidget {
               child: Tooltip(
                 message: marker.name,
                 child: GestureDetector(
-                  onTap: onMarkerTap == null ? null : () => onMarkerTap!(marker.id),
-                  child: _pin(selected: marker.selected),
+                  onTap: onMarkerTap == null
+                      ? null
+                      : () => onMarkerTap!(marker.id),
+                  child: _pin(selected: marker.selected, label: marker.label),
                 ),
               ),
             );
