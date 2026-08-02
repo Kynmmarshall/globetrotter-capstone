@@ -6,12 +6,26 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
-Planned for **Phase 2: Microservices** — see [README → Roadmap](README.md#roadmap).
+Planned for **Phase 3: Cloud Deployment** — see [README → Roadmap](README.md#roadmap).
 
-- Decompose the monolith into independent User, Itinerary, and Recommendation services.
-- Introduce an API Gateway as the single client-facing entry point.
-- Replace direct in-process calls with REST (sync) and message-queue (async) inter-service communication.
-- Give each service its own datastore instead of a shared JSON file.
+- Deploy the Phase 2 microservices stack to a cloud provider instead of a single VPS.
+- Container orchestration (Kubernetes or Docker Swarm) in place of a single `docker compose` host.
+- Load balancing and auto-scaling across multiple instances of each service.
+- Cut the live deployment over from the Phase 1 monolith to the Phase 2 microservices stack.
+
+## [0.15.0] - 2026-08-02 — Phase 2: Microservices decomposition
+
+Decomposes the Phase 1 monolith into three independent services behind an API Gateway, satisfying every item that was previously listed under Unreleased for this phase. The monolith (`backend/app/`) is left untouched and still serves the live production deployment — this is a separate, parallel stack (`backend/docker-compose.microservices.yml`) that hasn't been cut over yet.
+
+- **API Gateway** (`backend/gateway/`): the single public entry point (port 8000). Reverse-proxies each request to the owning service by path (`backend/gateway/app/proxy.py`), keeping every external URL byte-for-byte identical to the monolith's so the Flutter app and website only need `API_BASE_URL` repointed. Also serves the marketing site, `/downloads`, `/app`, and `/stats/public` directly, since none of those cleanly belong to one service.
+- **User Service** (port 8001, internal-only): registration/login, Google Sign-In, profile, interests, avatar upload, and favorites (hydrated by calling Recommendation Service internally for the destination details).
+- **Itinerary Service** (port 8002, internal-only): itinerary create/list/delete, ownership-checked.
+- **Recommendation Service** (port 8003, internal-only): destinations, ratings, comments, favorites lookups, the AI assistant, routing, and admin moderation — everything that didn't cleanly split three ways landed here, since it's the natural reader of both other services' data.
+- **Synchronous inter-service communication**: Recommendation Service calls User Service and Itinerary Service over internal REST endpoints (`/internal/...`), authenticated with a shared `X-Internal-Token` header (`INTERNAL_SERVICE_TOKEN`) rather than a user's JWT. These `/internal/*` routes are explicitly blocked at the Gateway and unreachable from the public internet.
+- **Asynchronous inter-service communication**: a RabbitMQ topic exchange (`trip_io.events`) carries fire-and-forget domain events (`user.registered`, `itinerary.created`, `destination.rated`), published by the service that owns the action and consumed by Recommendation Service in a background thread. Publishing is best-effort — RabbitMQ being briefly down never fails the request that triggered the event.
+- **Per-service datastores**: each service now owns its own JSON data file (`users.json`, `itineraries.json`, `destinations.json`) instead of one shared `data.json` — still file-based, not a proper database, but the data ownership split the roadmap called for. `backend/scripts/migrate_data.py` does a one-off, non-destructive split of the monolith's existing `data.json`/`static/` into the three services' own data/static directories.
+- Added `backend/docker-compose.microservices.yml` (Gateway + 3 services + RabbitMQ) and `backend/update_microservices.sh`, a separate pull-and-redeploy script from the monolith's, so the two stacks can be tested and cut over independently.
+- Fixed the public stats endpoint's total-user count silently falling back to 0 (it now fetches the real count from User Service's `GET /internal/users/count`) and fixed the microservices Compose stack publishing service ports 8001-8003 to the host, leaving only the Gateway's 8000 public.
 
 ## [0.14.0] - 2026-08-01 — AI chat suggestions, new-comments badge & read-aloud
 
