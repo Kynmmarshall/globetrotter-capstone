@@ -1233,6 +1233,31 @@ class _MapPageState extends State<MapPage> {
                   : l10n.mapRouteError(_routeError!),
               style: TextStyle(color: Colors.red.shade100, fontSize: 12.5),
             ),
+            // Not shown for "not configured" - that's a server-side setup
+            // problem retrying can't fix, unlike the routing provider's own
+            // transient failures/rate limits.
+            if (!_routeError!.contains('not configured')) ...[
+              const SizedBox(height: 4),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: TextButton(
+                  onPressed: _computeRoute,
+                  style: TextButton.styleFrom(
+                    padding: EdgeInsets.zero,
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                  child: Text(
+                    l10n.mapRetryButton,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ],
           if (_route != null) ...[
             const SizedBox(height: 10),

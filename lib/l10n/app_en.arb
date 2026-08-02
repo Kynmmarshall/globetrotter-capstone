@@ -179,6 +179,7 @@
   "mapLocationPermissionDenied": "Location access is needed to show your position on the map. Please allow it in your device settings.",
   "mapLocationServicesDisabled": "Turn on location services on your device to show your position on the map.",
   "mapLocateFailed": "Couldn't get your location. Please try again.",
+  "mapRetryButton": "Retry",
   "mapUseMyLocation": "Use my current location",
   "mapMyLocationLabel": "My current location",
   "mapResolvingLocation": "Finding your location…",

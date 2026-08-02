@@ -908,6 +908,12 @@ abstract class AppLocalizations {
   /// **'Couldn\'t get your location. Please try again.'**
   String get mapLocateFailed;
 
+  /// No description provided for @mapRetryButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get mapRetryButton;
+
   /// No description provided for @mapUseMyLocation.
   ///
   /// In en, this message translates to:

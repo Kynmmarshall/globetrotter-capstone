@@ -470,6 +470,9 @@ class AppLocalizationsFr extends AppLocalizations {
       'Impossible d\'obtenir votre position. Veuillez réessayer.';
 
   @override
+  String get mapRetryButton => 'Réessayer';
+
+  @override
   String get mapUseMyLocation => 'Utiliser ma position actuelle';
 
   @override

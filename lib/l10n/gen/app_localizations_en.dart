@@ -457,6 +457,9 @@ class AppLocalizationsEn extends AppLocalizations {
       'Couldn\'t get your location. Please try again.';
 
   @override
+  String get mapRetryButton => 'Retry';
+
+  @override
   String get mapUseMyLocation => 'Use my current location';
 
   @override
