@@ -31,7 +31,11 @@ Future<void> showCommentsSheet(
               child: Container(
                 decoration: BoxDecoration(
                   color: const Color(0xFF0B1A24).withValues(alpha: 0.96),
-                  border: Border(top: BorderSide(color: Colors.white.withValues(alpha: 0.14))),
+                  border: Border(
+                    top: BorderSide(
+                      color: Colors.white.withValues(alpha: 0.14),
+                    ),
+                  ),
                 ),
                 child: CommentsSection(
                   session: session,
@@ -109,7 +113,10 @@ class _CommentsSectionState extends State<CommentsSection> {
     if (text.isEmpty || _posting) return;
     setState(() => _posting = true);
     try {
-      final comment = await widget.session.postComment(widget.destinationId, text);
+      final comment = await widget.session.postComment(
+        widget.destinationId,
+        text,
+      );
       setState(() {
         _comments = [comment, ...?_comments];
         _composerController.clear();
@@ -128,7 +135,11 @@ class _CommentsSectionState extends State<CommentsSection> {
     );
   }
 
-  List<Comment> _mapTree(List<Comment> nodes, bool Function(Comment) match, Comment Function(Comment) transform) {
+  List<Comment> _mapTree(
+    List<Comment> nodes,
+    bool Function(Comment) match,
+    Comment Function(Comment) transform,
+  ) {
     return nodes.map((c) {
       if (match(c)) return transform(c);
       if (c.replies.isNotEmpty) {
@@ -148,14 +159,10 @@ class _CommentsSectionState extends State<CommentsSection> {
 
   void _onReplyPosted(String parentId, Comment reply) {
     setState(() {
-      _comments = _mapTree(
-        _comments ?? [],
-        (c) => c.id == parentId,
-        (c) {
-          c.replies = [...c.replies, reply];
-          return c;
-        },
-      );
+      _comments = _mapTree(_comments ?? [], (c) => c.id == parentId, (c) {
+        c.replies = [...c.replies, reply];
+        return c;
+      });
     });
   }
 
@@ -169,7 +176,34 @@ class _CommentsSectionState extends State<CommentsSection> {
     });
   }
 
-  Widget _glassPanel({required Widget child, EdgeInsets? padding, BorderRadius? borderRadius}) {
+  void _onEdited(String commentId, Comment updated) {
+    setState(() {
+      _comments = _mapTree(
+        _comments ?? [],
+        (c) => c.id == commentId,
+        (c) => c.withText(updated.text),
+      );
+    });
+  }
+
+  List<Comment> _removeFromTree(List<Comment> nodes, String commentId) {
+    return nodes.where((c) => c.id != commentId).map((c) {
+      if (c.replies.isNotEmpty) {
+        c.replies = _removeFromTree(c.replies, commentId);
+      }
+      return c;
+    }).toList();
+  }
+
+  void _onDeleted(String commentId) {
+    setState(() => _comments = _removeFromTree(_comments ?? [], commentId));
+  }
+
+  Widget _glassPanel({
+    required Widget child,
+    EdgeInsets? padding,
+    BorderRadius? borderRadius,
+  }) {
     final radius = borderRadius ?? BorderRadius.circular(16);
     return DecoratedBox(
       decoration: BoxDecoration(
@@ -177,7 +211,10 @@ class _CommentsSectionState extends State<CommentsSection> {
         borderRadius: radius,
         border: Border.all(color: Colors.white.withValues(alpha: 0.18)),
       ),
-      child: Padding(padding: padding ?? const EdgeInsets.all(12), child: child),
+      child: Padding(
+        padding: padding ?? const EdgeInsets.all(12),
+        child: child,
+      ),
     );
   }
 
@@ -209,8 +246,14 @@ class _CommentsSectionState extends State<CommentsSection> {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  comments.isEmpty ? l10n.commentsTitle : '${l10n.commentsTitle} (${_totalCount(comments)})',
-                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 16),
+                  comments.isEmpty
+                      ? l10n.commentsTitle
+                      : '${l10n.commentsTitle} (${_totalCount(comments)})',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 16,
+                  ),
                 ),
               ),
               IconButton(
@@ -226,40 +269,42 @@ class _CommentsSectionState extends State<CommentsSection> {
           child: _loading
               ? const Center(child: CircularProgressIndicator())
               : _error != null
-                  ? Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(24),
-                        child: Text(
-                          l10n.commentsLoadError(_error!),
-                          style: TextStyle(color: Colors.red.shade100),
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                    )
-                  : comments.isEmpty
-                      ? Center(
-                          child: Padding(
-                            padding: const EdgeInsets.all(24),
-                            child: Text(
-                              l10n.commentsEmpty,
-                              style: const TextStyle(color: Colors.white70),
-                              textAlign: TextAlign.center,
-                            ),
-                          ),
-                        )
-                      : ListView.builder(
-                          controller: widget.scrollController,
-                          padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-                          itemCount: comments.length,
-                          itemBuilder: (context, index) => _CommentTile(
-                            comment: comments[index],
-                            session: widget.session,
-                            destinationId: widget.destinationId,
-                            depth: 0,
-                            onReplyPosted: _onReplyPosted,
-                            onVoted: _onVoted,
-                          ),
-                        ),
+              ? Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Text(
+                      l10n.commentsLoadError(_error!),
+                      style: TextStyle(color: Colors.red.shade100),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                )
+              : comments.isEmpty
+              ? Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Text(
+                      l10n.commentsEmpty,
+                      style: const TextStyle(color: Colors.white70),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                )
+              : ListView.builder(
+                  controller: widget.scrollController,
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+                  itemCount: comments.length,
+                  itemBuilder: (context, index) => _CommentTile(
+                    comment: comments[index],
+                    session: widget.session,
+                    destinationId: widget.destinationId,
+                    depth: 0,
+                    onReplyPosted: _onReplyPosted,
+                    onVoted: _onVoted,
+                    onEdited: _onEdited,
+                    onDeleted: _onDeleted,
+                  ),
+                ),
         ),
         SafeArea(
           top: false,
@@ -291,7 +336,10 @@ class _CommentsSectionState extends State<CommentsSection> {
                         ? const SizedBox(
                             width: 16,
                             height: 16,
-                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white70),
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white70,
+                            ),
                           )
                         : const Icon(Icons.send, color: Colors.white),
                   ),
@@ -313,6 +361,8 @@ class _CommentTile extends StatefulWidget {
     required this.depth,
     required this.onReplyPosted,
     required this.onVoted,
+    required this.onEdited,
+    required this.onDeleted,
   });
 
   final Comment comment;
@@ -321,6 +371,14 @@ class _CommentTile extends StatefulWidget {
   final int depth;
   final void Function(String parentId, Comment reply) onReplyPosted;
   final void Function(String commentId, Comment updated) onVoted;
+  final void Function(String commentId, Comment updated) onEdited;
+  final void Function(String commentId) onDeleted;
+
+  // How long after posting a comment its author may still edit/delete it -
+  // must match the backend's COMMENT_EDIT_WINDOW
+  // (recommendation_service/app/crud.py) or this button would stay
+  // enabled/disabled out of sync with what the server actually allows.
+  static const editWindow = Duration(minutes: 5);
 
   @override
   State<_CommentTile> createState() => _CommentTileState();
@@ -330,11 +388,31 @@ class _CommentTileState extends State<_CommentTile> {
   bool _showReplyBox = false;
   bool _posting = false;
   bool _voting = false;
+  bool _editing = false;
+  bool _saving = false;
+  bool _deleting = false;
   final TextEditingController _replyController = TextEditingController();
+  final TextEditingController _editController = TextEditingController();
+
+  bool get _isOwnComment => widget.comment.username == widget.session.username;
+
+  // Evaluated at build/interaction time rather than kept live-ticking with
+  // a Timer - good enough since the backend is the real source of truth
+  // for the deadline anyway (a stale-but-still-shown button just gets a
+  // 403 from _saveEdit/_delete, surfaced the same way any other failure is).
+  bool get _withinEditWindow {
+    final createdAt = widget.comment.createdAt;
+    if (createdAt == null) return false;
+    return DateTime.now().toUtc().difference(createdAt.toUtc()) <
+        _CommentTile.editWindow;
+  }
+
+  bool get _canModify => _isOwnComment && _withinEditWindow;
 
   @override
   void dispose() {
     _replyController.dispose();
+    _editController.dispose();
     super.dispose();
   }
 
@@ -343,6 +421,57 @@ class _CommentTileState extends State<_CommentTile> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
     );
+  }
+
+  void _startEdit() {
+    _editController.text = widget.comment.text;
+    setState(() => _editing = true);
+  }
+
+  Future<void> _saveEdit() async {
+    final text = _editController.text.trim();
+    if (text.isEmpty || _saving) return;
+    setState(() => _saving = true);
+    try {
+      final updated = await widget.session.editComment(widget.comment.id, text);
+      widget.onEdited(widget.comment.id, updated);
+      if (mounted) setState(() => _editing = false);
+    } catch (e) {
+      _showError(e);
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  Future<void> _confirmDelete() async {
+    final l10n = AppLocalizations.of(context)!;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(l10n.commentDeleteConfirmTitle),
+        content: Text(l10n.commentDeleteConfirmMessage),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(l10n.cancelButton),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: FilledButton.styleFrom(backgroundColor: Colors.red.shade600),
+            child: Text(l10n.commentDeleteButton),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    setState(() => _deleting = true);
+    try {
+      await widget.session.deleteComment(widget.comment.id);
+      widget.onDeleted(widget.comment.id);
+    } catch (e) {
+      _showError(e);
+      if (mounted) setState(() => _deleting = false);
+    }
   }
 
   Future<void> _vote(String direction) async {
@@ -365,7 +494,11 @@ class _CommentTileState extends State<_CommentTile> {
     if (text.isEmpty || _posting) return;
     setState(() => _posting = true);
     try {
-      final reply = await widget.session.postComment(widget.destinationId, text, parentId: widget.comment.id);
+      final reply = await widget.session.postComment(
+        widget.destinationId,
+        text,
+        parentId: widget.comment.id,
+      );
       widget.onReplyPosted(widget.comment.id, reply);
       _replyController.clear();
       if (mounted) setState(() => _showReplyBox = false);
@@ -376,13 +509,23 @@ class _CommentTileState extends State<_CommentTile> {
     }
   }
 
-  Widget _voteButton(IconData icon, {required bool active, required VoidCallback onTap}) {
+  Widget _voteButton(
+    IconData icon, {
+    required bool active,
+    required VoidCallback onTap,
+  }) {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(999),
       child: Padding(
         padding: const EdgeInsets.all(4),
-        child: Icon(icon, size: 16, color: active ? Theme.of(context).colorScheme.primary : Colors.white54),
+        child: Icon(
+          icon,
+          size: 16,
+          color: active
+              ? Theme.of(context).colorScheme.primary
+              : Colors.white54,
+        ),
       ),
     );
   }
@@ -411,106 +554,248 @@ class _CommentTileState extends State<_CommentTile> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              // A solid, tinted card instead of the near-invisible frosted
-              // white used for structural panels - comment text needs to
-              // stay legible over any photo background, not just blend in.
-              color: const Color(0xFF13253A).withValues(alpha: 0.92),
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.4)),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
+          Opacity(
+            opacity: _deleting ? 0.5 : 1,
+            child: IgnorePointer(
+              ignoring: _deleting,
+              child: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  // A solid, tinted card instead of the near-invisible frosted
+                  // white used for structural panels - comment text needs to
+                  // stay legible over any photo background, not just blend in.
+                  color: const Color(0xFF13253A).withValues(alpha: 0.92),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.primary.withValues(alpha: 0.4),
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      widget.comment.username,
-                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 13),
-                    ),
-                    if (widget.comment.createdAt != null) ...[
-                      const SizedBox(width: 8),
-                      Text(
-                        _relativeTime(widget.comment.createdAt!),
-                        style: const TextStyle(color: Colors.white54, fontSize: 11.5),
-                      ),
-                    ],
-                  ],
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  widget.comment.text,
-                  style: TextStyle(color: Colors.white.withValues(alpha: 0.92), fontSize: 13.5, height: 1.4),
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    _voteButton(Icons.arrow_upward, active: widget.comment.userVote == 'up', onTap: () => _vote('up')),
-                    const SizedBox(width: 4),
-                    Text(
-                      '${widget.comment.score}',
-                      style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.w700, fontSize: 12.5),
-                    ),
-                    const SizedBox(width: 4),
-                    _voteButton(Icons.arrow_downward, active: widget.comment.userVote == 'down', onTap: () => _vote('down')),
-                    const SizedBox(width: 14),
-                    TextButton(
-                      onPressed: () => setState(() => _showReplyBox = !_showReplyBox),
-                      style: TextButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(horizontal: 8),
-                        minimumSize: Size.zero,
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      ),
-                      child: Text(
-                        l10n.commentsReplyButton,
-                        style: const TextStyle(color: Colors.white70, fontSize: 12.5, fontWeight: FontWeight.w600),
-                      ),
-                    ),
-                  ],
-                ),
-                if (_showReplyBox) ...[
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          controller: _replyController,
-                          autofocus: true,
-                          style: const TextStyle(color: Colors.white, fontSize: 13),
-                          cursorColor: Colors.white,
-                          minLines: 1,
-                          maxLines: 4,
-                          decoration: InputDecoration(
-                            isDense: true,
-                            filled: true,
-                            fillColor: Colors.white.withValues(alpha: 0.08),
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                            hintText: l10n.commentsInputHint,
-                            hintStyle: const TextStyle(color: Colors.white54),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
-                              borderSide: BorderSide.none,
+                    Row(
+                      children: [
+                        Text(
+                          widget.comment.username,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 13,
+                          ),
+                        ),
+                        if (widget.comment.createdAt != null) ...[
+                          const SizedBox(width: 8),
+                          Text(
+                            _relativeTime(widget.comment.createdAt!),
+                            style: const TextStyle(
+                              color: Colors.white54,
+                              fontSize: 11.5,
                             ),
+                          ),
+                        ],
+                        const Spacer(),
+                        if (_canModify && !_editing)
+                          PopupMenuButton<String>(
+                            icon: const Icon(
+                              Icons.more_horiz,
+                              color: Colors.white54,
+                              size: 18,
+                            ),
+                            padding: EdgeInsets.zero,
+                            color: const Color(0xFF13253A),
+                            onSelected: (value) => value == 'edit'
+                                ? _startEdit()
+                                : _confirmDelete(),
+                            itemBuilder: (context) => [
+                              PopupMenuItem(
+                                value: 'edit',
+                                child: Text(
+                                  l10n.commentEditButton,
+                                  style: const TextStyle(color: Colors.white),
+                                ),
+                              ),
+                              PopupMenuItem(
+                                value: 'delete',
+                                child: Text(
+                                  l10n.commentDeleteButton,
+                                  style: TextStyle(color: Colors.red.shade200),
+                                ),
+                              ),
+                            ],
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    if (_editing) ...[
+                      TextField(
+                        controller: _editController,
+                        autofocus: true,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 13.5,
+                        ),
+                        cursorColor: Colors.white,
+                        minLines: 1,
+                        maxLines: 6,
+                        decoration: InputDecoration(
+                          isDense: true,
+                          filled: true,
+                          fillColor: Colors.white.withValues(alpha: 0.08),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 8,
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: BorderSide.none,
                           ),
                         ),
                       ),
-                      IconButton(
-                        tooltip: l10n.commentsPostButton,
-                        onPressed: _posting ? null : _postReply,
-                        icon: _posting
-                            ? const SizedBox(
-                                width: 16,
-                                height: 16,
-                                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white70),
-                              )
-                            : const Icon(Icons.send, size: 18, color: Colors.white),
+                      const SizedBox(height: 6),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          TextButton(
+                            onPressed: _saving
+                                ? null
+                                : () => setState(() => _editing = false),
+                            child: Text(
+                              l10n.cancelButton,
+                              style: const TextStyle(color: Colors.white70),
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          FilledButton(
+                            onPressed: _saving ? null : _saveEdit,
+                            child: _saving
+                                ? const SizedBox(
+                                    width: 14,
+                                    height: 14,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Colors.white,
+                                    ),
+                                  )
+                                : Text(l10n.saveButton),
+                          ),
+                        ],
+                      ),
+                    ] else
+                      Text(
+                        widget.comment.text,
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.92),
+                          fontSize: 13.5,
+                          height: 1.4,
+                        ),
+                      ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        _voteButton(
+                          widget.comment.userVote == 'up'
+                              ? Icons.thumb_up
+                              : Icons.thumb_up_outlined,
+                          active: widget.comment.userVote == 'up',
+                          onTap: () => _vote('up'),
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          '${widget.comment.score}',
+                          style: const TextStyle(
+                            color: Colors.white70,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 12.5,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        _voteButton(
+                          widget.comment.userVote == 'down'
+                              ? Icons.thumb_down
+                              : Icons.thumb_down_outlined,
+                          active: widget.comment.userVote == 'down',
+                          onTap: () => _vote('down'),
+                        ),
+                        const SizedBox(width: 14),
+                        TextButton(
+                          onPressed: () =>
+                              setState(() => _showReplyBox = !_showReplyBox),
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(horizontal: 8),
+                            minimumSize: Size.zero,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          ),
+                          child: Text(
+                            l10n.commentsReplyButton,
+                            style: const TextStyle(
+                              color: Colors.white70,
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (_showReplyBox) ...[
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              controller: _replyController,
+                              autofocus: true,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 13,
+                              ),
+                              cursorColor: Colors.white,
+                              minLines: 1,
+                              maxLines: 4,
+                              decoration: InputDecoration(
+                                isDense: true,
+                                filled: true,
+                                fillColor: Colors.white.withValues(alpha: 0.08),
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 8,
+                                ),
+                                hintText: l10n.commentsInputHint,
+                                hintStyle: const TextStyle(
+                                  color: Colors.white54,
+                                ),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                  borderSide: BorderSide.none,
+                                ),
+                              ),
+                            ),
+                          ),
+                          IconButton(
+                            tooltip: l10n.commentsPostButton,
+                            onPressed: _posting ? null : _postReply,
+                            icon: _posting
+                                ? const SizedBox(
+                                    width: 16,
+                                    height: 16,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Colors.white70,
+                                    ),
+                                  )
+                                : const Icon(
+                                    Icons.send,
+                                    size: 18,
+                                    color: Colors.white,
+                                  ),
+                          ),
+                        ],
                       ),
                     ],
-                  ),
-                ],
-              ],
+                  ],
+                ),
+              ),
             ),
           ),
           for (final reply in widget.comment.replies)
@@ -521,6 +806,8 @@ class _CommentTileState extends State<_CommentTile> {
               depth: widget.depth + 1,
               onReplyPosted: widget.onReplyPosted,
               onVoted: widget.onVoted,
+              onEdited: widget.onEdited,
+              onDeleted: widget.onDeleted,
             ),
         ],
       ),

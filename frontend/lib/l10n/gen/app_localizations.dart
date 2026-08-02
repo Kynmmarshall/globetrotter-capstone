@@ -434,6 +434,30 @@ abstract class AppLocalizations {
   /// **'Couldn\'t load comments.\n{error}'**
   String commentsLoadError(String error);
 
+  /// No description provided for @commentEditButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit'**
+  String get commentEditButton;
+
+  /// No description provided for @commentDeleteButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get commentDeleteButton;
+
+  /// No description provided for @commentDeleteConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this comment?'**
+  String get commentDeleteConfirmTitle;
+
+  /// No description provided for @commentDeleteConfirmMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'This can\'t be undone.'**
+  String get commentDeleteConfirmMessage;
+
   /// No description provided for @commentsNewBadge.
   ///
   /// In en, this message translates to:
@@ -686,6 +710,108 @@ abstract class AppLocalizations {
   /// **'Itinerary deleted.'**
   String get itineraryDeletedSnackbar;
 
+  /// No description provided for @addToItineraryTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Add to itinerary'**
+  String get addToItineraryTooltip;
+
+  /// No description provided for @addToItinerarySheetTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Add to itinerary'**
+  String get addToItinerarySheetTitle;
+
+  /// No description provided for @addToItineraryCreateNew.
+  ///
+  /// In en, this message translates to:
+  /// **'Create new itinerary'**
+  String get addToItineraryCreateNew;
+
+  /// No description provided for @addToItineraryEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'You don\'t have any itineraries yet.'**
+  String get addToItineraryEmpty;
+
+  /// No description provided for @addToItineraryAdded.
+  ///
+  /// In en, this message translates to:
+  /// **'Added to \"{title}\".'**
+  String addToItineraryAdded(String title);
+
+  /// No description provided for @addToItineraryAlready.
+  ///
+  /// In en, this message translates to:
+  /// **'Already in \"{title}\".'**
+  String addToItineraryAlready(String title);
+
+  /// No description provided for @addToItineraryAlreadyAdded.
+  ///
+  /// In en, this message translates to:
+  /// **'Already added'**
+  String get addToItineraryAlreadyAdded;
+
+  /// No description provided for @addToItineraryNewDialogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'New itinerary'**
+  String get addToItineraryNewDialogTitle;
+
+  /// No description provided for @orderDestinationsSheetTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Order your visit'**
+  String get orderDestinationsSheetTitle;
+
+  /// No description provided for @orderDestinationsSheetSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Drag to set the order you want to visit these in.'**
+  String get orderDestinationsSheetSubtitle;
+
+  /// No description provided for @orderDestinationsConfirmButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm order'**
+  String get orderDestinationsConfirmButton;
+
+  /// No description provided for @mapOptionsToggleTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Map options'**
+  String get mapOptionsToggleTooltip;
+
+  /// No description provided for @mapSelectItineraryButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Select itinerary'**
+  String get mapSelectItineraryButton;
+
+  /// No description provided for @mapSelectItinerarySheetTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose an itinerary'**
+  String get mapSelectItinerarySheetTitle;
+
+  /// No description provided for @mapLeaveItineraryButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave itinerary'**
+  String get mapLeaveItineraryButton;
+
+  /// No description provided for @mapNoItinerariesAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'You don\'t have any itineraries yet.'**
+  String get mapNoItinerariesAvailable;
+
+  /// No description provided for @mapItineraryProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'{visited} of {total} visited'**
+  String mapItineraryProgress(int visited, int total);
+
   /// No description provided for @navMap.
   ///
   /// In en, this message translates to:
@@ -769,6 +895,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Location access is needed to show your position on the map. Please allow it in your device settings.'**
   String get mapLocationPermissionDenied;
+
+  /// No description provided for @mapLocationServicesDisabled.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn on location services on your device to show your position on the map.'**
+  String get mapLocationServicesDisabled;
+
+  /// No description provided for @mapLocateFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t get your location. Please try again.'**
+  String get mapLocateFailed;
+
+  /// No description provided for @mapRetryButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get mapRetryButton;
 
   /// No description provided for @mapUseMyLocation.
   ///

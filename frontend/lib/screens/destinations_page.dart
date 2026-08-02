@@ -9,6 +9,7 @@ import 'package:trip_io/screens/submit_destination_page.dart';
 import 'package:trip_io/services/analytics.dart';
 import 'package:trip_io/services/api_client.dart';
 import 'package:trip_io/services/session_controller.dart';
+import 'package:trip_io/widgets/add_to_itinerary_button.dart';
 import 'package:trip_io/widgets/favorite_toggle_button.dart';
 import 'package:trip_io/widgets/new_comments_badge.dart';
 import 'package:trip_io/widgets/session_expired_card.dart';
@@ -217,13 +218,33 @@ class _DestinationsPageState extends State<DestinationsPage> {
                       color: Colors.black.withValues(alpha: 0.35),
                       shape: BoxShape.circle,
                     ),
-                    child: FavoriteToggleButton(session: widget.session, destinationId: d.id),
+                    child: FavoriteToggleButton(
+                      session: widget.session,
+                      destinationId: d.id,
+                    ),
                   ),
                 ),
                 Positioned(
                   top: 8,
                   left: 8,
-                  child: NewCommentsBadge(session: widget.session, destination: d),
+                  child: NewCommentsBadge(
+                    session: widget.session,
+                    destination: d,
+                  ),
+                ),
+                Positioned(
+                  bottom: 8,
+                  right: 8,
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.35),
+                      shape: BoxShape.circle,
+                    ),
+                    child: AddToItineraryButton(
+                      session: widget.session,
+                      destinationId: d.id,
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -244,7 +265,11 @@ class _DestinationsPageState extends State<DestinationsPage> {
                   ),
                   if (d.hasRatings) ...[
                     const SizedBox(height: 4),
-                    StarRating(average: d.ratingAverage, count: d.ratingCount, size: 13),
+                    StarRating(
+                      average: d.ratingAverage,
+                      count: d.ratingCount,
+                      size: 13,
+                    ),
                   ],
                   const SizedBox(height: 6),
                   Row(
@@ -333,7 +358,11 @@ class _DestinationsPageState extends State<DestinationsPage> {
         children: [
           Row(
             children: [
-              Icon(Icons.tune, color: Colors.white.withValues(alpha: 0.85), size: 18),
+              Icon(
+                Icons.tune,
+                color: Colors.white.withValues(alpha: 0.85),
+                size: 18,
+              ),
               const SizedBox(width: 8),
               Text(
                 l10n.destinationsFilterLabel,
@@ -422,13 +451,16 @@ class _DestinationsPageState extends State<DestinationsPage> {
                     onPressed: () {
                       Navigator.of(context).push(
                         MaterialPageRoute(
-                          builder: (_) => SubmitDestinationPage(session: widget.session),
+                          builder: (_) =>
+                              SubmitDestinationPage(session: widget.session),
                         ),
                       );
                     },
                     style: OutlinedButton.styleFrom(
                       foregroundColor: Colors.white,
-                      side: BorderSide(color: Colors.white.withValues(alpha: 0.4)),
+                      side: BorderSide(
+                        color: Colors.white.withValues(alpha: 0.4),
+                      ),
                     ),
                     icon: const Icon(Icons.add_location_alt, size: 18),
                     label: Text(l10n.suggestDestinationButton),

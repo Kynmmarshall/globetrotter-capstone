@@ -190,6 +190,18 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get commentEditButton => 'Edit';
+
+  @override
+  String get commentDeleteButton => 'Delete';
+
+  @override
+  String get commentDeleteConfirmTitle => 'Delete this comment?';
+
+  @override
+  String get commentDeleteConfirmMessage => 'This can\'t be undone.';
+
+  @override
   String get commentsNewBadge => 'New';
 
   @override
@@ -334,6 +346,65 @@ class AppLocalizationsEn extends AppLocalizations {
   String get itineraryDeletedSnackbar => 'Itinerary deleted.';
 
   @override
+  String get addToItineraryTooltip => 'Add to itinerary';
+
+  @override
+  String get addToItinerarySheetTitle => 'Add to itinerary';
+
+  @override
+  String get addToItineraryCreateNew => 'Create new itinerary';
+
+  @override
+  String get addToItineraryEmpty => 'You don\'t have any itineraries yet.';
+
+  @override
+  String addToItineraryAdded(String title) {
+    return 'Added to \"$title\".';
+  }
+
+  @override
+  String addToItineraryAlready(String title) {
+    return 'Already in \"$title\".';
+  }
+
+  @override
+  String get addToItineraryAlreadyAdded => 'Already added';
+
+  @override
+  String get addToItineraryNewDialogTitle => 'New itinerary';
+
+  @override
+  String get orderDestinationsSheetTitle => 'Order your visit';
+
+  @override
+  String get orderDestinationsSheetSubtitle =>
+      'Drag to set the order you want to visit these in.';
+
+  @override
+  String get orderDestinationsConfirmButton => 'Confirm order';
+
+  @override
+  String get mapOptionsToggleTooltip => 'Map options';
+
+  @override
+  String get mapSelectItineraryButton => 'Select itinerary';
+
+  @override
+  String get mapSelectItinerarySheetTitle => 'Choose an itinerary';
+
+  @override
+  String get mapLeaveItineraryButton => 'Leave itinerary';
+
+  @override
+  String get mapNoItinerariesAvailable =>
+      'You don\'t have any itineraries yet.';
+
+  @override
+  String mapItineraryProgress(int visited, int total) {
+    return '$visited of $total visited';
+  }
+
+  @override
   String get navMap => 'Map';
 
   @override
@@ -376,6 +447,17 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get mapLocationPermissionDenied =>
       'Location access is needed to show your position on the map. Please allow it in your device settings.';
+
+  @override
+  String get mapLocationServicesDisabled =>
+      'Turn on location services on your device to show your position on the map.';
+
+  @override
+  String get mapLocateFailed =>
+      'Couldn\'t get your location. Please try again.';
+
+  @override
+  String get mapRetryButton => 'Retry';
 
   @override
   String get mapUseMyLocation => 'Use my current location';

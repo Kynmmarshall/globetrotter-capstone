@@ -65,6 +65,10 @@
   "commentsButtonLabel": "View comments",
   "commentsEmpty": "No comments yet — be the first to share your thoughts.",
   "commentsLoadError": "Couldn't load comments.\n{error}",
+  "commentEditButton": "Edit",
+  "commentDeleteButton": "Delete",
+  "commentDeleteConfirmTitle": "Delete this comment?",
+  "commentDeleteConfirmMessage": "This can't be undone.",
   "commentsNewBadge": "New",
   "readAloudTooltip": "Read aloud",
   "readAloudStopTooltip": "Stop reading",
@@ -127,6 +131,38 @@
   "itineraryCreatedSnackbar": "Itinerary created.",
   "itineraryDeletedSnackbar": "Itinerary deleted.",
 
+  "addToItineraryTooltip": "Add to itinerary",
+  "addToItinerarySheetTitle": "Add to itinerary",
+  "addToItineraryCreateNew": "Create new itinerary",
+  "addToItineraryEmpty": "You don't have any itineraries yet.",
+  "addToItineraryAdded": "Added to \"{title}\".",
+  "@addToItineraryAdded": {
+    "placeholders": { "title": { "type": "String" } }
+  },
+  "addToItineraryAlready": "Already in \"{title}\".",
+  "@addToItineraryAlready": {
+    "placeholders": { "title": { "type": "String" } }
+  },
+  "addToItineraryAlreadyAdded": "Already added",
+  "addToItineraryNewDialogTitle": "New itinerary",
+
+  "orderDestinationsSheetTitle": "Order your visit",
+  "orderDestinationsSheetSubtitle": "Drag to set the order you want to visit these in.",
+  "orderDestinationsConfirmButton": "Confirm order",
+
+  "mapOptionsToggleTooltip": "Map options",
+  "mapSelectItineraryButton": "Select itinerary",
+  "mapSelectItinerarySheetTitle": "Choose an itinerary",
+  "mapLeaveItineraryButton": "Leave itinerary",
+  "mapNoItinerariesAvailable": "You don't have any itineraries yet.",
+  "mapItineraryProgress": "{visited} of {total} visited",
+  "@mapItineraryProgress": {
+    "placeholders": {
+      "visited": { "type": "int" },
+      "total": { "type": "int" }
+    }
+  },
+
   "navMap": "Map",
   "mapTitle": "Get directions",
   "mapFromLabel": "From",
@@ -141,6 +177,9 @@
   "mapRoutingNotConfigured": "Directions aren't set up yet. Please check back soon.",
   "viewOnMapButton": "View on map",
   "mapLocationPermissionDenied": "Location access is needed to show your position on the map. Please allow it in your device settings.",
+  "mapLocationServicesDisabled": "Turn on location services on your device to show your position on the map.",
+  "mapLocateFailed": "Couldn't get your location. Please try again.",
+  "mapRetryButton": "Retry",
   "mapUseMyLocation": "Use my current location",
   "mapMyLocationLabel": "My current location",
   "mapResolvingLocation": "Finding your location…",

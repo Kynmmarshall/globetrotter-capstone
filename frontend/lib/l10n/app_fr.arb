@@ -61,6 +61,10 @@
   "commentsButtonLabel": "Voir les commentaires",
   "commentsEmpty": "Aucun commentaire pour l'instant — soyez le premier à partager votre avis.",
   "commentsLoadError": "Impossible de charger les commentaires.\n{error}",
+  "commentEditButton": "Modifier",
+  "commentDeleteButton": "Supprimer",
+  "commentDeleteConfirmTitle": "Supprimer ce commentaire ?",
+  "commentDeleteConfirmMessage": "Cette action est irréversible.",
   "commentsNewBadge": "Nouveau",
   "readAloudTooltip": "Lire à voix haute",
   "readAloudStopTooltip": "Arrêter la lecture",
@@ -108,6 +112,38 @@
   "itineraryCreatedSnackbar": "Itinéraire créé.",
   "itineraryDeletedSnackbar": "Itinéraire supprimé.",
 
+  "addToItineraryTooltip": "Ajouter à un itinéraire",
+  "addToItinerarySheetTitle": "Ajouter à un itinéraire",
+  "addToItineraryCreateNew": "Créer un nouvel itinéraire",
+  "addToItineraryEmpty": "Vous n'avez pas encore d'itinéraire.",
+  "addToItineraryAdded": "Ajouté à « {title} ».",
+  "@addToItineraryAdded": {
+    "placeholders": { "title": { "type": "String" } }
+  },
+  "addToItineraryAlready": "Déjà dans « {title} ».",
+  "@addToItineraryAlready": {
+    "placeholders": { "title": { "type": "String" } }
+  },
+  "addToItineraryAlreadyAdded": "Déjà ajouté",
+  "addToItineraryNewDialogTitle": "Nouvel itinéraire",
+
+  "orderDestinationsSheetTitle": "Ordonnez votre visite",
+  "orderDestinationsSheetSubtitle": "Faites glisser pour définir l'ordre de visite souhaité.",
+  "orderDestinationsConfirmButton": "Confirmer l'ordre",
+
+  "mapOptionsToggleTooltip": "Options de la carte",
+  "mapSelectItineraryButton": "Choisir un itinéraire",
+  "mapSelectItinerarySheetTitle": "Choisissez un itinéraire",
+  "mapLeaveItineraryButton": "Quitter l'itinéraire",
+  "mapNoItinerariesAvailable": "Vous n'avez pas encore d'itinéraire.",
+  "mapItineraryProgress": "{visited} sur {total} visités",
+  "@mapItineraryProgress": {
+    "placeholders": {
+      "visited": { "type": "int" },
+      "total": { "type": "int" }
+    }
+  },
+
   "navMap": "Carte",
   "mapTitle": "Obtenir l'itinéraire",
   "mapFromLabel": "Départ",
@@ -122,6 +158,9 @@
   "mapRoutingNotConfigured": "L'itinéraire n'est pas encore configuré. Revenez bientôt.",
   "viewOnMapButton": "Voir sur la carte",
   "mapLocationPermissionDenied": "L'accès à la position est nécessaire pour l'afficher sur la carte. Veuillez l'autoriser dans les paramètres de votre appareil.",
+  "mapLocationServicesDisabled": "Activez la localisation sur votre appareil pour afficher votre position sur la carte.",
+  "mapLocateFailed": "Impossible d'obtenir votre position. Veuillez réessayer.",
+  "mapRetryButton": "Réessayer",
   "mapUseMyLocation": "Utiliser ma position actuelle",
   "mapMyLocationLabel": "Ma position actuelle",
   "mapResolvingLocation": "Recherche de votre position…",

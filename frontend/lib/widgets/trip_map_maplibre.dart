@@ -36,12 +36,25 @@ class TripMapLibreView extends StatefulWidget {
   final bool showMyLocation;
 
   @override
-  State<TripMapLibreView> createState() => _TripMapLibreViewState();
+  State<TripMapLibreView> createState() => TripMapLibreViewState();
 }
 
-class _TripMapLibreViewState extends State<TripMapLibreView> {
+class TripMapLibreViewState extends State<TripMapLibreView> {
   MapLibreMapController? _controller;
   final Map<String, String> _circleIdToMarkerId = {};
+
+  /// Recenters the map on [lat]/[lon] - called imperatively by TripMap's
+  /// locate button each time it's pressed. `myLocationTrackingMode` alone
+  /// isn't enough: the plugin doesn't reliably react to that prop changing
+  /// after the map has already been created, so this explicitly commands
+  /// the camera instead of hoping the passive tracking mode picks it up.
+  Future<void> flyTo(double lat, double lon, {double zoom = 15}) async {
+    final controller = _controller;
+    if (controller == null) return;
+    await controller.animateCamera(
+      CameraUpdate.newLatLngZoom(LatLng(lat, lon), zoom),
+    );
+  }
 
   // Mouse-hover label - only ever populated on platforms that actually send
   // hover events (web has a real cursor; Android/iOS touch never fires
@@ -52,7 +65,8 @@ class _TripMapLibreViewState extends State<TripMapLibreView> {
   @override
   void didUpdateWidget(covariant TripMapLibreView oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.markers != widget.markers || oldWidget.routeGeometry != widget.routeGeometry) {
+    if (oldWidget.markers != widget.markers ||
+        oldWidget.routeGeometry != widget.routeGeometry) {
       _syncAnnotations();
     }
   }
@@ -103,27 +117,51 @@ class _TripMapLibreViewState extends State<TripMapLibreView> {
 
     await controller.clearCircles();
     await controller.clearLines();
+    await controller.clearSymbols();
     _circleIdToMarkerId.clear();
 
     final route = widget.routeGeometry;
     if (route != null && route.isNotEmpty) {
-      await controller.addLine(LineOptions(
-        geometry: route.map((p) => LatLng(p.lat, p.lon)).toList(),
-        lineColor: '#1E88E5',
-        lineWidth: 4.0,
-        lineOpacity: 0.9,
-      ));
+      await controller.addLine(
+        LineOptions(
+          geometry: route.map((p) => LatLng(p.lat, p.lon)).toList(),
+          lineColor: '#1E88E5',
+          lineWidth: 4.0,
+          lineOpacity: 0.9,
+        ),
+      );
     }
 
     for (final marker in widget.markers) {
-      final circle = await controller.addCircle(CircleOptions(
-        geometry: LatLng(marker.lat, marker.lon),
-        circleRadius: marker.selected ? 10 : 7,
-        circleColor: marker.selected ? '#F2A93B' : '#0A7E8C',
-        circleStrokeColor: '#FFFFFF',
-        circleStrokeWidth: 2,
-      ));
+      final circle = await controller.addCircle(
+        CircleOptions(
+          geometry: LatLng(marker.lat, marker.lon),
+          circleRadius: marker.selected ? 10 : 7,
+          circleColor: marker.selected ? '#F2A93B' : '#0A7E8C',
+          circleStrokeColor: '#FFFFFF',
+          circleStrokeWidth: 2,
+        ),
+      );
       _circleIdToMarkerId[circle.id] = marker.id;
+
+      if (marker.label != null) {
+        // A text-only symbol layered on top of the circle - the visiting
+        // order number. No icon image is registered/needed since this only
+        // sets textField, not iconImage.
+        await controller.addSymbol(
+          SymbolOptions(
+            geometry: LatLng(marker.lat, marker.lon),
+            textField: marker.label,
+            textSize: 11,
+            textColor: '#FFFFFF',
+            // Opaque, blurred halo - a soft fade behind the number rather
+            // than a hard outline, so it stays readable over any tile color.
+            textHaloColor: '#000000',
+            textHaloWidth: 1.4,
+            textHaloBlur: 0.6,
+          ),
+        );
+      }
     }
   }
 
@@ -145,7 +183,11 @@ class _TripMapLibreViewState extends State<TripMapLibreView> {
           ),
           child: Text(
             label,
-            style: const TextStyle(color: Colors.white, fontSize: 12.5, fontWeight: FontWeight.w600),
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 12.5,
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ),
       ),
@@ -166,12 +208,19 @@ class _TripMapLibreViewState extends State<TripMapLibreView> {
           onStyleLoadedCallback: _syncAnnotations,
           onMapClick: widget.onMapTapped == null
               ? null
-              : (point, coordinates) => widget.onMapTapped!(coordinates.latitude, coordinates.longitude),
+              : (point, coordinates) => widget.onMapTapped!(
+                  coordinates.latitude,
+                  coordinates.longitude,
+                ),
           compassEnabled: false,
           logoEnabled: false,
           myLocationEnabled: widget.showMyLocation,
-          myLocationTrackingMode: widget.showMyLocation ? MyLocationTrackingMode.tracking : MyLocationTrackingMode.none,
-          myLocationRenderMode: widget.showMyLocation ? MyLocationRenderMode.compass : MyLocationRenderMode.normal,
+          myLocationTrackingMode: widget.showMyLocation
+              ? MyLocationTrackingMode.tracking
+              : MyLocationTrackingMode.none,
+          myLocationRenderMode: widget.showMyLocation
+              ? MyLocationRenderMode.compass
+              : MyLocationRenderMode.normal,
         ),
         _hoverLabel(),
       ],

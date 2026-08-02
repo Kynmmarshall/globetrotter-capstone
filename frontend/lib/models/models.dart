@@ -320,6 +320,22 @@ class Comment {
       replies: replies,
     );
   }
+
+  /// Returns a copy with the text replaced - used after a successful edit,
+  /// same in-place-splice pattern as [withVote].
+  Comment withText(String text) {
+    return Comment(
+      id: id,
+      destinationId: destinationId,
+      parentId: parentId,
+      username: username,
+      text: text,
+      createdAt: createdAt,
+      score: score,
+      userVote: userVote,
+      replies: replies,
+    );
+  }
 }
 
 /// A single point along a route's geometry - mirrors the backend's

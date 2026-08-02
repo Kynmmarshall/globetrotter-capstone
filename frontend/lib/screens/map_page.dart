@@ -9,6 +9,7 @@ import 'package:trip_io/screens/destination_detail_page.dart';
 import 'package:trip_io/screens/itineraries_page.dart' show formatDuration;
 import 'package:trip_io/services/analytics.dart';
 import 'package:trip_io/services/session_controller.dart';
+import 'package:trip_io/widgets/order_destinations_sheet.dart';
 import 'package:trip_io/widgets/session_expired_card.dart';
 import 'package:trip_io/widgets/trip_map.dart';
 
@@ -68,10 +69,24 @@ class _MapPageState extends State<MapPage> {
   bool _resolvingMyLocation = false;
   String? _myLocationError;
 
-  bool get _isItineraryMode => widget.itineraryDestinationIds != null;
+  // Live-selected itinerary state - seeded from the constructor params but
+  // reassignable from within this screen itself via "select itinerary", so
+  // a user can browse into itinerary-following mode without having come
+  // from the itinerary detail page's "Start itinerary" button.
+  List<String>? _itineraryIds;
+  String? _itineraryTitle;
+  final Set<String> _visitedIds = {};
+  StreamSubscription<Position>? _positionSub;
+
+  // The options panel starts collapsed so the map fills the whole screen -
+  // "get directions"/"my location"/"select itinerary" live behind this
+  // toggle instead of a permanently fixed panel.
+  bool _panelExpanded = false;
+
+  bool get _isItineraryMode => _itineraryIds != null;
 
   List<Destination> get _itineraryCheckpoints {
-    final ids = widget.itineraryDestinationIds;
+    final ids = _itineraryIds;
     if (ids == null) return const [];
     final byId = {for (final d in _allDestinations) d.id: d};
     return ids
@@ -91,12 +106,24 @@ class _MapPageState extends State<MapPage> {
       }),
     );
     _destination = widget.focusDestination;
+    _itineraryIds = widget.itineraryDestinationIds;
+    _itineraryTitle = widget.itineraryTitle;
+    // Arriving with a specific destination or itinerary already in hand is a
+    // deliberate "show me the route" intent - skip making the user tap the
+    // toggle to see what they came here for. Plain browsing (the dashboard
+    // tab, no params) starts collapsed so the map fills the screen.
+    _panelExpanded = widget.focusDestination != null || _isItineraryMode;
     if (_isItineraryMode) {
-      unawaited(_resolveMyLocationForItinerary());
+      unawaited(_startItineraryTracking());
+    } else {
+      // Itinerary mode already asks (via _startItineraryTracking) - for
+      // every other way of opening this screen, ask up front too instead of
+      // waiting for the user to discover the locate button and tap it.
+      unawaited(ensureLocationPermission());
     }
   }
 
-  Future<void> _resolveMyLocationForItinerary() async {
+  Future<void> _startItineraryTracking() async {
     setState(() {
       _resolvingMyLocation = true;
       _myLocationError = null;
@@ -115,17 +142,8 @@ class _MapPageState extends State<MapPage> {
     try {
       final position = await Geolocator.getCurrentPosition();
       if (!mounted) return;
-      setState(() {
-        _origin = Destination(
-          id: _myLocationDestinationId,
-          name: AppLocalizations.of(context)!.mapMyLocationLabel,
-          country: '',
-          tags: const [],
-          lat: position.latitude,
-          lon: position.longitude,
-        );
-        _resolvingMyLocation = false;
-      });
+      _applyPosition(position);
+      setState(() => _resolvingMyLocation = false);
       unawaited(_computeRoute());
     } catch (e) {
       if (!mounted) return;
@@ -134,14 +152,169 @@ class _MapPageState extends State<MapPage> {
         _myLocationError = e.toString();
       });
     }
+    if (!mounted) return;
+    // A continuous stream, not just the one-shot fix above - both to keep
+    // the origin marker moving with the user and to detect when they get
+    // close enough to a checkpoint to count it as visited.
+    unawaited(_positionSub?.cancel());
+    _positionSub = Geolocator.getPositionStream(
+      locationSettings: const LocationSettings(
+        accuracy: LocationAccuracy.high,
+        distanceFilter: 15,
+      ),
+    ).listen(_applyPosition);
+  }
+
+  void _applyPosition(Position position) {
+    if (!mounted) return;
+    setState(() {
+      _origin = Destination(
+        id: _myLocationDestinationId,
+        name: AppLocalizations.of(context)!.mapMyLocationLabel,
+        country: '',
+        tags: const [],
+        lat: position.latitude,
+        lon: position.longitude,
+      );
+      _updateVisitedProgress(position);
+    });
+  }
+
+  // A checkpoint counts as visited once the user has physically come within
+  // this radius of it - close enough to be a deliberate stop rather than
+  // just passing nearby on the way to somewhere else.
+  static const double _visitRadiusMeters = 120;
+
+  void _updateVisitedProgress(Position position) {
+    for (final checkpoint in _itineraryCheckpoints) {
+      if (_visitedIds.contains(checkpoint.id)) continue;
+      final distance = Geolocator.distanceBetween(
+        position.latitude,
+        position.longitude,
+        checkpoint.lat!,
+        checkpoint.lon!,
+      );
+      if (distance <= _visitRadiusMeters) _visitedIds.add(checkpoint.id);
+    }
+  }
+
+  Future<void> _selectItinerary() async {
+    final l10n = AppLocalizations.of(context)!;
+    List<Itinerary> itineraries;
+    try {
+      itineraries = await widget.session.itineraries();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
+      );
+      return;
+    }
+    if (!mounted) return;
+    if (itineraries.isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.mapNoItinerariesAvailable)));
+      return;
+    }
+
+    final chosen = await showModalBottomSheet<Itinerary>(
+      context: context,
+      backgroundColor: const Color(0xFF13253A),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                l10n.mapSelectItinerarySheetTitle,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 16,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Flexible(
+                child: ListView(
+                  shrinkWrap: true,
+                  children: [
+                    for (final itinerary in itineraries)
+                      ListTile(
+                        leading: const Icon(
+                          Icons.map_outlined,
+                          color: Colors.white70,
+                        ),
+                        title: Text(
+                          itinerary.title,
+                          style: const TextStyle(color: Colors.white),
+                        ),
+                        subtitle: Text(
+                          '${itinerary.destinations.length}',
+                          style: const TextStyle(color: Colors.white54),
+                        ),
+                        onTap: () => Navigator.of(context).pop(itinerary),
+                      ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    if (chosen == null || !mounted) return;
+
+    final ordered = await showOrderDestinationsSheet(
+      context,
+      destinationIds: chosen.destinations,
+      destinationsById: {for (final d in _allDestinations) d.id: d},
+    );
+    if (ordered == null || !mounted) return;
+
+    unawaited(_positionSub?.cancel());
+    setState(() {
+      _itineraryIds = ordered;
+      _itineraryTitle = chosen.title;
+      _visitedIds.clear();
+      _origin = null;
+      _route = null;
+      _panelExpanded = false;
+    });
+    unawaited(_startItineraryTracking());
+  }
+
+  void _leaveItineraryMode() {
+    unawaited(_positionSub?.cancel());
+    setState(() {
+      _itineraryIds = null;
+      _itineraryTitle = null;
+      _visitedIds.clear();
+      _origin = null;
+      _destination = null;
+      _route = null;
+      _routeError = null;
+    });
   }
 
   @override
   void dispose() {
     _searchController.dispose();
+    unawaited(_positionSub?.cancel());
     super.dispose();
   }
 
+  // Unlike the app's other glass panels, this one floats directly on top of
+  // TripMap - which on Android/Web renders as a native platform view
+  // (MapLibre), not ordinary Flutter pixels. BackdropFilter can't sample a
+  // platform view's own compositing layer, so its blur/tint silently no-ops
+  // there, leaving text with no readable background at all. A solid, mostly
+  // opaque fill works the same on every backend instead.
   Widget _glassPanel({
     required Widget child,
     EdgeInsets? padding,
@@ -150,17 +323,14 @@ class _MapPageState extends State<MapPage> {
     final radius = borderRadius ?? BorderRadius.circular(18);
     return ClipRRect(
       borderRadius: radius,
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
-        child: Container(
-          padding: padding ?? const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.12),
-            borderRadius: radius,
-            border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
-          ),
-          child: child,
+      child: Container(
+        padding: padding ?? const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: const Color(0xFF0B1A24).withValues(alpha: 0.88),
+          borderRadius: radius,
+          border: Border.all(color: Colors.white.withValues(alpha: 0.18)),
         ),
+        child: child,
       ),
     );
   }
@@ -510,7 +680,7 @@ class _MapPageState extends State<MapPage> {
             ),
           ),
           TextButton(
-            onPressed: _resolveMyLocationForItinerary,
+            onPressed: _startItineraryTracking,
             style: TextButton.styleFrom(
               padding: EdgeInsets.zero,
               minimumSize: Size.zero,
@@ -708,7 +878,7 @@ class _MapPageState extends State<MapPage> {
       backgroundColor: Colors.transparent,
       appBar: widget.showAppBar
           ? AppBar(
-              title: Text(widget.itineraryTitle ?? l10n.navMap),
+              title: Text(_itineraryTitle ?? l10n.navMap),
               backgroundColor: Colors.transparent,
               foregroundColor: Colors.white,
               elevation: 0,
@@ -732,22 +902,22 @@ class _MapPageState extends State<MapPage> {
           final all = snapshot.data ?? <Destination>[];
           final withCoords = all.where((d) => d.hasCoordinates).toList();
           final checkpoints = _itineraryCheckpoints;
+          final visitedCount = checkpoints
+              .where((c) => _visitedIds.contains(c.id))
+              .length;
           final markers = _isItineraryMode
               ? [
-                  if (_origin != null)
+                  // No pin for the origin here - the heading-aware "my
+                  // location" puck (below, via alwaysShowMyLocation) shows
+                  // the user's own position instead, so it isn't drawn twice.
+                  for (var i = 0; i < checkpoints.length; i++)
                     TripMapMarker(
-                      id: _origin!.id,
-                      name: _origin!.name,
-                      lat: _origin!.lat!,
-                      lon: _origin!.lon!,
-                    ),
-                  for (final stop in checkpoints)
-                    TripMapMarker(
-                      id: stop.id,
-                      name: stop.name,
-                      lat: stop.lat!,
-                      lon: stop.lon!,
+                      id: checkpoints[i].id,
+                      name: checkpoints[i].name,
+                      lat: checkpoints[i].lat!,
+                      lon: checkpoints[i].lon!,
                       selected: true,
+                      label: '${i + 1}',
                     ),
                 ]
               : [
@@ -764,210 +934,362 @@ class _MapPageState extends State<MapPage> {
           final firstCheckpoint = checkpoints.isNotEmpty
               ? checkpoints.first
               : null;
+          // Below the AppBar (if any) plus a little breathing room, so the
+          // floating controls never sit under the status bar/notch even
+          // though the map itself extends fully behind them.
+          final topInset =
+              (widget.showAppBar ? 0.0 : MediaQuery.of(context).padding.top) +
+              12;
 
-          return Column(
+          return Stack(
             children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 10),
-                child: _glassPanel(
-                  borderRadius: BorderRadius.circular(20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Icon(Icons.alt_route, color: Colors.white, size: 20),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              _isItineraryMode
-                                  ? (widget.itineraryTitle ?? l10n.navMap)
-                                  : l10n.mapTitle,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w800,
-                                fontSize: 16,
-                              ),
-                            ),
-                          ),
-                          if (!_isItineraryMode &&
-                              (_origin != null || _destination != null))
-                            TextButton(
-                              onPressed: _clearRoute,
-                              style: TextButton.styleFrom(
-                                padding: EdgeInsets.zero,
-                                minimumSize: Size.zero,
-                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                              ),
-                              child: Text(
-                                l10n.mapClearRoute,
-                                style: const TextStyle(
-                                  color: Colors.white70,
-                                  fontSize: 12.5,
-                                ),
-                              ),
-                            ),
-                        ],
-                      ),
-                      const SizedBox(height: 10),
-                      if (_isItineraryMode)
-                        _buildItinerarySummary(l10n, checkpoints)
-                      else
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Expanded(
-                              child: Column(
-                                children: [
-                                  _pointField(
-                                    icon: Icons.trip_origin,
-                                    label: l10n.mapFromLabel,
-                                    value: _origin,
-                                    options: withCoords,
-                                    onPicked: (d) =>
-                                        setState(() => _origin = d),
-                                    allowMyLocation: true,
-                                  ),
-                                  const SizedBox(height: 8),
-                                  _pointField(
-                                    icon: Icons.flag,
-                                    label: l10n.mapToLabel,
-                                    value: _destination,
-                                    options: withCoords,
-                                    onPicked: (d) =>
-                                        setState(() => _destination = d),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(width: 6),
-                            IconButton(
-                              onPressed:
-                                  (_origin == null && _destination == null)
-                                  ? null
-                                  : _swapPoints,
-                              icon: const Icon(
-                                Icons.swap_vert,
-                                color: Colors.white70,
-                              ),
-                              tooltip: l10n.mapSwapButton,
-                            ),
-                          ],
-                        ),
-                      const SizedBox(height: 10),
-                      Wrap(
-                        spacing: 8,
-                        children: [
-                          _profileChip(
-                            'driving-car',
-                            Icons.directions_car,
-                            l10n.mapProfileDriving,
-                          ),
-                          _profileChip(
-                            'foot-walking',
-                            Icons.directions_walk,
-                            l10n.mapProfileWalking,
-                          ),
-                          _profileChip(
-                            'cycling-regular',
-                            Icons.directions_bike,
-                            l10n.mapProfileCycling,
-                          ),
-                        ],
-                      ),
-                      if (_routeLoading) ...[
-                        const SizedBox(height: 10),
-                        const Center(
-                          child: SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          ),
-                        ),
-                      ],
-                      if (_routeError != null) ...[
-                        const SizedBox(height: 8),
-                        Text(
-                          _routeError!.contains('not configured')
-                              ? l10n.mapRoutingNotConfigured
-                              : l10n.mapRouteError(_routeError!),
-                          style: TextStyle(
-                            color: Colors.red.shade100,
-                            fontSize: 12.5,
-                          ),
-                        ),
-                      ],
-                      if (_route != null) ...[
-                        const SizedBox(height: 10),
-                        Row(
-                          children: [
-                            const Icon(
-                              Icons.straighten,
-                              size: 15,
-                              color: Colors.white70,
-                            ),
-                            const SizedBox(width: 6),
-                            Text(
-                              _formatDistance(_route!.distanceMeters),
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 12.5,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            const SizedBox(width: 16),
-                            const Icon(
-                              Icons.schedule,
-                              size: 15,
-                              color: Colors.white70,
-                            ),
-                            const SizedBox(width: 6),
-                            Text(
-                              formatDuration(
-                                Duration(
-                                  seconds: _route!.durationSeconds.round(),
-                                ),
-                              ),
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 12.5,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ],
+              Positioned.fill(
+                child: TripMap(
+                  markers: markers,
+                  routeGeometry: _route?.geometry,
+                  onMarkerTap: (id) => _onMarkerTap(id, withCoords),
+                  initialLat:
+                      firstCheckpoint?.lat ?? focus?.lat ?? yaoundeCenterLat,
+                  initialLon:
+                      firstCheckpoint?.lon ?? focus?.lon ?? yaoundeCenterLon,
+                  initialZoom: (firstCheckpoint != null || focus != null)
+                      ? 14
+                      : 12.5,
+                  alwaysShowMyLocation: _isItineraryMode,
+                ),
+              ),
+              if (_isItineraryMode && checkpoints.isNotEmpty)
+                Positioned(
+                  top: topInset,
+                  left: 16,
+                  child: _progressPill(l10n, visitedCount, checkpoints.length),
+                ),
+              Positioned(
+                top: topInset,
+                right: 16,
+                child: _panelToggleButton(l10n),
+              ),
+              if (_panelExpanded)
+                Positioned(
+                  top: topInset + 56,
+                  left: 16,
+                  right: 16,
+                  child: _optionsPanel(l10n, withCoords, checkpoints),
+                ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _panelToggleButton(AppLocalizations l10n) {
+    return Material(
+      color: _panelExpanded
+          ? Theme.of(context).colorScheme.primary
+          : const Color(0xFF0B1A24),
+      shape: const CircleBorder(),
+      elevation: 3,
+      child: InkWell(
+        customBorder: const CircleBorder(),
+        onTap: () => setState(() => _panelExpanded = !_panelExpanded),
+        child: Padding(
+          padding: const EdgeInsets.all(11),
+          child: Icon(
+            _panelExpanded ? Icons.close : Icons.tune,
+            color: Colors.white,
+            size: 20,
+            semanticLabel: l10n.mapOptionsToggleTooltip,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _progressPill(AppLocalizations l10n, int visited, int total) {
+    return _glassPanel(
+      borderRadius: BorderRadius.circular(999),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.flag_circle, size: 16, color: Colors.white),
+          const SizedBox(width: 6),
+          Text(
+            l10n.mapItineraryProgress(visited, total),
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w700,
+              fontSize: 12.5,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _optionsPanel(
+    AppLocalizations l10n,
+    List<Destination> withCoords,
+    List<Destination> checkpoints,
+  ) {
+    return _glassPanel(
+      borderRadius: BorderRadius.circular(20),
+      // Pinned on top+left+right but not bottom (see the Positioned above),
+      // so its height constraint is unbounded - without `min` a Column
+      // defaults to trying to be as tall as possible, which fails to lay
+      // out under an infinite max height and renders nothing at all.
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.alt_route, color: Colors.white, size: 20),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  _isItineraryMode
+                      ? (_itineraryTitle ?? l10n.navMap)
+                      : l10n.mapTitle,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 16,
                   ),
                 ),
               ),
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(20),
-                    child: TripMap(
-                      markers: markers,
-                      routeGeometry: _route?.geometry,
-                      onMarkerTap: (id) => _onMarkerTap(id, withCoords),
-                      initialLat:
-                          firstCheckpoint?.lat ??
-                          focus?.lat ??
-                          yaoundeCenterLat,
-                      initialLon:
-                          firstCheckpoint?.lon ??
-                          focus?.lon ??
-                          yaoundeCenterLon,
-                      initialZoom: (firstCheckpoint != null || focus != null)
-                          ? 14
-                          : 12.5,
+              if (_isItineraryMode)
+                TextButton(
+                  onPressed: _leaveItineraryMode,
+                  style: TextButton.styleFrom(
+                    padding: EdgeInsets.zero,
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                  child: Text(
+                    l10n.mapLeaveItineraryButton,
+                    style: const TextStyle(
+                      color: Colors.white70,
+                      fontSize: 12.5,
+                    ),
+                  ),
+                )
+              else if (_origin != null || _destination != null)
+                TextButton(
+                  onPressed: _clearRoute,
+                  style: TextButton.styleFrom(
+                    padding: EdgeInsets.zero,
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                  child: Text(
+                    l10n.mapClearRoute,
+                    style: const TextStyle(
+                      color: Colors.white70,
+                      fontSize: 12.5,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          if (_isItineraryMode) ...[
+            _buildItinerarySummary(l10n, checkpoints),
+            const SizedBox(height: 8),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                onPressed: _selectItinerary,
+                style: TextButton.styleFrom(
+                  padding: EdgeInsets.zero,
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+                icon: const Icon(
+                  Icons.swap_horiz,
+                  size: 16,
+                  color: Colors.white70,
+                ),
+                label: Text(
+                  l10n.mapSelectItineraryButton,
+                  style: const TextStyle(color: Colors.white70, fontSize: 12.5),
+                ),
+              ),
+            ),
+          ] else ...[
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Column(
+                    children: [
+                      _pointField(
+                        icon: Icons.trip_origin,
+                        label: l10n.mapFromLabel,
+                        value: _origin,
+                        options: withCoords,
+                        onPicked: (d) => setState(() => _origin = d),
+                        allowMyLocation: true,
+                      ),
+                      const SizedBox(height: 8),
+                      _pointField(
+                        icon: Icons.flag,
+                        label: l10n.mapToLabel,
+                        value: _destination,
+                        options: withCoords,
+                        onPicked: (d) => setState(() => _destination = d),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 6),
+                IconButton(
+                  onPressed: (_origin == null && _destination == null)
+                      ? null
+                      : _swapPoints,
+                  icon: const Icon(Icons.swap_vert, color: Colors.white70),
+                  tooltip: l10n.mapSwapButton,
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            InkWell(
+              borderRadius: BorderRadius.circular(12),
+              onTap: _selectItinerary,
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.2),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.route, size: 18, color: Colors.white70),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        l10n.mapSelectItineraryButton,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 13.5,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    const Icon(
+                      Icons.chevron_right,
+                      size: 18,
+                      color: Colors.white54,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            children: [
+              _profileChip(
+                'driving-car',
+                Icons.directions_car,
+                l10n.mapProfileDriving,
+              ),
+              _profileChip(
+                'foot-walking',
+                Icons.directions_walk,
+                l10n.mapProfileWalking,
+              ),
+              _profileChip(
+                'cycling-regular',
+                Icons.directions_bike,
+                l10n.mapProfileCycling,
+              ),
+            ],
+          ),
+          if (_routeLoading) ...[
+            const SizedBox(height: 10),
+            const Center(
+              child: SizedBox(
+                width: 18,
+                height: 18,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+            ),
+          ],
+          if (_routeError != null) ...[
+            const SizedBox(height: 8),
+            Text(
+              _routeError!.contains('not configured')
+                  ? l10n.mapRoutingNotConfigured
+                  : l10n.mapRouteError(_routeError!),
+              style: TextStyle(color: Colors.red.shade100, fontSize: 12.5),
+            ),
+            // Not shown for "not configured" - that's a server-side setup
+            // problem retrying can't fix, unlike the routing provider's own
+            // transient failures/rate limits.
+            if (!_routeError!.contains('not configured')) ...[
+              const SizedBox(height: 4),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: TextButton(
+                  onPressed: _computeRoute,
+                  style: TextButton.styleFrom(
+                    padding: EdgeInsets.zero,
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                  child: Text(
+                    l10n.mapRetryButton,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
                 ),
               ),
             ],
-          );
-        },
+          ],
+          if (_route != null) ...[
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                const Icon(Icons.straighten, size: 15, color: Colors.white70),
+                const SizedBox(width: 6),
+                Text(
+                  _formatDistance(_route!.distanceMeters),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                const Icon(Icons.schedule, size: 15, color: Colors.white70),
+                const SizedBox(width: 6),
+                Text(
+                  formatDuration(
+                    Duration(seconds: _route!.durationSeconds.round()),
+                  ),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ],
       ),
     );
   }

@@ -95,7 +95,9 @@ class ApiClient {
       headers: {'Authorization': 'Bearer $token'},
     );
     _throwIfNotOk(response);
-    return UserProfile.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
+    return UserProfile.fromJson(
+      jsonDecode(response.body) as Map<String, dynamic>,
+    );
   }
 
   // The backend keys off the multipart part's actual Content-Type header
@@ -110,22 +112,33 @@ class ApiClient {
     return MediaType('image', 'jpeg');
   }
 
-  Future<UserProfile> uploadAvatar(String token, List<int> bytes, String filename) async {
+  Future<UserProfile> uploadAvatar(
+    String token,
+    List<int> bytes,
+    String filename,
+  ) async {
     final request = http.MultipartRequest('POST', _uri('/me/avatar'))
       ..headers['Authorization'] = 'Bearer $token'
-      ..files.add(http.MultipartFile.fromBytes(
-        'file',
-        bytes,
-        filename: filename,
-        contentType: _imageMediaType(filename),
-      ));
+      ..files.add(
+        http.MultipartFile.fromBytes(
+          'file',
+          bytes,
+          filename: filename,
+          contentType: _imageMediaType(filename),
+        ),
+      );
     final streamed = await _client.send(request);
     final response = await http.Response.fromStream(streamed);
     _throwIfNotOk(response);
-    return UserProfile.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
+    return UserProfile.fromJson(
+      jsonDecode(response.body) as Map<String, dynamic>,
+    );
   }
 
-  Future<UserProfile> updateInterests(String token, List<String> interests) async {
+  Future<UserProfile> updateInterests(
+    String token,
+    List<String> interests,
+  ) async {
     final response = await _client.put(
       _uri('/me/interests'),
       headers: {
@@ -135,7 +148,9 @@ class ApiClient {
       body: jsonEncode({'interests': interests}),
     );
     _throwIfNotOk(response);
-    return UserProfile.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
+    return UserProfile.fromJson(
+      jsonDecode(response.body) as Map<String, dynamic>,
+    );
   }
 
   Future<List<Destination>> getFavorites(String token) async {
@@ -145,7 +160,9 @@ class ApiClient {
     );
     _throwIfNotOk(response);
     final decoded = jsonDecode(response.body) as List<dynamic>;
-    return decoded.map((e) => Destination.fromJson(e as Map<String, dynamic>)).toList();
+    return decoded
+        .map((e) => Destination.fromJson(e as Map<String, dynamic>))
+        .toList();
   }
 
   Future<UserProfile> addFavorite(String token, String destinationId) async {
@@ -154,7 +171,9 @@ class ApiClient {
       headers: {'Authorization': 'Bearer $token'},
     );
     _throwIfNotOk(response);
-    return UserProfile.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
+    return UserProfile.fromJson(
+      jsonDecode(response.body) as Map<String, dynamic>,
+    );
   }
 
   Future<UserProfile> removeFavorite(String token, String destinationId) async {
@@ -163,10 +182,15 @@ class ApiClient {
       headers: {'Authorization': 'Bearer $token'},
     );
     _throwIfNotOk(response);
-    return UserProfile.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
+    return UserProfile.fromJson(
+      jsonDecode(response.body) as Map<String, dynamic>,
+    );
   }
 
-  Future<List<Destination>> getDestinations({String? query, String? token}) async {
+  Future<List<Destination>> getDestinations({
+    String? query,
+    String? token,
+  }) async {
     final response = await _client.get(
       _uri(
         '/destinations',
@@ -183,7 +207,11 @@ class ApiClient {
         .toList();
   }
 
-  Future<Destination> rateDestination(String token, String destinationId, int stars) async {
+  Future<Destination> rateDestination(
+    String token,
+    String destinationId,
+    int stars,
+  ) async {
     final response = await _client.put(
       _uri('/destinations/$destinationId/rating'),
       headers: {
@@ -222,7 +250,10 @@ class ApiClient {
     });
   }
 
-  Future<Destination> submitDestination(String token, Map<String, dynamic> payload) async {
+  Future<Destination> submitDestination(
+    String token,
+    Map<String, dynamic> payload,
+  ) async {
     final response = await _client.post(
       _uri('/destinations/submit'),
       headers: {
@@ -232,7 +263,9 @@ class ApiClient {
       body: jsonEncode(payload),
     );
     _throwIfNotOk(response);
-    return Destination.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
+    return Destination.fromJson(
+      jsonDecode(response.body) as Map<String, dynamic>,
+    );
   }
 
   Future<List<Destination>> getMySubmissions(String token) async {
@@ -242,7 +275,9 @@ class ApiClient {
     );
     _throwIfNotOk(response);
     final decoded = jsonDecode(response.body) as List<dynamic>;
-    return decoded.map((e) => Destination.fromJson(e as Map<String, dynamic>)).toList();
+    return decoded
+        .map((e) => Destination.fromJson(e as Map<String, dynamic>))
+        .toList();
   }
 
   Future<Destination> uploadDestinationImage(
@@ -251,18 +286,26 @@ class ApiClient {
     List<int> bytes,
     String filename,
   ) async {
-    final request = http.MultipartRequest('POST', _uri('/destinations/$destinationId/image'))
-      ..headers['Authorization'] = 'Bearer $token'
-      ..files.add(http.MultipartFile.fromBytes(
-        'file',
-        bytes,
-        filename: filename,
-        contentType: _imageMediaType(filename),
-      ));
+    final request =
+        http.MultipartRequest(
+            'POST',
+            _uri('/destinations/$destinationId/image'),
+          )
+          ..headers['Authorization'] = 'Bearer $token'
+          ..files.add(
+            http.MultipartFile.fromBytes(
+              'file',
+              bytes,
+              filename: filename,
+              contentType: _imageMediaType(filename),
+            ),
+          );
     final streamed = await _client.send(request);
     final response = await http.Response.fromStream(streamed);
     _throwIfNotOk(response);
-    return Destination.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
+    return Destination.fromJson(
+      jsonDecode(response.body) as Map<String, dynamic>,
+    );
   }
 
   Future<List<Destination>> getRecommendations(String token) async {
@@ -319,6 +362,32 @@ class ApiClient {
         .toList();
   }
 
+  Future<Itinerary> updateItinerary(
+    String token,
+    String itineraryId, {
+    String? title,
+    List<String>? destinations,
+    List<ScheduleEntry>? schedule,
+  }) async {
+    final response = await _client.patch(
+      _uri('/itineraries/$itineraryId'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({
+        if (title != null) 'title': title,
+        if (destinations != null) 'destinations': destinations,
+        if (schedule != null)
+          'schedule': schedule.map((e) => e.toJson()).toList(),
+      }),
+    );
+    _throwIfNotOk(response);
+    return Itinerary.fromJson(
+      jsonDecode(response.body) as Map<String, dynamic>,
+    );
+  }
+
   Future<void> deleteItinerary(String token, String itineraryId) async {
     final response = await _client.delete(
       _uri('/itineraries/$itineraryId'),
@@ -344,7 +413,9 @@ class ApiClient {
       }),
     );
     _throwIfNotOk(response);
-    return RouteResult.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
+    return RouteResult.fromJson(
+      jsonDecode(response.body) as Map<String, dynamic>,
+    );
   }
 
   Future<List<Comment>> getComments(String token, String destinationId) async {
@@ -354,7 +425,9 @@ class ApiClient {
     );
     _throwIfNotOk(response);
     final decoded = jsonDecode(response.body) as List<dynamic>;
-    return decoded.map((e) => Comment.fromJson(e as Map<String, dynamic>)).toList();
+    return decoded
+        .map((e) => Comment.fromJson(e as Map<String, dynamic>))
+        .toList();
   }
 
   Future<Comment> postComment(
@@ -369,17 +442,43 @@ class ApiClient {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',
       },
-      body: jsonEncode({
-        'text': text,
-        'parent_id': ?parentId,
-      }),
+      body: jsonEncode({'text': text, 'parent_id': ?parentId}),
     );
     _throwIfNotOk(response);
     return Comment.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
   }
 
+  Future<Comment> editComment(
+    String token,
+    String commentId,
+    String text,
+  ) async {
+    final response = await _client.patch(
+      _uri('/comments/$commentId'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({'text': text}),
+    );
+    _throwIfNotOk(response);
+    return Comment.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
+  }
+
+  Future<void> deleteComment(String token, String commentId) async {
+    final response = await _client.delete(
+      _uri('/comments/$commentId'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+    _throwIfNotOk(response);
+  }
+
   /// [direction] is "up", "down", or "none" (removes the vote).
-  Future<Comment> voteComment(String token, String commentId, String direction) async {
+  Future<Comment> voteComment(
+    String token,
+    String commentId,
+    String direction,
+  ) async {
     final response = await _client.post(
       _uri('/comments/$commentId/vote'),
       headers: {
@@ -399,9 +498,7 @@ class ApiClient {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',
       },
-      body: jsonEncode({
-        'messages': messages.map((m) => m.toJson()).toList(),
-      }),
+      body: jsonEncode({'messages': messages.map((m) => m.toJson()).toList()}),
     );
     _throwIfNotOk(response);
     final decoded = jsonDecode(response.body) as Map<String, dynamic>;

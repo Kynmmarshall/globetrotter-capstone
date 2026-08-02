@@ -7,6 +7,7 @@ import 'package:trip_io/screens/destination_detail_page.dart';
 import 'package:trip_io/services/analytics.dart';
 import 'package:trip_io/services/api_client.dart';
 import 'package:trip_io/services/session_controller.dart';
+import 'package:trip_io/widgets/add_to_itinerary_button.dart';
 import 'package:trip_io/widgets/favorite_toggle_button.dart';
 import 'package:trip_io/widgets/feature_pill.dart';
 import 'package:trip_io/widgets/new_comments_badge.dart';
@@ -54,7 +55,11 @@ class _FavoritesPageState extends State<FavoritesPage> {
     );
   }
 
-  Widget _buildThumbnail(BuildContext context, Destination item, String heroTag) {
+  Widget _buildThumbnail(
+    BuildContext context,
+    Destination item,
+    String heroTag,
+  ) {
     final imageUrl = ApiClient.resolveAssetUrl(item.imageUrl);
     return ClipRRect(
       borderRadius: BorderRadius.circular(14),
@@ -72,11 +77,15 @@ class _FavoritesPageState extends State<FavoritesPage> {
                     return const ColoredBox(
                       color: Colors.white10,
                       child: Center(
-                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white70),
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white70,
+                        ),
                       ),
                     );
                   },
-                  errorBuilder: (context, error, stackTrace) => _fallbackThumb(context),
+                  errorBuilder: (context, error, stackTrace) =>
+                      _fallbackThumb(context),
                 )
               : _fallbackThumb(context),
         ),
@@ -88,10 +97,15 @@ class _FavoritesPageState extends State<FavoritesPage> {
     return DecoratedBox(
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [Theme.of(context).colorScheme.primary, Theme.of(context).colorScheme.tertiary],
+          colors: [
+            Theme.of(context).colorScheme.primary,
+            Theme.of(context).colorScheme.tertiary,
+          ],
         ),
       ),
-      child: const Center(child: Icon(Icons.favorite, color: Colors.white, size: 26)),
+      child: const Center(
+        child: Icon(Icons.favorite, color: Colors.white, size: 26),
+      ),
     );
   }
 
@@ -126,29 +140,57 @@ class _FavoritesPageState extends State<FavoritesPage> {
                       Expanded(
                         child: Text(
                           item.name,
-                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 15),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 15,
+                          ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      NewCommentsBadge(session: widget.session, destination: item),
+                      NewCommentsBadge(
+                        session: widget.session,
+                        destination: item,
+                      ),
                       const SizedBox(width: 6),
-                      FavoriteToggleButton(session: widget.session, destinationId: item.id, size: 18),
+                      AddToItineraryButton(
+                        session: widget.session,
+                        destinationId: item.id,
+                        size: 18,
+                      ),
+                      const SizedBox(width: 2),
+                      FavoriteToggleButton(
+                        session: widget.session,
+                        destinationId: item.id,
+                        size: 18,
+                      ),
                     ],
                   ),
                   if (item.hasRatings) ...[
                     const SizedBox(height: 2),
-                    StarRating(average: item.ratingAverage, count: item.ratingCount, size: 12.5),
+                    StarRating(
+                      average: item.ratingAverage,
+                      count: item.ratingCount,
+                      size: 12.5,
+                    ),
                   ],
                   const SizedBox(height: 2),
                   Row(
                     children: [
-                      const Icon(Icons.location_on, size: 13, color: Colors.white70),
+                      const Icon(
+                        Icons.location_on,
+                        size: 13,
+                        color: Colors.white70,
+                      ),
                       const SizedBox(width: 3),
                       Expanded(
                         child: Text(
                           item.location ?? item.country,
-                          style: const TextStyle(color: Colors.white70, fontSize: 12),
+                          style: const TextStyle(
+                            color: Colors.white70,
+                            fontSize: 12,
+                          ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -159,7 +201,11 @@ class _FavoritesPageState extends State<FavoritesPage> {
                     const SizedBox(height: 6),
                     Text(
                       item.description!,
-                      style: TextStyle(color: Colors.white.withValues(alpha: 0.85), fontSize: 12.5, height: 1.3),
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.85),
+                        fontSize: 12.5,
+                        height: 1.3,
+                      ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -169,7 +215,9 @@ class _FavoritesPageState extends State<FavoritesPage> {
                     Wrap(
                       spacing: 6,
                       runSpacing: 6,
-                      children: item.tags.map((t) => FeaturePill(icon: Icons.sell, label: t)).toList(),
+                      children: item.tags
+                          .map((t) => FeaturePill(icon: Icons.sell, label: t))
+                          .toList(),
                     ),
                   ],
                 ],
@@ -197,10 +245,17 @@ class _FavoritesPageState extends State<FavoritesPage> {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   gradient: LinearGradient(
-                    colors: [Theme.of(context).colorScheme.primary, Theme.of(context).colorScheme.tertiary],
+                    colors: [
+                      Theme.of(context).colorScheme.primary,
+                      Theme.of(context).colorScheme.tertiary,
+                    ],
                   ),
                 ),
-                child: const Icon(Icons.favorite, color: Colors.white, size: 20),
+                child: const Icon(
+                  Icons.favorite,
+                  color: Colors.white,
+                  size: 20,
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -215,7 +270,10 @@ class _FavoritesPageState extends State<FavoritesPage> {
                       ),
                     ),
                     const SizedBox(height: 2),
-                    Text(l10n.favoritesSubtitle, style: const TextStyle(color: Colors.white70)),
+                    Text(
+                      l10n.favoritesSubtitle,
+                      style: const TextStyle(color: Colors.white70),
+                    ),
                   ],
                 ),
               ),
@@ -236,7 +294,9 @@ class _FavoritesPageState extends State<FavoritesPage> {
                   return SessionExpiredCard(session: widget.session);
                 }
                 return ErrorStateCard(
-                  message: l10n.favoritesErrorMessage(snapshot.error.toString()),
+                  message: l10n.favoritesErrorMessage(
+                    snapshot.error.toString(),
+                  ),
                 );
               }
               final items = snapshot.data ?? <Destination>[];
