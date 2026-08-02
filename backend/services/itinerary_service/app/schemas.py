@@ -24,3 +24,11 @@ class ItineraryCreate(BaseModel):
     schedule: Optional[List[ScheduleItem]] = None
     start_date: Optional[str] = None
     end_date: Optional[str] = None
+
+
+class ItineraryUpdate(BaseModel):
+    title: Optional[str] = None
+    destinations: Optional[List[str]] = None
+    schedule: Optional[List[ScheduleItem]] = None
+    start_date: Optional[str] = None
+    end_date: Optional[str] = None

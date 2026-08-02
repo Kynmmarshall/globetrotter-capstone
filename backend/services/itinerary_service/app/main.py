@@ -2,7 +2,7 @@ from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 
 from . import crud, events
-from .schemas import Itinerary, ItineraryCreate
+from .schemas import Itinerary, ItineraryCreate, ItineraryUpdate
 from .auth import get_current_user, require_internal
 
 app = FastAPI(title="trip_io Itinerary Service")
@@ -35,6 +35,22 @@ def create_itinerary(itin: ItineraryCreate, user: str = Depends(get_current_user
 @app.get("/itineraries", response_model=list[Itinerary])
 def list_itineraries(user: str = Depends(get_current_user)):
     return crud.get_itineraries_for(user)
+
+
+@app.patch("/itineraries/{itinerary_id}", response_model=Itinerary)
+def update_itinerary(
+    itinerary_id: str, updates: ItineraryUpdate, user: str = Depends(get_current_user)
+):
+    updated = crud.update_itinerary(
+        itinerary_id, user, updates.dict(exclude_unset=True)
+    )
+    if updated is None:
+        raise HTTPException(status_code=404, detail="Itinerary not found")
+    events.publish(
+        "itinerary.updated",
+        {"user": user, "id": itinerary_id, "destinations": updated["destinations"]},
+    )
+    return updated
 
 
 @app.delete("/itineraries/{itinerary_id}")

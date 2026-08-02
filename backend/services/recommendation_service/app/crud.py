@@ -1,6 +1,24 @@
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from .data import read_data, write_data
+
+# How long after posting a comment/reply its author may still edit or
+# delete it - after this it's permanent, same as most forums/social apps.
+COMMENT_EDIT_WINDOW = timedelta(minutes=5)
+
+
+class CommentNotOwnedError(Exception):
+    """Raised when the caller isn't the comment's original author."""
+
+
+class CommentEditWindowExpiredError(Exception):
+    """Raised once COMMENT_EDIT_WINDOW has passed since posting."""
+
+
+class CommentHasRepliesError(Exception):
+    """Raised on delete when other comments already reply to this one -
+    removing it would either orphan those replies or silently destroy
+    someone else's content, so it's blocked rather than either of those."""
 
 APPROVED = "approved"
 PENDING = "pending"
@@ -280,6 +298,47 @@ def vote_comment(comment_id: str, username: str, direction: str):
             write_data(data)
             return _serialize_comment(c, username, [])
     return None
+
+
+def _parse_created_at(raw: str) -> datetime:
+    dt = datetime.fromisoformat(raw)
+    return dt if dt.tzinfo else dt.replace(tzinfo=timezone.utc)
+
+
+def _require_editable(comment: dict, username: str) -> None:
+    if comment.get("username") != username:
+        raise CommentNotOwnedError()
+    if datetime.now(timezone.utc) - _parse_created_at(comment["created_at"]) > COMMENT_EDIT_WINDOW:
+        raise CommentEditWindowExpiredError()
+
+
+def update_comment(comment_id: str, username: str, text: str) -> dict | None:
+    """Returns the updated comment, None if not found, or raises
+    CommentNotOwnedError / CommentEditWindowExpiredError."""
+    data = read_data()
+    for c in data.get("comments", []):
+        if c["id"] == comment_id:
+            _require_editable(c, username)
+            c["text"] = text
+            write_data(data)
+            return _serialize_comment(c, username, [])
+    return None
+
+
+def delete_comment(comment_id: str, username: str) -> bool | None:
+    """Returns True on success, None if not found, or raises
+    CommentNotOwnedError / CommentEditWindowExpiredError / CommentHasRepliesError."""
+    data = read_data()
+    comments = data.get("comments", [])
+    target = next((c for c in comments if c["id"] == comment_id), None)
+    if target is None:
+        return None
+    _require_editable(target, username)
+    if any(c.get("parent_id") == comment_id for c in comments):
+        raise CommentHasRepliesError()
+    data["comments"] = [c for c in comments if c["id"] != comment_id]
+    write_data(data)
+    return True
 
 
 def get_comments_for_destination(destination_id: str, viewer: str | None = None) -> list[dict]:
