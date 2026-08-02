@@ -13,3 +13,13 @@ website/webapp/*
 
 # Real secrets live only in the VPS's own matomo/.env, never in git.
 matomo/.env
+
+# User-uploaded avatars are entirely runtime content - never committed.
+# static/destinations/ is NOT listed here on purpose: it holds the 62
+# curated destination photos (tracked in git) alongside admin/user-uploaded
+# ones (never git-added). A plain `git pull` only ever touches tracked
+# files, so the uploaded ones are already left alone without needing an
+# ignore rule - gitignoring the whole folder would just make it wrong to
+# add a 63rd curated photo later without remembering to force-add it.
+static/avatars/*
+!static/avatars/.gitkeep
