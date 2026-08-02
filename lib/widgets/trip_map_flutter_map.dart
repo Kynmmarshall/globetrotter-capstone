@@ -9,7 +9,7 @@ import 'package:trip_io/widgets/trip_map.dart' show TripMapMarker;
 /// flutter_map-backed map (Windows only - MapLibre has no Windows plugin
 /// implementation). Pure-Dart raster tiles from OpenStreetMap, so it works
 /// without any native platform bindings.
-class TripMapFlutterMapView extends StatelessWidget {
+class TripMapFlutterMapView extends StatefulWidget {
   const TripMapFlutterMapView({
     super.key,
     required this.markers,
@@ -35,6 +35,21 @@ class TripMapFlutterMapView extends StatelessWidget {
   /// real heading to report (most Windows desktops have no compass hardware
   /// and won't) - the arrow is only drawn in that case.
   final ({double lat, double lon, double? heading})? myLocation;
+
+  @override
+  State<TripMapFlutterMapView> createState() => TripMapFlutterMapViewState();
+}
+
+class TripMapFlutterMapViewState extends State<TripMapFlutterMapView> {
+  final MapController _mapController = MapController();
+
+  /// Recenters the map on [lat]/[lon] - called imperatively by TripMap's
+  /// locate button each time it's pressed, rather than being inferred from
+  /// prop changes, so every tap reliably pans the camera even if the fresh
+  /// position happens to be the same as (or very close to) the last one.
+  void flyTo(double lat, double lon, {double zoom = 15}) {
+    _mapController.move(ll.LatLng(lat, lon), zoom);
+  }
 
   Widget _myLocationMarker({double? heading}) {
     final dot = Container(
@@ -93,15 +108,18 @@ class TripMapFlutterMapView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final route = routeGeometry ?? const [];
+    final route = widget.routeGeometry ?? const [];
+    final myLocation = widget.myLocation;
 
     return FlutterMap(
+      mapController: _mapController,
       options: MapOptions(
-        initialCenter: ll.LatLng(initialLat, initialLon),
-        initialZoom: initialZoom,
-        onTap: onMapTapped == null
+        initialCenter: ll.LatLng(widget.initialLat, widget.initialLon),
+        initialZoom: widget.initialZoom,
+        onTap: widget.onMapTapped == null
             ? null
-            : (_, point) => onMapTapped!(point.latitude, point.longitude),
+            : (_, point) =>
+                  widget.onMapTapped!(point.latitude, point.longitude),
       ),
       children: [
         TileLayer(
@@ -119,7 +137,7 @@ class TripMapFlutterMapView extends StatelessWidget {
             ],
           ),
         MarkerLayer(
-          markers: markers.map((marker) {
+          markers: widget.markers.map((marker) {
             final size = marker.label != null
                 ? 24.0
                 : (marker.selected ? 22.0 : 16.0);
@@ -132,9 +150,9 @@ class TripMapFlutterMapView extends StatelessWidget {
               child: Tooltip(
                 message: marker.name,
                 child: GestureDetector(
-                  onTap: onMarkerTap == null
+                  onTap: widget.onMarkerTap == null
                       ? null
-                      : () => onMarkerTap!(marker.id),
+                      : () => widget.onMarkerTap!(marker.id),
                   child: _pin(selected: marker.selected, label: marker.label),
                 ),
               ),
@@ -145,10 +163,10 @@ class TripMapFlutterMapView extends StatelessWidget {
           MarkerLayer(
             markers: [
               Marker(
-                point: ll.LatLng(myLocation!.lat, myLocation!.lon),
-                width: myLocation!.heading != null ? 34 : 22,
-                height: myLocation!.heading != null ? 34 : 22,
-                child: _myLocationMarker(heading: myLocation!.heading),
+                point: ll.LatLng(myLocation.lat, myLocation.lon),
+                width: myLocation.heading != null ? 34 : 22,
+                height: myLocation.heading != null ? 34 : 22,
+                child: _myLocationMarker(heading: myLocation.heading),
               ),
             ],
           ),

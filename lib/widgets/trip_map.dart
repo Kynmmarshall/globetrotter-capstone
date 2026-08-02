@@ -98,12 +98,17 @@ class _TripMapState extends State<TripMap> {
   bool _locating = false;
 
   // MapLibre (Android/Web) renders the user-location puck itself, driven by
-  // the native SDK's own GPS/compass - it only needs a "may I show it" flag.
-  // flutter_map (Windows) has no built-in equivalent, so this drives a plain
-  // marker manually; Windows desktops also have no compass hardware, so
-  // there's no heading to show there, just a position dot.
+  // the native SDK's own GPS/compass; flutter_map (Windows) has no built-in
+  // equivalent, so this also drives a plain marker manually there. Either
+  // way it's kept here (rather than solely inside each platform view) so
+  // this widget can also command an explicit camera recenter on every
+  // locate-button tap - relying on the native "tracking mode" alone turned
+  // out to not reliably repeat after the very first fix.
   Position? _myPosition;
   StreamSubscription<Position>? _positionSub;
+
+  final GlobalKey<TripMapLibreViewState> _mapLibreKey = GlobalKey();
+  final GlobalKey<TripMapFlutterMapViewState> _flutterMapKey = GlobalKey();
 
   @override
   void initState() {
@@ -125,41 +130,75 @@ class _TripMapState extends State<TripMap> {
     await _startLocating();
   }
 
+  void _flyTo(double lat, double lon) {
+    if (TripMap.usesMapLibre) {
+      unawaited(_mapLibreKey.currentState?.flyTo(lat, lon));
+    } else {
+      _flutterMapKey.currentState?.flyTo(lat, lon);
+    }
+  }
+
   Future<void> _startLocating() async {
     setState(() => _locating = true);
+    final l10n = AppLocalizations.of(context)!;
+    if (!await Geolocator.isLocationServiceEnabled()) {
+      if (!mounted) return;
+      setState(() => _locating = false);
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.mapLocationServicesDisabled)));
+      return;
+    }
     final granted = await ensureLocationPermission();
     if (!mounted) return;
     if (!granted) {
       setState(() => _locating = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            AppLocalizations.of(context)!.mapLocationPermissionDenied,
-          ),
-        ),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.mapLocationPermissionDenied)));
       return;
     }
     setState(() => _showMyLocation = true);
-    if (!TripMap.usesMapLibre) {
-      try {
-        final current = await Geolocator.getCurrentPosition();
-        if (mounted) setState(() => _myPosition = current);
-      } catch (_) {
-        // Fall through to the live stream below - a single fix can fail
-        // (e.g. cold GPS) even though the stream still comes up fine.
+
+    // Tracks whether the camera has already been moved for this request, so
+    // it happens exactly once - either from the one-shot fix below, or (if
+    // that fails/times out, e.g. a cold GPS) from the first update the live
+    // stream delivers instead - never both, and never on every later tick.
+    var flown = false;
+    try {
+      final current = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+          timeLimit: Duration(seconds: 12),
+        ),
+      );
+      if (mounted) {
+        setState(() => _myPosition = current);
+        _flyTo(current.latitude, current.longitude);
+        flown = true;
       }
-      unawaited(_positionSub?.cancel());
-      _positionSub =
-          Geolocator.getPositionStream(
-            locationSettings: const LocationSettings(
-              accuracy: LocationAccuracy.high,
-              distanceFilter: 5,
-            ),
-          ).listen((position) {
-            if (mounted) setState(() => _myPosition = position);
-          });
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(l10n.mapLocateFailed)));
+      }
     }
+    unawaited(_positionSub?.cancel());
+    _positionSub =
+        Geolocator.getPositionStream(
+          locationSettings: const LocationSettings(
+            accuracy: LocationAccuracy.high,
+            distanceFilter: 5,
+          ),
+        ).listen((position) {
+          if (!mounted) return;
+          setState(() => _myPosition = position);
+          if (!flown) {
+            flown = true;
+            _flyTo(position.latitude, position.longitude);
+          }
+        });
     if (mounted) setState(() => _locating = false);
   }
 
@@ -200,6 +239,7 @@ class _TripMapState extends State<TripMap> {
   Widget build(BuildContext context) {
     final map = TripMap.usesMapLibre
         ? TripMapLibreView(
+            key: _mapLibreKey,
             markers: widget.markers,
             routeGeometry: widget.routeGeometry,
             onMarkerTap: widget.onMarkerTap,
@@ -210,6 +250,7 @@ class _TripMapState extends State<TripMap> {
             showMyLocation: _showMyLocation,
           )
         : TripMapFlutterMapView(
+            key: _flutterMapKey,
             markers: widget.markers,
             routeGeometry: widget.routeGeometry,
             onMarkerTap: widget.onMarkerTap,

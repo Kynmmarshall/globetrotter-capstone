@@ -36,12 +36,25 @@ class TripMapLibreView extends StatefulWidget {
   final bool showMyLocation;
 
   @override
-  State<TripMapLibreView> createState() => _TripMapLibreViewState();
+  State<TripMapLibreView> createState() => TripMapLibreViewState();
 }
 
-class _TripMapLibreViewState extends State<TripMapLibreView> {
+class TripMapLibreViewState extends State<TripMapLibreView> {
   MapLibreMapController? _controller;
   final Map<String, String> _circleIdToMarkerId = {};
+
+  /// Recenters the map on [lat]/[lon] - called imperatively by TripMap's
+  /// locate button each time it's pressed. `myLocationTrackingMode` alone
+  /// isn't enough: the plugin doesn't reliably react to that prop changing
+  /// after the map has already been created, so this explicitly commands
+  /// the camera instead of hoping the passive tracking mode picks it up.
+  Future<void> flyTo(double lat, double lon, {double zoom = 15}) async {
+    final controller = _controller;
+    if (controller == null) return;
+    await controller.animateCamera(
+      CameraUpdate.newLatLngZoom(LatLng(lat, lon), zoom),
+    );
+  }
 
   // Mouse-hover label - only ever populated on platforms that actually send
   // hover events (web has a real cursor; Android/iOS touch never fires

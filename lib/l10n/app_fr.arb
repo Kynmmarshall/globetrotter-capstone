@@ -158,6 +158,8 @@
   "mapRoutingNotConfigured": "L'itinéraire n'est pas encore configuré. Revenez bientôt.",
   "viewOnMapButton": "Voir sur la carte",
   "mapLocationPermissionDenied": "L'accès à la position est nécessaire pour l'afficher sur la carte. Veuillez l'autoriser dans les paramètres de votre appareil.",
+  "mapLocationServicesDisabled": "Activez la localisation sur votre appareil pour afficher votre position sur la carte.",
+  "mapLocateFailed": "Impossible d'obtenir votre position. Veuillez réessayer.",
   "mapUseMyLocation": "Utiliser ma position actuelle",
   "mapMyLocationLabel": "Ma position actuelle",
   "mapResolvingLocation": "Recherche de votre position…",

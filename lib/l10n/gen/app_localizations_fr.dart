@@ -462,6 +462,14 @@ class AppLocalizationsFr extends AppLocalizations {
       'L\'accès à la position est nécessaire pour l\'afficher sur la carte. Veuillez l\'autoriser dans les paramètres de votre appareil.';
 
   @override
+  String get mapLocationServicesDisabled =>
+      'Activez la localisation sur votre appareil pour afficher votre position sur la carte.';
+
+  @override
+  String get mapLocateFailed =>
+      'Impossible d\'obtenir votre position. Veuillez réessayer.';
+
+  @override
   String get mapUseMyLocation => 'Utiliser ma position actuelle';
 
   @override

@@ -896,6 +896,18 @@ abstract class AppLocalizations {
   /// **'Location access is needed to show your position on the map. Please allow it in your device settings.'**
   String get mapLocationPermissionDenied;
 
+  /// No description provided for @mapLocationServicesDisabled.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn on location services on your device to show your position on the map.'**
+  String get mapLocationServicesDisabled;
+
+  /// No description provided for @mapLocateFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t get your location. Please try again.'**
+  String get mapLocateFailed;
+
   /// No description provided for @mapUseMyLocation.
   ///
   /// In en, this message translates to:
