@@ -20,9 +20,14 @@ x-shared-env: &shared-env
 services:
   rabbitmq:
     image: rabbitmq:3-management
-    ports:
-      - "5672:5672"   # AMQP
-      - "15672:15672" # management UI (guest/guest)
+    # No ports: published to the host - only the three app services talk to
+    # this, over the Docker network's own DNS (amqp://guest:guest@rabbitmq:5672/).
+    # Publishing 5672/15672 would put the default guest/guest credentials
+    # directly on the internet on a public VPS. To browse the management UI
+    # locally, use an SSH tunnel instead:
+    #   ssh -L 15672:localhost:15672 <vps-user>@<vps-host>
+    # then add back "127.0.0.1:15672:15672" (host-only) if you want it to
+    # persist rather than re-tunneling each time.
     healthcheck:
       test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
       interval: 10s
@@ -39,8 +44,9 @@ services:
     volumes:
       - ./services/user_service/data:/srv/data
       - ./services/user_service/static:/srv/static
-    ports:
-      - "8001:8001"
+    # No host port published - only the Gateway and recommendation_service
+    # talk to this, over the Docker network. Add back "8001:8001" locally
+    # if you want to curl it directly while debugging.
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -52,8 +58,9 @@ services:
       ITINERARY_SERVICE_DATA_PATH: /srv/data/itineraries.json
     volumes:
       - ./services/itinerary_service/data:/srv/data
-    ports:
-      - "8002:8002"
+    # No host port published - only the Gateway and recommendation_service
+    # talk to this, over the Docker network. Add back "8002:8002" locally
+    # if you want to curl it directly while debugging.
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -71,8 +78,9 @@ services:
     volumes:
       - ./services/recommendation_service/data:/srv/data
       - ./services/recommendation_service/static:/srv/static
-    ports:
-      - "8003:8003"
+    # No host port published - only the Gateway talks to this, over the
+    # Docker network. Add back "8003:8003" locally if you want to curl it
+    # directly while debugging.
     depends_on:
       rabbitmq:
         condition: service_healthy
