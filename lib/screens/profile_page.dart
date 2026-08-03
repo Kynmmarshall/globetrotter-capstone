@@ -394,6 +394,54 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
+  Widget _buildThemeSwitcher(BuildContext context, AppLocalizations l10n) {
+    final colors = Theme.of(context).colorScheme;
+    return GlassPanel(
+      borderRadius: BorderRadius.circular(22),
+      padding: const EdgeInsets.all(18),
+      child: Row(
+        children: [
+          const Icon(Icons.brightness_6, color: Colors.white70, size: 20),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              l10n.themeLabel,
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w700,
+                fontSize: 15,
+              ),
+            ),
+          ),
+          SegmentedButton<ThemeMode>(
+            segments: [
+              ButtonSegment(
+                value: ThemeMode.system,
+                label: Text(l10n.themeSystem),
+              ),
+              ButtonSegment(
+                value: ThemeMode.light,
+                label: Text(l10n.themeLight),
+              ),
+              ButtonSegment(value: ThemeMode.dark, label: Text(l10n.themeDark)),
+            ],
+            selected: {widget.session.themeMode},
+            onSelectionChanged: (selection) {
+              widget.session.setThemeMode(selection.first);
+            },
+            style: SegmentedButton.styleFrom(
+              backgroundColor: Colors.white.withValues(alpha: 0.08),
+              foregroundColor: Colors.white70,
+              selectedForegroundColor: Colors.white,
+              selectedBackgroundColor: colors.primary.withValues(alpha: 0.85),
+              side: BorderSide(color: Colors.white.withValues(alpha: 0.2)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
@@ -557,6 +605,8 @@ class _ProfilePageState extends State<ProfilePage> {
             _buildInterestsPanel(context, l10n),
             const SizedBox(height: 16),
             _buildLanguageSwitcher(context, l10n),
+            const SizedBox(height: 16),
+            _buildThemeSwitcher(context, l10n),
             const SizedBox(height: 16),
             GlassPanel(
               borderRadius: BorderRadius.circular(22),

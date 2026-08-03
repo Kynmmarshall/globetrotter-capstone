@@ -312,6 +312,11 @@
   "languageEnglish": "English",
   "languageFrench": "French",
 
+  "themeLabel": "Theme",
+  "themeSystem": "System",
+  "themeLight": "Light",
+  "themeDark": "Dark",
+
   "interestsLabel": "Areas of interest",
   "interestsHelper": "Pick a few things you enjoy - we'll use these to recommend Yaoundé spots for you.",
   "interestsUpdatedSnackbar": "Interests updated.",

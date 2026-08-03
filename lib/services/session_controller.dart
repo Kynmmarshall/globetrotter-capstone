@@ -19,6 +19,7 @@ class SessionController extends ChangeNotifier {
   static const _memberSinceKey = 'gt_member_since';
   static const _localeKey = 'gt_locale';
   static const _themeModeKey = 'gt_theme_mode';
+  static const _onboardingSeenKey = 'gt_onboarding_seen';
   static const _interestsKey = 'gt_interests';
   static const _favoriteIdsKey = 'gt_favorite_ids';
   static const _roleKey = 'gt_role';
@@ -48,6 +49,7 @@ class SessionController extends ChangeNotifier {
   // under them on an unrelated update would be a surprise; light mode and
   // system-follow are both opt-in via the profile screen.
   ThemeMode _themeMode = ThemeMode.dark;
+  bool _hasSeenOnboarding = false;
   List<String> _interests = [];
   Set<String> _favoriteIds = {};
   String? _role;
@@ -64,9 +66,18 @@ class SessionController extends ChangeNotifier {
   // Null means "follow the device's system language".
   Locale? get locale => _locale;
   ThemeMode get themeMode => _themeMode;
+  bool get hasSeenOnboarding => _hasSeenOnboarding;
   List<String> get interests => _interests;
   bool isFavorite(String destinationId) => _favoriteIds.contains(destinationId);
   bool get isAdmin => _role == 'admin';
+
+  Future<void> markOnboardingSeen() async {
+    if (_hasSeenOnboarding) return;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_onboardingSeenKey, true);
+    _hasSeenOnboarding = true;
+    notifyListeners();
+  }
 
   void clearError() {
     _error = null;
@@ -91,6 +102,7 @@ class SessionController extends ChangeNotifier {
       (m) => m.name == themeModeName,
       orElse: () => ThemeMode.dark,
     );
+    _hasSeenOnboarding = prefs.getBool(_onboardingSeenKey) ?? false;
     _interests = prefs.getStringList(_interestsKey) ?? [];
     _favoriteIds = (prefs.getStringList(_favoriteIdsKey) ?? []).toSet();
     _role = prefs.getString(_roleKey);
