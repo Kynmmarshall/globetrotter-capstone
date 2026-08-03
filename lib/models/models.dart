@@ -367,6 +367,54 @@ class RouteWaypoint {
   }
 }
 
+/// A moderation notice or trip reminder from GET /me/notifications.
+/// [titleKey]/[bodyKey] are Flutter ARB keys (matching l10n/gen), not
+/// rendered text - the backend has no idea what language the viewer reads
+/// the app in, so it hands back which string to show plus interpolation
+/// args, and the client does the actual rendering. See
+/// notifications_page.dart for the key -> localized-string mapping.
+class AppNotification {
+  const AppNotification({
+    required this.id,
+    required this.type,
+    required this.titleKey,
+    required this.bodyKey,
+    required this.bodyArgs,
+    this.destinationId,
+    this.itineraryId,
+    required this.createdAt,
+    required this.read,
+  });
+
+  final String id;
+  final String type; // "moderation" | "trip_reminder"
+  final String titleKey;
+  final String bodyKey;
+  final Map<String, String> bodyArgs;
+  final String? destinationId;
+  final String? itineraryId;
+  final DateTime createdAt;
+  final bool read;
+
+  factory AppNotification.fromJson(Map<String, dynamic> json) {
+    return AppNotification(
+      id: (json['id'] ?? '').toString(),
+      type: (json['type'] ?? '').toString(),
+      titleKey: (json['title_key'] ?? '').toString(),
+      bodyKey: (json['body_key'] ?? '').toString(),
+      bodyArgs: (json['body_args'] as Map<String, dynamic>? ?? const {}).map(
+        (key, value) => MapEntry(key, value.toString()),
+      ),
+      destinationId: json['destination_id']?.toString(),
+      itineraryId: json['itinerary_id']?.toString(),
+      createdAt:
+          DateTime.tryParse((json['created_at'] ?? '').toString()) ??
+          DateTime.now(),
+      read: json['read'] == true,
+    );
+  }
+}
+
 /// The result of a POST /route call: the full path geometry to draw, plus
 /// trip totals - mirrors the backend's RouteResponse schema.
 class RouteResult {

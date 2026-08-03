@@ -110,6 +110,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get navRecommendations => 'Recommendations';
 
   @override
+  String get navForYou => 'For You';
+
+  @override
   String get navFavorites => 'Favorites';
 
   @override
@@ -323,6 +326,19 @@ class AppLocalizationsEn extends AppLocalizations {
       'Browse destinations and we\'ll start suggesting spots for you.';
 
   @override
+  String get forYouTitle => 'For You';
+
+  @override
+  String get forYouSubtitle =>
+      'A personalized mix of picks made for you and what\'s popular in Yaoundé.';
+
+  @override
+  String get forYouPersonalizedSectionTitle => 'Picked for you';
+
+  @override
+  String get forYouTrendingSectionTitle => 'Trending in Yaoundé';
+
+  @override
   String get favoritesTitle => 'Your favorites';
 
   @override
@@ -339,6 +355,37 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get favoritesEmptySubtitle =>
       'Tap the heart on any destination to save it here.';
+
+  @override
+  String get viewMySubmissionsButton => 'My submissions';
+
+  @override
+  String get mySubmissionsTitle => 'Your submissions';
+
+  @override
+  String get mySubmissionsSubtitle =>
+      'Destinations you\'ve suggested, and their review status.';
+
+  @override
+  String mySubmissionsErrorMessage(String error) {
+    return 'Could not load your submissions.\n$error';
+  }
+
+  @override
+  String get mySubmissionsEmptyTitle => 'No submissions yet';
+
+  @override
+  String get mySubmissionsEmptySubtitle =>
+      'Suggest a destination and track its review status here.';
+
+  @override
+  String get submissionStatusPending => 'Pending review';
+
+  @override
+  String get submissionStatusApproved => 'Approved';
+
+  @override
+  String get submissionStatusRejected => 'Not approved';
 
   @override
   String get itinerariesFormMissing =>
@@ -821,4 +868,95 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get closeButton => 'Close';
+
+  @override
+  String get onboardingSkip => 'Skip';
+
+  @override
+  String get onboardingNext => 'Next';
+
+  @override
+  String get onboardingGetStarted => 'Get started';
+
+  @override
+  String get onboardingPage1Title => 'Discover Yaoundé';
+
+  @override
+  String get onboardingPage1Body =>
+      'Browse real, hand-picked landmarks, culture, markets and nature across Yaoundé, Cameroon.';
+
+  @override
+  String get onboardingPage2Title => 'Get picks made for you';
+
+  @override
+  String get onboardingPage2Body =>
+      'Tell us what you\'re into and we\'ll surface the spots you\'re most likely to enjoy.';
+
+  @override
+  String get onboardingPage3Title => 'Plan your day';
+
+  @override
+  String get onboardingPage3Body =>
+      'Pick your stops and how much time you have - trip_io builds a timed schedule for you.';
+
+  @override
+  String get onboardingPage4Title => 'Navigate as you go';
+
+  @override
+  String get onboardingPage4Body =>
+      'Follow turn-by-turn directions and see every stop, numbered in order, right on the map.';
+
+  @override
+  String get avatarCropTitle => 'Adjust photo';
+
+  @override
+  String get avatarCropConfirmButton => 'Done';
+
+  @override
+  String get avatarCropHint => 'Drag to reposition, pinch or scroll to zoom.';
+
+  @override
+  String get notificationsTitle => 'Notifications';
+
+  @override
+  String get notificationsSubtitle =>
+      'Trip reminders and updates on your submissions.';
+
+  @override
+  String notificationsErrorMessage(String error) {
+    return 'Could not load notifications.\n$error';
+  }
+
+  @override
+  String get notificationsEmptyTitle => 'You\'re all caught up';
+
+  @override
+  String get notificationsEmptySubtitle =>
+      'Moderation notices and trip reminders will show up here.';
+
+  @override
+  String get notificationDestinationStatusTitle => 'Submission update';
+
+  @override
+  String notificationDestinationApprovedBody(String name) {
+    return '\"$name\" was approved and is now live.';
+  }
+
+  @override
+  String notificationDestinationRejectedBody(String name) {
+    return '\"$name\" wasn\'t approved this time.';
+  }
+
+  @override
+  String get notificationTripReminderTitle => 'Upcoming trip';
+
+  @override
+  String notificationTripReminderBodyToday(String title) {
+    return '\"$title\" starts today.';
+  }
+
+  @override
+  String notificationTripReminderBodyInDays(String title, String days) {
+    return '\"$title\" starts in $days days.';
+  }
 }

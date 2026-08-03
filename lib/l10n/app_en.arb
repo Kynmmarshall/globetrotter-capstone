@@ -36,6 +36,7 @@
 
   "navDestinations": "Destinations",
   "navRecommendations": "Recommendations",
+  "navForYou": "For You",
   "navFavorites": "Favorites",
   "navItineraries": "Itineraries",
   "navProfile": "Profile",
@@ -121,6 +122,10 @@
   },
   "recommendationsEmptyTitle": "No recommendations yet",
   "recommendationsEmptySubtitle": "Browse destinations and we'll start suggesting spots for you.",
+  "forYouTitle": "For You",
+  "forYouSubtitle": "A personalized mix of picks made for you and what's popular in Yaoundé.",
+  "forYouPersonalizedSectionTitle": "Picked for you",
+  "forYouTrendingSectionTitle": "Trending in Yaoundé",
 
   "favoritesTitle": "Your favorites",
   "favoritesSubtitle": "Destinations you've saved for later.",
@@ -130,6 +135,19 @@
   },
   "favoritesEmptyTitle": "No favorites yet",
   "favoritesEmptySubtitle": "Tap the heart on any destination to save it here.",
+
+  "viewMySubmissionsButton": "My submissions",
+  "mySubmissionsTitle": "Your submissions",
+  "mySubmissionsSubtitle": "Destinations you've suggested, and their review status.",
+  "mySubmissionsErrorMessage": "Could not load your submissions.\n{error}",
+  "@mySubmissionsErrorMessage": {
+    "placeholders": { "error": { "type": "String" } }
+  },
+  "mySubmissionsEmptyTitle": "No submissions yet",
+  "mySubmissionsEmptySubtitle": "Suggest a destination and track its review status here.",
+  "submissionStatusPending": "Pending review",
+  "submissionStatusApproved": "Approved",
+  "submissionStatusRejected": "Not approved",
 
   "itinerariesFormMissing": "Add a title and pick at least one destination.",
   "itineraryCreatedSnackbar": "Itinerary created.",
@@ -344,5 +362,51 @@
   "shareItineraryTurnOffButton": "Turn off sharing",
   "shareItineraryTurnedOffSnackbar": "Sharing turned off. The old link no longer works.",
   "shareItineraryErrorSnackbar": "Couldn't create a share link right now.",
-  "closeButton": "Close"
+  "closeButton": "Close",
+
+  "onboardingSkip": "Skip",
+  "onboardingNext": "Next",
+  "onboardingGetStarted": "Get started",
+  "onboardingPage1Title": "Discover Yaoundé",
+  "onboardingPage1Body": "Browse real, hand-picked landmarks, culture, markets and nature across Yaoundé, Cameroon.",
+  "onboardingPage2Title": "Get picks made for you",
+  "onboardingPage2Body": "Tell us what you're into and we'll surface the spots you're most likely to enjoy.",
+  "onboardingPage3Title": "Plan your day",
+  "onboardingPage3Body": "Pick your stops and how much time you have - trip_io builds a timed schedule for you.",
+  "onboardingPage4Title": "Navigate as you go",
+  "onboardingPage4Body": "Follow turn-by-turn directions and see every stop, numbered in order, right on the map.",
+
+  "avatarCropTitle": "Adjust photo",
+  "avatarCropConfirmButton": "Done",
+  "avatarCropHint": "Drag to reposition, pinch or scroll to zoom.",
+
+  "notificationsTitle": "Notifications",
+  "notificationsSubtitle": "Trip reminders and updates on your submissions.",
+  "notificationsErrorMessage": "Could not load notifications.\n{error}",
+  "@notificationsErrorMessage": {
+    "placeholders": { "error": { "type": "String" } }
+  },
+  "notificationsEmptyTitle": "You're all caught up",
+  "notificationsEmptySubtitle": "Moderation notices and trip reminders will show up here.",
+  "notificationDestinationStatusTitle": "Submission update",
+  "notificationDestinationApprovedBody": "\"{name}\" was approved and is now live.",
+  "@notificationDestinationApprovedBody": {
+    "placeholders": { "name": { "type": "String" } }
+  },
+  "notificationDestinationRejectedBody": "\"{name}\" wasn't approved this time.",
+  "@notificationDestinationRejectedBody": {
+    "placeholders": { "name": { "type": "String" } }
+  },
+  "notificationTripReminderTitle": "Upcoming trip",
+  "notificationTripReminderBodyToday": "\"{title}\" starts today.",
+  "@notificationTripReminderBodyToday": {
+    "placeholders": { "title": { "type": "String" } }
+  },
+  "notificationTripReminderBodyInDays": "\"{title}\" starts in {days} days.",
+  "@notificationTripReminderBodyInDays": {
+    "placeholders": {
+      "title": { "type": "String" },
+      "days": { "type": "String" }
+    }
+  }
 }

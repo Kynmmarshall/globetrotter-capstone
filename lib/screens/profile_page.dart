@@ -1,9 +1,12 @@
+import 'dart:typed_data' show Uint8List;
+
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:trip_io/l10n/gen/app_localizations.dart';
 import 'package:trip_io/models/interest_tags.dart';
 import 'package:trip_io/models/models.dart';
+import 'package:trip_io/screens/avatar_cropper_page.dart';
 import 'package:trip_io/services/api_client.dart';
 import 'package:trip_io/services/session_controller.dart';
 import 'package:trip_io/widgets/glass_panel.dart';
@@ -72,12 +75,21 @@ class _ProfilePageState extends State<ProfilePage> {
     try {
       final picked = await ImagePicker().pickImage(
         source: ImageSource.gallery,
-        maxWidth: 900,
-        imageQuality: 85,
+        maxWidth: 1600,
+        imageQuality: 90,
       );
-      if (picked != null) {
+      if (picked != null && mounted) {
         final bytes = await picked.readAsBytes();
-        await widget.session.updateAvatar(bytes, picked.name);
+        if (!mounted) return;
+        final cropped = await Navigator.of(context).push<Uint8List>(
+          MaterialPageRoute(
+            fullscreenDialog: true,
+            builder: (_) => AvatarCropperPage(imageBytes: bytes),
+          ),
+        );
+        if (cropped != null) {
+          await widget.session.updateAvatar(cropped, 'avatar.png');
+        }
       }
     } catch (e) {
       if (!mounted) return;

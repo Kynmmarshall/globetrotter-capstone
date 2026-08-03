@@ -482,6 +482,16 @@ class SessionController extends ChangeNotifier {
     Analytics.instance.trackEvent('itinerary', 'deleted', name: itineraryId);
   }
 
+  Future<List<AppNotification>> notifications() async {
+    final token = _requireToken();
+    return ApiClient().getNotifications(token);
+  }
+
+  Future<void> markNotificationRead(String notificationId) async {
+    final token = _requireToken();
+    await ApiClient().markNotificationRead(token, notificationId);
+  }
+
   Future<String> shareItinerary(String itineraryId) async {
     final token = _requireToken();
     final shareToken = await ApiClient().shareItinerary(token, itineraryId);

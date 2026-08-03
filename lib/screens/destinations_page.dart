@@ -3,6 +3,7 @@ import 'package:trip_io/l10n/gen/app_localizations.dart';
 import 'package:trip_io/models/interest_tags.dart';
 import 'package:trip_io/models/models.dart';
 import 'package:trip_io/screens/destination_detail_page.dart';
+import 'package:trip_io/screens/my_submissions_page.dart';
 import 'package:trip_io/screens/submit_destination_page.dart';
 import 'package:trip_io/services/analytics.dart';
 import 'package:trip_io/services/api_client.dart';
@@ -449,23 +450,45 @@ class _DestinationsPageState extends State<DestinationsPage> {
                     ),
                   ),
                   const SizedBox(width: 12),
-                  OutlinedButton.icon(
-                    onPressed: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) =>
-                              SubmitDestinationPage(session: widget.session),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      OutlinedButton.icon(
+                        onPressed: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => SubmitDestinationPage(
+                                session: widget.session,
+                              ),
+                            ),
+                          );
+                        },
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.white,
+                          side: BorderSide(
+                            color: Colors.white.withValues(alpha: 0.4),
+                          ),
                         ),
-                      );
-                    },
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.white,
-                      side: BorderSide(
-                        color: Colors.white.withValues(alpha: 0.4),
+                        icon: const Icon(Icons.add_location_alt, size: 18),
+                        label: Text(l10n.suggestDestinationButton),
                       ),
-                    ),
-                    icon: const Icon(Icons.add_location_alt, size: 18),
-                    label: Text(l10n.suggestDestinationButton),
+                      const SizedBox(height: 8),
+                      TextButton.icon(
+                        onPressed: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) =>
+                                  MySubmissionsPage(session: widget.session),
+                            ),
+                          );
+                        },
+                        style: TextButton.styleFrom(
+                          foregroundColor: Colors.white70,
+                        ),
+                        icon: const Icon(Icons.checklist, size: 16),
+                        label: Text(l10n.viewMySubmissionsButton),
+                      ),
+                    ],
                   ),
                 ],
               ),

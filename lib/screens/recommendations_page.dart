@@ -16,6 +16,18 @@ import 'package:trip_io/widgets/session_expired_card.dart';
 import 'package:trip_io/widgets/skeleton_loaders.dart';
 import 'package:trip_io/widgets/star_rating.dart';
 
+/// The two signals blended into the "For You" home: destinations picked for
+/// this specific viewer (interests + trip history, via the backend's own
+/// recommendation scoring), and destinations broadly popular with everyone
+/// - so the feed still has substance for a new account with no interests or
+/// history yet to personalize against.
+class _ForYouFeed {
+  const _ForYouFeed({required this.personalized, required this.trending});
+
+  final List<Destination> personalized;
+  final List<Destination> trending;
+}
+
 class RecommendationsPage extends StatefulWidget {
   const RecommendationsPage({super.key, required this.session});
 
@@ -26,12 +38,36 @@ class RecommendationsPage extends StatefulWidget {
 }
 
 class _RecommendationsPageState extends State<RecommendationsPage> {
-  late Future<List<Destination>> _future;
+  late Future<_ForYouFeed> _future;
 
   @override
   void initState() {
     super.initState();
-    _future = widget.session.recommendations();
+    _future = _loadFeed();
+  }
+
+  Future<_ForYouFeed> _loadFeed() async {
+    final results = await Future.wait<List<Destination>>([
+      widget.session.recommendations(),
+      widget.session.destinations(),
+    ]);
+    final personalized = results[0];
+    final all = results[1];
+    final personalizedIds = personalized.map((d) => d.id).toSet();
+    final trending = all
+        .where((d) => d.hasRatings && !personalizedIds.contains(d.id))
+        .toList()
+      ..sort((a, b) {
+        final byAverage = (b.ratingAverage ?? 0).compareTo(
+          a.ratingAverage ?? 0,
+        );
+        if (byAverage != 0) return byAverage;
+        return b.ratingCount.compareTo(a.ratingCount);
+      });
+    return _ForYouFeed(
+      personalized: personalized,
+      trending: trending.take(6).toList(),
+    );
   }
 
   Widget _buildThumbnail(
@@ -258,7 +294,7 @@ class _RecommendationsPageState extends State<RecommendationsPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      l10n.recommendationsTitle,
+                      l10n.forYouTitle,
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
                         color: Colors.white,
                         fontWeight: FontWeight.w800,
@@ -266,7 +302,7 @@ class _RecommendationsPageState extends State<RecommendationsPage> {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      l10n.recommendationsSubtitle,
+                      l10n.forYouSubtitle,
                       style: const TextStyle(color: Colors.white70),
                     ),
                   ],
@@ -275,7 +311,7 @@ class _RecommendationsPageState extends State<RecommendationsPage> {
             ],
           ),
           const SizedBox(height: 20),
-          FutureBuilder<List<Destination>>(
+          FutureBuilder<_ForYouFeed>(
             future: _future,
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
@@ -291,8 +327,10 @@ class _RecommendationsPageState extends State<RecommendationsPage> {
                   ),
                 );
               }
-              final items = snapshot.data ?? <Destination>[];
-              if (items.isEmpty) {
+              final feed = snapshot.data;
+              final personalized = feed?.personalized ?? const <Destination>[];
+              final trending = feed?.trending ?? const <Destination>[];
+              if (personalized.isEmpty && trending.isEmpty) {
                 return EmptyStateCard(
                   icon: Icons.explore_off,
                   title: l10n.recommendationsEmptyTitle,
@@ -300,12 +338,44 @@ class _RecommendationsPageState extends State<RecommendationsPage> {
                 );
               }
               return Column(
-                children: items.map((item) {
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: _buildCard(context, item),
-                  );
-                }).toList(),
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (personalized.isNotEmpty) ...[
+                    Text(
+                      l10n.forYouPersonalizedSectionTitle,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 15,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    ...personalized.map(
+                      (item) => Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: _buildCard(context, item),
+                      ),
+                    ),
+                  ],
+                  if (trending.isNotEmpty) ...[
+                    if (personalized.isNotEmpty) const SizedBox(height: 8),
+                    Text(
+                      l10n.forYouTrendingSectionTitle,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 15,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    ...trending.map(
+                      (item) => Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: _buildCard(context, item),
+                      ),
+                    ),
+                  ],
+                ],
               );
             },
           ),

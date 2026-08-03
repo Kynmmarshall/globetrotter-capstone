@@ -9,7 +9,10 @@ import 'package:trip_io/screens/destinations_page.dart';
 import 'package:trip_io/screens/favorites_page.dart';
 import 'package:trip_io/screens/itineraries_page.dart';
 import 'package:trip_io/screens/map_page.dart';
+import 'package:trip_io/screens/notifications_page.dart';
+import 'package:trip_io/screens/onboarding_walkthrough.dart';
 import 'package:trip_io/screens/profile_page.dart';
+import 'package:trip_io/models/models.dart';
 import 'package:trip_io/screens/recommendations_page.dart';
 import 'package:trip_io/themes/trip_colors.dart';
 import 'package:trip_io/widgets/ai_chat_sheet.dart';
@@ -26,10 +29,11 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   int _index = 0;
+  late Future<List<AppNotification>> _notificationsFuture;
 
   static const _icons = <IconData>[
     Icons.public,
-    Icons.star,
+    Icons.auto_awesome,
     Icons.favorite,
     Icons.map,
     Icons.event_note,
@@ -40,7 +44,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   // user-facing (translated) tab labels below.
   static const _screenNames = <String>[
     'destinations',
-    'recommendations',
+    'for_you',
     'favorites',
     'map',
     'itineraries',
@@ -60,6 +64,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
   void initState() {
     super.initState();
     Analytics.instance.trackScreen(_screenNames[_index]);
+    _notificationsFuture = widget.session.notifications();
+    if (!widget.session.hasSeenOnboarding) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            fullscreenDialog: true,
+            builder: (_) => OnboardingWalkthrough(session: widget.session),
+          ),
+        );
+      });
+    }
   }
 
   void _selectTab(int index) {
@@ -71,7 +87,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final l10n = AppLocalizations.of(context)!;
     return [
       l10n.navDestinations,
-      l10n.navRecommendations,
+      l10n.navForYou,
       l10n.navFavorites,
       l10n.navMap,
       l10n.navItineraries,
@@ -85,6 +101,37 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget _aiFab(BuildContext context) {
     return AiFabButton(
       onTap: () => showAiChatSheet(context, session: widget.session),
+    );
+  }
+
+  Future<void> _openNotifications() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => NotificationsPage(session: widget.session),
+      ),
+    );
+    // The inbox may have marked things read while it was open - refresh so
+    // the badge count reflects that as soon as it's popped, not on the next
+    // unrelated rebuild.
+    if (mounted) setState(() => _notificationsFuture = widget.session.notifications());
+  }
+
+  Widget _notificationsBell(BuildContext context) {
+    return FutureBuilder<List<AppNotification>>(
+      future: _notificationsFuture,
+      builder: (context, snapshot) {
+        final unread =
+            snapshot.data?.where((n) => !n.read).length ?? 0;
+        return IconButton(
+          onPressed: _openNotifications,
+          icon: Badge(
+            isLabelVisible: unread > 0,
+            label: Text(unread > 9 ? '9+' : '$unread'),
+            child: const Icon(Icons.notifications_outlined),
+          ),
+          tooltip: AppLocalizations.of(context)!.notificationsTitle,
+        );
+      },
     );
   }
 
@@ -186,6 +233,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               foregroundColor: Colors.white,
               elevation: 0,
               scrolledUnderElevation: 0,
+              actions: [_notificationsBell(context)],
             ),
           ),
         );

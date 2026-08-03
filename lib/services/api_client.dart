@@ -224,6 +224,26 @@ class ApiClient {
     );
   }
 
+  Future<List<AppNotification>> getNotifications(String token) async {
+    final response = await _client.get(
+      _uri('/me/notifications'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+    _throwIfNotOk(response);
+    final decoded = jsonDecode(response.body) as List<dynamic>;
+    return decoded
+        .map((e) => AppNotification.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  Future<void> markNotificationRead(String token, String notificationId) async {
+    final response = await _client.post(
+      _uri('/me/notifications/$notificationId/read'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+    _throwIfNotOk(response);
+  }
+
   Future<List<Destination>> getDestinations({
     String? query,
     String? token,

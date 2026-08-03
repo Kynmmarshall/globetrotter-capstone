@@ -290,6 +290,12 @@ abstract class AppLocalizations {
   /// **'Recommendations'**
   String get navRecommendations;
 
+  /// No description provided for @navForYou.
+  ///
+  /// In en, this message translates to:
+  /// **'For You'**
+  String get navForYou;
+
   /// No description provided for @navFavorites.
   ///
   /// In en, this message translates to:
@@ -668,6 +674,30 @@ abstract class AppLocalizations {
   /// **'Browse destinations and we\'ll start suggesting spots for you.'**
   String get recommendationsEmptySubtitle;
 
+  /// No description provided for @forYouTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'For You'**
+  String get forYouTitle;
+
+  /// No description provided for @forYouSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'A personalized mix of picks made for you and what\'s popular in Yaoundé.'**
+  String get forYouSubtitle;
+
+  /// No description provided for @forYouPersonalizedSectionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Picked for you'**
+  String get forYouPersonalizedSectionTitle;
+
+  /// No description provided for @forYouTrendingSectionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Trending in Yaoundé'**
+  String get forYouTrendingSectionTitle;
+
   /// No description provided for @favoritesTitle.
   ///
   /// In en, this message translates to:
@@ -697,6 +727,60 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Tap the heart on any destination to save it here.'**
   String get favoritesEmptySubtitle;
+
+  /// No description provided for @viewMySubmissionsButton.
+  ///
+  /// In en, this message translates to:
+  /// **'My submissions'**
+  String get viewMySubmissionsButton;
+
+  /// No description provided for @mySubmissionsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your submissions'**
+  String get mySubmissionsTitle;
+
+  /// No description provided for @mySubmissionsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Destinations you\'ve suggested, and their review status.'**
+  String get mySubmissionsSubtitle;
+
+  /// No description provided for @mySubmissionsErrorMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load your submissions.\n{error}'**
+  String mySubmissionsErrorMessage(String error);
+
+  /// No description provided for @mySubmissionsEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No submissions yet'**
+  String get mySubmissionsEmptyTitle;
+
+  /// No description provided for @mySubmissionsEmptySubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Suggest a destination and track its review status here.'**
+  String get mySubmissionsEmptySubtitle;
+
+  /// No description provided for @submissionStatusPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending review'**
+  String get submissionStatusPending;
+
+  /// No description provided for @submissionStatusApproved.
+  ///
+  /// In en, this message translates to:
+  /// **'Approved'**
+  String get submissionStatusApproved;
+
+  /// No description provided for @submissionStatusRejected.
+  ///
+  /// In en, this message translates to:
+  /// **'Not approved'**
+  String get submissionStatusRejected;
 
   /// No description provided for @itinerariesFormMissing.
   ///
@@ -1537,6 +1621,156 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Close'**
   String get closeButton;
+
+  /// No description provided for @onboardingSkip.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip'**
+  String get onboardingSkip;
+
+  /// No description provided for @onboardingNext.
+  ///
+  /// In en, this message translates to:
+  /// **'Next'**
+  String get onboardingNext;
+
+  /// No description provided for @onboardingGetStarted.
+  ///
+  /// In en, this message translates to:
+  /// **'Get started'**
+  String get onboardingGetStarted;
+
+  /// No description provided for @onboardingPage1Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Discover Yaoundé'**
+  String get onboardingPage1Title;
+
+  /// No description provided for @onboardingPage1Body.
+  ///
+  /// In en, this message translates to:
+  /// **'Browse real, hand-picked landmarks, culture, markets and nature across Yaoundé, Cameroon.'**
+  String get onboardingPage1Body;
+
+  /// No description provided for @onboardingPage2Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Get picks made for you'**
+  String get onboardingPage2Title;
+
+  /// No description provided for @onboardingPage2Body.
+  ///
+  /// In en, this message translates to:
+  /// **'Tell us what you\'re into and we\'ll surface the spots you\'re most likely to enjoy.'**
+  String get onboardingPage2Body;
+
+  /// No description provided for @onboardingPage3Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Plan your day'**
+  String get onboardingPage3Title;
+
+  /// No description provided for @onboardingPage3Body.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick your stops and how much time you have - trip_io builds a timed schedule for you.'**
+  String get onboardingPage3Body;
+
+  /// No description provided for @onboardingPage4Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Navigate as you go'**
+  String get onboardingPage4Title;
+
+  /// No description provided for @onboardingPage4Body.
+  ///
+  /// In en, this message translates to:
+  /// **'Follow turn-by-turn directions and see every stop, numbered in order, right on the map.'**
+  String get onboardingPage4Body;
+
+  /// No description provided for @avatarCropTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Adjust photo'**
+  String get avatarCropTitle;
+
+  /// No description provided for @avatarCropConfirmButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get avatarCropConfirmButton;
+
+  /// No description provided for @avatarCropHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Drag to reposition, pinch or scroll to zoom.'**
+  String get avatarCropHint;
+
+  /// No description provided for @notificationsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications'**
+  String get notificationsTitle;
+
+  /// No description provided for @notificationsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Trip reminders and updates on your submissions.'**
+  String get notificationsSubtitle;
+
+  /// No description provided for @notificationsErrorMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load notifications.\n{error}'**
+  String notificationsErrorMessage(String error);
+
+  /// No description provided for @notificationsEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re all caught up'**
+  String get notificationsEmptyTitle;
+
+  /// No description provided for @notificationsEmptySubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Moderation notices and trip reminders will show up here.'**
+  String get notificationsEmptySubtitle;
+
+  /// No description provided for @notificationDestinationStatusTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Submission update'**
+  String get notificationDestinationStatusTitle;
+
+  /// No description provided for @notificationDestinationApprovedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'\"{name}\" was approved and is now live.'**
+  String notificationDestinationApprovedBody(String name);
+
+  /// No description provided for @notificationDestinationRejectedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'\"{name}\" wasn\'t approved this time.'**
+  String notificationDestinationRejectedBody(String name);
+
+  /// No description provided for @notificationTripReminderTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Upcoming trip'**
+  String get notificationTripReminderTitle;
+
+  /// No description provided for @notificationTripReminderBodyToday.
+  ///
+  /// In en, this message translates to:
+  /// **'\"{title}\" starts today.'**
+  String notificationTripReminderBodyToday(String title);
+
+  /// No description provided for @notificationTripReminderBodyInDays.
+  ///
+  /// In en, this message translates to:
+  /// **'\"{title}\" starts in {days} days.'**
+  String notificationTripReminderBodyInDays(String title, String days);
 }
 
 class _AppLocalizationsDelegate

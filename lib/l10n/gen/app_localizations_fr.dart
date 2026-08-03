@@ -113,6 +113,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get navRecommendations => 'Recommandations';
 
   @override
+  String get navForYou => 'Pour vous';
+
+  @override
   String get navFavorites => 'Favoris';
 
   @override
@@ -335,6 +338,19 @@ class AppLocalizationsFr extends AppLocalizations {
       'Explorez les destinations et nous vous suggérerons des lieux.';
 
   @override
+  String get forYouTitle => 'Pour vous';
+
+  @override
+  String get forYouSubtitle =>
+      'Un mélange personnalisé de suggestions faites pour vous et de ce qui est populaire à Yaoundé.';
+
+  @override
+  String get forYouPersonalizedSectionTitle => 'Sélectionné pour vous';
+
+  @override
+  String get forYouTrendingSectionTitle => 'Tendance à Yaoundé';
+
+  @override
   String get favoritesTitle => 'Vos favoris';
 
   @override
@@ -351,6 +367,37 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get favoritesEmptySubtitle =>
       'Appuyez sur le cœur d\'une destination pour l\'enregistrer ici.';
+
+  @override
+  String get viewMySubmissionsButton => 'Mes suggestions';
+
+  @override
+  String get mySubmissionsTitle => 'Vos suggestions';
+
+  @override
+  String get mySubmissionsSubtitle =>
+      'Les destinations que vous avez suggérées, et leur statut de validation.';
+
+  @override
+  String mySubmissionsErrorMessage(String error) {
+    return 'Impossible de charger vos suggestions.\n$error';
+  }
+
+  @override
+  String get mySubmissionsEmptyTitle => 'Aucune suggestion pour l\'instant';
+
+  @override
+  String get mySubmissionsEmptySubtitle =>
+      'Suggérez une destination et suivez son statut de validation ici.';
+
+  @override
+  String get submissionStatusPending => 'En attente de validation';
+
+  @override
+  String get submissionStatusApproved => 'Approuvée';
+
+  @override
+  String get submissionStatusRejected => 'Non approuvée';
 
   @override
   String get itinerariesFormMissing =>
@@ -841,4 +888,97 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get closeButton => 'Fermer';
+
+  @override
+  String get onboardingSkip => 'Passer';
+
+  @override
+  String get onboardingNext => 'Suivant';
+
+  @override
+  String get onboardingGetStarted => 'Commencer';
+
+  @override
+  String get onboardingPage1Title => 'Découvrez Yaoundé';
+
+  @override
+  String get onboardingPage1Body =>
+      'Parcourez de vrais lieux sélectionnés à la main : monuments, culture, marchés et nature à Yaoundé, Cameroun.';
+
+  @override
+  String get onboardingPage2Title => 'Des suggestions pensées pour vous';
+
+  @override
+  String get onboardingPage2Body =>
+      'Dites-nous ce qui vous intéresse et nous vous proposerons les lieux les plus susceptibles de vous plaire.';
+
+  @override
+  String get onboardingPage3Title => 'Planifiez votre journée';
+
+  @override
+  String get onboardingPage3Body =>
+      'Choisissez vos arrêts et votre temps disponible - trip_io construit un planning chronométré pour vous.';
+
+  @override
+  String get onboardingPage4Title => 'Naviguez en temps réel';
+
+  @override
+  String get onboardingPage4Body =>
+      'Suivez un itinéraire pas à pas et voyez chaque arrêt, numéroté dans l\'ordre, directement sur la carte.';
+
+  @override
+  String get avatarCropTitle => 'Ajuster la photo';
+
+  @override
+  String get avatarCropConfirmButton => 'Terminé';
+
+  @override
+  String get avatarCropHint =>
+      'Faites glisser pour repositionner, pincez ou faites défiler pour zoomer.';
+
+  @override
+  String get notificationsTitle => 'Notifications';
+
+  @override
+  String get notificationsSubtitle =>
+      'Rappels de voyage et mises à jour sur vos suggestions.';
+
+  @override
+  String notificationsErrorMessage(String error) {
+    return 'Impossible de charger les notifications.\n$error';
+  }
+
+  @override
+  String get notificationsEmptyTitle => 'Vous êtes à jour';
+
+  @override
+  String get notificationsEmptySubtitle =>
+      'Les avis de modération et rappels de voyage apparaîtront ici.';
+
+  @override
+  String get notificationDestinationStatusTitle =>
+      'Mise à jour de votre suggestion';
+
+  @override
+  String notificationDestinationApprovedBody(String name) {
+    return '« $name » a été approuvée et est maintenant en ligne.';
+  }
+
+  @override
+  String notificationDestinationRejectedBody(String name) {
+    return '« $name » n\'a pas été approuvée cette fois-ci.';
+  }
+
+  @override
+  String get notificationTripReminderTitle => 'Voyage à venir';
+
+  @override
+  String notificationTripReminderBodyToday(String title) {
+    return '« $title » commence aujourd\'hui.';
+  }
+
+  @override
+  String notificationTripReminderBodyInDays(String title, String days) {
+    return '« $title » commence dans $days jours.';
+  }
 }
