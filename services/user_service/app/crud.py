@@ -1,7 +1,18 @@
+import secrets
 import uuid
+from datetime import datetime, timedelta, timezone
 
 from .auth import hash_password, verify_password
 from .data import read_data, write_data
+
+RESET_CODE_TTL = timedelta(minutes=30)
+
+
+def _find_user(data: dict, identifier: str) -> dict | None:
+    for u in data.get("users", []):
+        if u.get("username") == identifier or u.get("email") == identifier:
+            return u
+    return None
 
 
 def register_user(username: str, password: str, email: str | None = None, interests: list[str] | None = None):
@@ -116,3 +127,62 @@ def is_admin(username: str) -> bool:
         if u.get("username") == username:
             return u.get("role") == "admin"
     return False
+
+
+def create_password_reset(identifier: str) -> tuple[dict, str] | None:
+    """identifier: username or email. Returns (user, plaintext_code) if a
+    matching account with an email on file exists, else None - the caller
+    must respond identically either way (see main.py) so this endpoint
+    can't be used to check which usernames/emails are registered.
+    """
+    data = read_data()
+    user = _find_user(data, identifier)
+    if user is None or not user.get("email"):
+        return None
+
+    # Six digits rather than a long token: typed into the app by hand, not
+    # clicked from a link - this app runs on Windows/Android/Web with no
+    # deep-link handling set up, so a manually-entered code works
+    # everywhere a clickable link wouldn't.
+    code = f"{secrets.randbelow(1_000_000):06d}"
+    reset = {
+        "username": user["username"],
+        # Reuses the same adaptive password hash as real passwords rather
+        # than storing the code in plain text or a fast hash - a 6-digit
+        # code is low-entropy, so resisting brute force on a stolen data
+        # file matters more here than it costs in extra CPU at reset time.
+        "code_hash": hash_password(code),
+        "expires_at": (datetime.now(timezone.utc) + RESET_CODE_TTL).isoformat(),
+    }
+    resets = [
+        r for r in data.get("password_resets", []) if r["username"] != user["username"]
+    ]
+    resets.append(reset)
+    data["password_resets"] = resets
+    write_data(data)
+    return user, code
+
+
+def reset_password(identifier: str, code: str, new_password: str) -> bool:
+    """True if the password was changed. False covers every failure case
+    uniformly (no such account, no pending reset, expired, wrong code) so
+    a caller can't distinguish "wrong code" from "no such account" either.
+    """
+    data = read_data()
+    user = _find_user(data, identifier)
+    if user is None:
+        return False
+
+    resets = data.get("password_resets", [])
+    reset = next((r for r in resets if r["username"] == user["username"]), None)
+    if reset is None:
+        return False
+    if datetime.now(timezone.utc) > datetime.fromisoformat(reset["expires_at"]):
+        return False
+    if not verify_password(code, reset["code_hash"]):
+        return False
+
+    user["password"] = hash_password(new_password)
+    data["password_resets"] = [r for r in resets if r["username"] != user["username"]]
+    write_data(data)
+    return True

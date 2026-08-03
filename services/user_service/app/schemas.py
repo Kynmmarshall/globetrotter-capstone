@@ -31,6 +31,16 @@ class GoogleAuthRequest(BaseModel):
     id_token: str
 
 
+class PasswordResetRequest(BaseModel):
+    identifier: str  # username or email
+
+
+class PasswordReset(BaseModel):
+    identifier: str
+    code: str
+    new_password: str
+
+
 class NearbyPlace(BaseModel):
     name: str
     category: str

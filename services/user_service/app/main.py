@@ -4,7 +4,7 @@ from fastapi import FastAPI, File, HTTPException, Depends, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
-from . import clients, crud, events, google_auth
+from . import clients, crud, email_util, events, google_auth
 from .schemas import (
     UserCreate,
     Token,
@@ -13,6 +13,8 @@ from .schemas import (
     GoogleAuthRequest,
     Destination,
     InternalUserProfile,
+    PasswordResetRequest,
+    PasswordReset,
 )
 from .auth import create_access_token, get_current_user, require_internal
 
@@ -77,6 +79,27 @@ async def auth_google(payload: GoogleAuthRequest):
     if not existing:
         events.publish("user.registered", {"username": user["username"], "interests": []})
     return {"access_token": token}
+
+
+@app.post("/auth/request-password-reset")
+def request_password_reset(payload: PasswordResetRequest):
+    result = crud.create_password_reset(payload.identifier)
+    if result:
+        user, code = result
+        email_util.send_password_reset_code(user["email"], code)
+    # Always the same response whether or not an account matched -
+    # otherwise this endpoint could be used to check which usernames or
+    # emails are registered.
+    return {"detail": "If an account exists, a reset code has been sent."}
+
+
+@app.post("/auth/reset-password")
+def reset_password(payload: PasswordReset):
+    if len(payload.new_password) < 6:
+        raise HTTPException(status_code=400, detail="Password must be at least 6 characters")
+    if not crud.reset_password(payload.identifier, payload.code, payload.new_password):
+        raise HTTPException(status_code=400, detail="Invalid or expired reset code")
+    return {"detail": "Password updated"}
 
 
 @app.get("/me", response_model=UserProfile)

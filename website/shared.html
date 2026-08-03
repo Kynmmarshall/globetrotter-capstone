@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Shared itinerary — trip_io</title>
+  <meta name="description" content="A trip itinerary through Yaoundé, Cameroon, shared from trip_io." />
+  <link rel="icon" href="assets/logo.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+  <script defer src="https://cloud.umami.is/script.js" data-website-id="980dbd63-3ccd-4e47-bf8e-0e7d14cd658b"></script>
+</head>
+<body>
+
+  <div class="ambient-blobs" aria-hidden="true"><span></span><span></span><span></span></div>
+
+  <nav class="nav">
+    <a href="/" class="nav-brand">
+      <img src="assets/logo.png" alt="trip_io logo" />
+      <span><span class="trip">trip</span><span class="io">_io</span></span>
+    </a>
+    <div class="nav-right">
+      <div class="nav-links" id="nav-links">
+        <a href="/#downloads" data-i18n="navGetApp">Get the app</a>
+        <a href="/#explore" data-i18n="navExplore">Explore Yaoundé</a>
+        <a href="/#features" data-i18n="navFeatures">Features</a>
+        <a href="/stats.html" data-i18n="navStats">Stats</a>
+      </div>
+      <div class="lang-toggle" role="group" aria-label="Language">
+        <button type="button" class="lang-btn" data-lang="en">EN</button>
+        <button type="button" class="lang-btn" data-lang="fr">FR</button>
+      </div>
+      <button type="button" class="nav-toggle" id="nav-toggle" data-i18n-aria-label="menuLabel" aria-label="Menu" aria-expanded="false" aria-controls="nav-links">
+        <svg viewBox="0 0 24 24" width="22" height="22"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+      </button>
+    </div>
+  </nav>
+
+  <main>
+    <div class="container shared-header" id="shared-loading">
+      <p class="shared-eyebrow" data-i18n="sharedEyebrow">Shared itinerary</p>
+      <h1 id="shared-title">…</h1>
+      <p class="shared-sub" id="shared-sub"></p>
+      <div class="shared-cta-row">
+        <a class="btn btn-primary" id="shared-open-app" href="/app/" data-i18n="sharedOpenInApp">Open in trip_io</a>
+        <a class="btn btn-ghost" href="/#downloads" data-i18n="sharedPlanYourOwn">Plan your own trip</a>
+      </div>
+    </div>
+
+    <div class="container">
+      <div id="shared-stops" class="shared-stop-list"></div>
+      <p id="shared-error" class="shared-empty" hidden></p>
+    </div>
+  </main>
+
+  <footer>
+    <div class="container">
+      <div class="footer-brand">
+        <img src="assets/logo.png" alt="trip_io" />
+        <span>trip_io</span>
+      </div>
+      <p><span data-i18n="footerBuilt">Built for Yaoundé, Cameroon.</span> &copy; <span id="year"></span> trip_io.</p>
+    </div>
+  </footer>
+
+  <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+  <script src="i18n.js"></script>
+  <script src="script.js"></script>
+  <script src="shared.js"></script>
+</body>
+</html>

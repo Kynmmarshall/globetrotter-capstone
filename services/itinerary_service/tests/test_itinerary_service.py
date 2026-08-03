@@ -4,6 +4,7 @@ import pytest
 from httpx import AsyncClient
 
 from app.main import app
+from app import clients
 from app.auth import create_access_token, INTERNAL_SERVICE_TOKEN
 
 
@@ -120,3 +121,90 @@ async def test_internal_itineraries_endpoint(tmp_path):
         )
         assert authorized.status_code == 200
         assert len(authorized.json()) == 1
+
+
+@pytest.mark.asyncio
+async def test_share_itinerary_is_idempotent_and_owner_only(tmp_path):
+    _use_temp_data(tmp_path)
+    token = create_access_token("alice")
+    headers = {"Authorization": f"Bearer {token}"}
+
+    async with AsyncClient(app=app, base_url="http://test") as ac:
+        r = await ac.post(
+            "/itineraries",
+            json={"title": "Trip", "destinations": ["d1"]},
+            headers=headers,
+        )
+        itin_id = r.json()["id"]
+
+        r2 = await ac.post(f"/itineraries/{itin_id}/share", headers=headers)
+        assert r2.status_code == 200
+        token1 = r2.json()["share_token"]
+        assert token1
+
+        # Re-sharing returns the same token rather than minting a new one.
+        r3 = await ac.post(f"/itineraries/{itin_id}/share", headers=headers)
+        assert r3.json()["share_token"] == token1
+
+        # Another user can't share someone else's itinerary.
+        other_token = create_access_token("bob")
+        other_headers = {"Authorization": f"Bearer {other_token}"}
+        r4 = await ac.post(f"/itineraries/{itin_id}/share", headers=other_headers)
+        assert r4.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_get_shared_itinerary_hydrates_destinations_in_order(tmp_path, monkeypatch):
+    _use_temp_data(tmp_path)
+    token = create_access_token("alice")
+    headers = {"Authorization": f"Bearer {token}"}
+
+    async def fake_get_destinations_by_ids(ids):
+        # Return them out of order to prove the endpoint re-sorts to match
+        # the itinerary's own stop order rather than trusting this order.
+        by_id = {"d1": {"id": "d1", "name": "First"}, "d2": {"id": "d2", "name": "Second"}}
+        return [by_id[i] for i in reversed(ids)]
+
+    monkeypatch.setattr(clients, "get_destinations_by_ids", fake_get_destinations_by_ids)
+
+    async with AsyncClient(app=app, base_url="http://test") as ac:
+        r = await ac.post(
+            "/itineraries",
+            json={"title": "Trip", "destinations": ["d1", "d2"]},
+            headers=headers,
+        )
+        itin_id = r.json()["id"]
+        share = await ac.post(f"/itineraries/{itin_id}/share", headers=headers)
+        share_token = share.json()["share_token"]
+
+        r2 = await ac.get(f"/shared/itineraries/{share_token}")
+        assert r2.status_code == 200
+        body = r2.json()
+        assert body["title"] == "Trip"
+        assert [d["id"] for d in body["destinations"]] == ["d1", "d2"]
+
+        missing = await ac.get("/shared/itineraries/does-not-exist")
+        assert missing.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_unshare_itinerary_revokes_token(tmp_path):
+    _use_temp_data(tmp_path)
+    token = create_access_token("alice")
+    headers = {"Authorization": f"Bearer {token}"}
+
+    async with AsyncClient(app=app, base_url="http://test") as ac:
+        r = await ac.post(
+            "/itineraries",
+            json={"title": "Trip", "destinations": ["d1"]},
+            headers=headers,
+        )
+        itin_id = r.json()["id"]
+        share = await ac.post(f"/itineraries/{itin_id}/share", headers=headers)
+        share_token = share.json()["share_token"]
+
+        r2 = await ac.delete(f"/itineraries/{itin_id}/share", headers=headers)
+        assert r2.status_code == 200
+
+        r3 = await ac.get(f"/shared/itineraries/{share_token}")
+        assert r3.status_code == 404

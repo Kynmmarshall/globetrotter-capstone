@@ -32,3 +32,26 @@ class ItineraryUpdate(BaseModel):
     schedule: Optional[List[ScheduleItem]] = None
     start_date: Optional[str] = None
     end_date: Optional[str] = None
+
+
+class ShareResponse(BaseModel):
+    share_token: str
+
+
+class SharedDestination(BaseModel):
+    """A trimmed-down, public-safe view of a destination for the shared
+    itinerary page - no viewer-specific fields (a rating the owner gave,
+    favorite status, etc), since whoever opens the link may not even have
+    a trip_io account.
+    """
+    id: str
+    name: str
+    image_url: Optional[str] = None
+    location: Optional[str] = None
+    lat: Optional[float] = None
+    lon: Optional[float] = None
+
+
+class SharedItinerary(BaseModel):
+    title: str
+    destinations: List[SharedDestination]
