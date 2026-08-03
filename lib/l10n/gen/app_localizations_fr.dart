@@ -358,6 +358,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get itineraryDeletedSnackbar => 'Itinéraire supprimé.';
 
   @override
+  String get directionsButtonTooltip => 'Itinéraire';
+
+  @override
   String get addToItineraryTooltip => 'Ajouter à un itinéraire';
 
   @override
@@ -453,6 +456,14 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get mapRoutingNotConfigured =>
       'L\'itinéraire n\'est pas encore configuré. Revenez bientôt.';
+
+  @override
+  String get mapNoRouteFound =>
+      'Impossible de trouver un itinéraire entre ces points. L\'un d\'eux est peut-être inaccessible - vérifiez les destinations et votre position.';
+
+  @override
+  String get mapLocationTooFar =>
+      'Votre position actuelle semble éloignée de ces destinations. Vérifiez que la localisation est précise, puis réessayez.';
 
   @override
   String get viewOnMapButton => 'Voir sur la carte';

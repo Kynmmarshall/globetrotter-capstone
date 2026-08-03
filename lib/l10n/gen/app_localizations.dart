@@ -710,6 +710,12 @@ abstract class AppLocalizations {
   /// **'Itinerary deleted.'**
   String get itineraryDeletedSnackbar;
 
+  /// No description provided for @directionsButtonTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Directions'**
+  String get directionsButtonTooltip;
+
   /// No description provided for @addToItineraryTooltip.
   ///
   /// In en, this message translates to:
@@ -883,6 +889,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Directions aren\'t set up yet. Please check back soon.'**
   String get mapRoutingNotConfigured;
+
+  /// No description provided for @mapNoRouteFound.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t find a route between these points. One of them may be unreachable - check the destinations and your location.'**
+  String get mapNoRouteFound;
+
+  /// No description provided for @mapLocationTooFar.
+  ///
+  /// In en, this message translates to:
+  /// **'Your current location seems far from these destinations. Check that location services are giving an accurate fix, then try again.'**
+  String get mapLocationTooFar;
 
   /// No description provided for @viewOnMapButton.
   ///

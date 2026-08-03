@@ -168,7 +168,7 @@ class _TripMapState extends State<TripMap> {
     try {
       final current = await Geolocator.getCurrentPosition(
         locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.high,
+          accuracy: LocationAccuracy.best,
           timeLimit: Duration(seconds: 12),
         ),
       );

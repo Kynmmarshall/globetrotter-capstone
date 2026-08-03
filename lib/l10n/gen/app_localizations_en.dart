@@ -346,6 +346,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get itineraryDeletedSnackbar => 'Itinerary deleted.';
 
   @override
+  String get directionsButtonTooltip => 'Directions';
+
+  @override
   String get addToItineraryTooltip => 'Add to itinerary';
 
   @override
@@ -440,6 +443,14 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get mapRoutingNotConfigured =>
       'Directions aren\'t set up yet. Please check back soon.';
+
+  @override
+  String get mapNoRouteFound =>
+      'We couldn\'t find a route between these points. One of them may be unreachable - check the destinations and your location.';
+
+  @override
+  String get mapLocationTooFar =>
+      'Your current location seems far from these destinations. Check that location services are giving an accurate fix, then try again.';
 
   @override
   String get viewOnMapButton => 'View on map';

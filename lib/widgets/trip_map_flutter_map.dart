@@ -47,7 +47,7 @@ class TripMapFlutterMapViewState extends State<TripMapFlutterMapView> {
   /// locate button each time it's pressed, rather than being inferred from
   /// prop changes, so every tap reliably pans the camera even if the fresh
   /// position happens to be the same as (or very close to) the last one.
-  void flyTo(double lat, double lon, {double zoom = 15}) {
+  void flyTo(double lat, double lon, {double zoom = 17}) {
     _mapController.move(ll.LatLng(lat, lon), zoom);
   }
 

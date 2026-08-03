@@ -10,6 +10,8 @@ import 'package:trip_io/services/analytics.dart';
 import 'package:trip_io/services/api_client.dart';
 import 'package:trip_io/services/session_controller.dart';
 import 'package:trip_io/widgets/add_to_itinerary_button.dart';
+import 'package:trip_io/widgets/comment_count_button.dart';
+import 'package:trip_io/widgets/directions_button.dart';
 import 'package:trip_io/widgets/favorite_toggle_button.dart';
 import 'package:trip_io/widgets/new_comments_badge.dart';
 import 'package:trip_io/widgets/session_expired_card.dart';
@@ -246,6 +248,20 @@ class _DestinationsPageState extends State<DestinationsPage> {
                     ),
                   ),
                 ),
+                Positioned(
+                  bottom: 8,
+                  left: 8,
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.35),
+                      shape: BoxShape.circle,
+                    ),
+                    child: DirectionsButton(
+                      session: widget.session,
+                      destination: d,
+                    ),
+                  ),
+                ),
               ],
             ),
             Padding(
@@ -291,6 +307,10 @@ class _DestinationsPageState extends State<DestinationsPage> {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
+                      ),
+                      CommentCountButton(
+                        session: widget.session,
+                        destination: d,
                       ),
                     ],
                   ),

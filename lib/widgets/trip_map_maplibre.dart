@@ -1,3 +1,4 @@
+import 'dart:async' show unawaited;
 import 'dart:math' show Point;
 
 import 'package:flutter/material.dart';
@@ -43,14 +44,26 @@ class TripMapLibreViewState extends State<TripMapLibreView> {
   MapLibreMapController? _controller;
   final Map<String, String> _circleIdToMarkerId = {};
 
+  // If flyTo is called before the map has finished initializing (a real
+  // possibility - the locate button becomes tappable as soon as the page
+  // is up, but the native map view can take a beat longer), the request
+  // would otherwise just silently no-op since there's no controller yet to
+  // send it to. Remembering it here and replaying it once the controller
+  // shows up in _onMapCreated means a tap is never lost to that race.
+  ({double lat, double lon, double zoom})? _pendingFlyTo;
+
   /// Recenters the map on [lat]/[lon] - called imperatively by TripMap's
-  /// locate button each time it's pressed. `myLocationTrackingMode` alone
-  /// isn't enough: the plugin doesn't reliably react to that prop changing
-  /// after the map has already been created, so this explicitly commands
-  /// the camera instead of hoping the passive tracking mode picks it up.
-  Future<void> flyTo(double lat, double lon, {double zoom = 15}) async {
+  /// locate button each time it's pressed, rather than relying on
+  /// `myLocationTrackingMode`'s passive camera-follow: that mode fights the
+  /// user's own panning (it snaps straight back to the GPS position after
+  /// every manual move, which reads as "broken" more than "helpful"), so
+  /// this widget never enables it and drives all recentering itself instead.
+  Future<void> flyTo(double lat, double lon, {double zoom = 17}) async {
     final controller = _controller;
-    if (controller == null) return;
+    if (controller == null) {
+      _pendingFlyTo = (lat: lat, lon: lon, zoom: zoom);
+      return;
+    }
     await controller.animateCamera(
       CameraUpdate.newLatLngZoom(LatLng(lat, lon), zoom),
     );
@@ -82,6 +95,11 @@ class TripMapLibreViewState extends State<TripMapLibreView> {
     _controller = controller;
     controller.onCircleTapped.add(_handleCircleTapped);
     controller.onFeatureHover.add(_handleFeatureHover);
+    final pending = _pendingFlyTo;
+    if (pending != null) {
+      _pendingFlyTo = null;
+      unawaited(flyTo(pending.lat, pending.lon, zoom: pending.zoom));
+    }
   }
 
   void _handleCircleTapped(Circle circle) {
@@ -152,6 +170,13 @@ class TripMapLibreViewState extends State<TripMapLibreView> {
           SymbolOptions(
             geometry: LatLng(marker.lat, marker.lon),
             textField: marker.label,
+            // Without an explicit font, MapLibre falls back to the style
+            // spec's default text-font ("Open Sans Regular"/"Arial Unicode
+            // MS Regular"), which OpenFreeMap's glyphs endpoint doesn't
+            // serve - the request 404s and the text silently never renders.
+            // "Noto Sans Regular" is one of the stacks this style's own
+            // place-name labels already use, so it's guaranteed available.
+            fontNames: const ['Noto Sans Regular'],
             textSize: 11,
             textColor: '#FFFFFF',
             // Opaque, blurred halo - a soft fade behind the number rather
@@ -215,9 +240,12 @@ class TripMapLibreViewState extends State<TripMapLibreView> {
           compassEnabled: false,
           logoEnabled: false,
           myLocationEnabled: widget.showMyLocation,
-          myLocationTrackingMode: widget.showMyLocation
-              ? MyLocationTrackingMode.tracking
-              : MyLocationTrackingMode.none,
+          // Deliberately not `.tracking`: that mode locks the camera to
+          // follow the GPS position continuously, fighting any manual pan
+          // the user makes - flyTo (driven by TripMap's locate button)
+          // handles recentering explicitly instead, on-demand rather than
+          // permanently.
+          myLocationTrackingMode: MyLocationTrackingMode.none,
           myLocationRenderMode: widget.showMyLocation
               ? MyLocationRenderMode.compass
               : MyLocationRenderMode.normal,

@@ -131,6 +131,7 @@
   "itineraryCreatedSnackbar": "Itinerary created.",
   "itineraryDeletedSnackbar": "Itinerary deleted.",
 
+  "directionsButtonTooltip": "Directions",
   "addToItineraryTooltip": "Add to itinerary",
   "addToItinerarySheetTitle": "Add to itinerary",
   "addToItineraryCreateNew": "Create new itinerary",
@@ -175,6 +176,8 @@
   "mapProfileWalking": "Walk",
   "mapProfileCycling": "Bike",
   "mapRoutingNotConfigured": "Directions aren't set up yet. Please check back soon.",
+  "mapNoRouteFound": "We couldn't find a route between these points. One of them may be unreachable - check the destinations and your location.",
+  "mapLocationTooFar": "Your current location seems far from these destinations. Check that location services are giving an accurate fix, then try again.",
   "viewOnMapButton": "View on map",
   "mapLocationPermissionDenied": "Location access is needed to show your position on the map. Please allow it in your device settings.",
   "mapLocationServicesDisabled": "Turn on location services on your device to show your position on the map.",

@@ -8,6 +8,8 @@ import 'package:trip_io/services/analytics.dart';
 import 'package:trip_io/services/api_client.dart';
 import 'package:trip_io/services/session_controller.dart';
 import 'package:trip_io/widgets/add_to_itinerary_button.dart';
+import 'package:trip_io/widgets/comment_count_button.dart';
+import 'package:trip_io/widgets/directions_button.dart';
 import 'package:trip_io/widgets/favorite_toggle_button.dart';
 import 'package:trip_io/widgets/feature_pill.dart';
 import 'package:trip_io/widgets/new_comments_badge.dart';
@@ -154,6 +156,12 @@ class _RecommendationsPageState extends State<RecommendationsPage> {
                         destination: item,
                       ),
                       const SizedBox(width: 6),
+                      DirectionsButton(
+                        session: widget.session,
+                        destination: item,
+                        size: 18,
+                      ),
+                      const SizedBox(width: 2),
                       AddToItineraryButton(
                         session: widget.session,
                         destinationId: item.id,
@@ -194,6 +202,10 @@ class _RecommendationsPageState extends State<RecommendationsPage> {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
+                      ),
+                      CommentCountButton(
+                        session: widget.session,
+                        destination: item,
                       ),
                     ],
                   ),

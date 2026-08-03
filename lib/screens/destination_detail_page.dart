@@ -10,6 +10,7 @@ import 'package:trip_io/services/api_client.dart';
 import 'package:trip_io/services/session_controller.dart';
 import 'package:trip_io/widgets/comments_section.dart';
 import 'package:trip_io/widgets/add_to_itinerary_button.dart';
+import 'package:trip_io/widgets/directions_button.dart';
 import 'package:trip_io/widgets/favorite_toggle_button.dart';
 import 'package:trip_io/widgets/star_rating.dart';
 
@@ -695,6 +696,11 @@ class _DestinationDetailPageState extends State<DestinationDetailPage> {
                                             : AppLocalizations.of(
                                                 context,
                                               )!.readAloudTooltip,
+                                      ),
+                                      DirectionsButton(
+                                        session: widget.session,
+                                        destination: destination,
+                                        size: 24,
                                       ),
                                       AddToItineraryButton(
                                         session: widget.session,
