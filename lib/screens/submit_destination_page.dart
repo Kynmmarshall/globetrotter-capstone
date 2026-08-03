@@ -219,71 +219,75 @@ class _SubmitDestinationPageState extends State<SubmitDestinationPage> {
 
   Widget _buildImagePicker(AppLocalizations l10n) {
     final bytes = _pickedImageBytes;
-    return InkWell(
-      onTap: _pickingImage ? null : _pickImage,
-      borderRadius: BorderRadius.circular(14),
-      child: Container(
-        height: 150,
-        width: double.infinity,
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.06),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.24)),
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: _pickingImage
-            ? const Center(
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: Colors.white70,
-                ),
-              )
-            : bytes != null
-            ? Stack(
-                fit: StackFit.expand,
-                children: [
-                  Image.memory(bytes, fit: BoxFit.cover),
-                  Positioned(
-                    top: 6,
-                    right: 6,
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.55),
-                        shape: BoxShape.circle,
-                      ),
-                      child: IconButton(
-                        iconSize: 18,
-                        color: Colors.white,
-                        icon: const Icon(Icons.close),
-                        onPressed: () => setState(() {
-                          _pickedImage = null;
-                          _pickedImageBytes = null;
-                        }),
-                      ),
-                    ),
+    return Semantics(
+      button: true,
+      label: l10n.submitDestinationAddPhoto,
+      child: InkWell(
+        onTap: _pickingImage ? null : _pickImage,
+        borderRadius: BorderRadius.circular(14),
+        child: Container(
+          height: 150,
+          width: double.infinity,
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.06),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.24)),
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: _pickingImage
+              ? const Center(
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white70,
                   ),
-                ],
-              )
-            : Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
+                )
+              : bytes != null
+              ? Stack(
+                  fit: StackFit.expand,
                   children: [
-                    const Icon(
-                      Icons.add_photo_alternate_outlined,
-                      color: Colors.white54,
-                      size: 30,
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      l10n.submitDestinationAddPhoto,
-                      style: const TextStyle(
-                        color: Colors.white54,
-                        fontSize: 12.5,
+                    Image.memory(bytes, fit: BoxFit.cover),
+                    Positioned(
+                      top: 6,
+                      right: 6,
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          color: Colors.black.withValues(alpha: 0.55),
+                          shape: BoxShape.circle,
+                        ),
+                        child: IconButton(
+                          iconSize: 18,
+                          color: Colors.white,
+                          icon: const Icon(Icons.close),
+                          onPressed: () => setState(() {
+                            _pickedImage = null;
+                            _pickedImageBytes = null;
+                          }),
+                        ),
                       ),
                     ),
                   ],
+                )
+              : Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.add_photo_alternate_outlined,
+                        color: Colors.white54,
+                        size: 30,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        l10n.submitDestinationAddPhoto,
+                        style: const TextStyle(
+                          color: Colors.white54,
+                          fontSize: 12.5,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
+        ),
       ),
     );
   }

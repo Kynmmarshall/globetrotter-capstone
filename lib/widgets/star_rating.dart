@@ -35,7 +35,9 @@ class StarRating extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
-    final filledUpTo = interactive ? (userRating ?? 0).toDouble() : (average ?? 0);
+    final filledUpTo = interactive
+        ? (userRating ?? 0).toDouble()
+        : (average ?? 0);
     final starColor = interactive ? Colors.amber : const Color(0xFFFFC670);
 
     return Row(
@@ -56,7 +58,9 @@ class StarRating extends StatelessWidget {
         if (interactive) ...[
           const SizedBox(width: 8),
           Text(
-            count > 0 ? '${average!.toStringAsFixed(1)} ($count)' : 'No ratings yet',
+            count > 0
+                ? '${average!.toStringAsFixed(1)} ($count)'
+                : 'No ratings yet',
             style: TextStyle(color: Colors.white60, fontSize: size * 0.7),
           ),
         ],
@@ -73,7 +77,11 @@ class StarRating extends StatelessWidget {
     } else {
       icon = Icons.star_border;
     }
-    final star = Icon(icon, size: size, color: filledUpTo > 0 ? color : Colors.white38);
+    final star = Icon(
+      icon,
+      size: size,
+      color: filledUpTo > 0 ? color : Colors.white38,
+    );
     if (!interactive) return star;
     return InkWell(
       onTap: onRate == null ? null : () => onRate!(index),

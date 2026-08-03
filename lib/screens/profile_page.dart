@@ -186,48 +186,53 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Widget _buildAvatar(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
-    return GestureDetector(
-      onTap: _pickingAvatar ? null : _pickAvatar,
-      child: Stack(
-        children: [
-          Container(
-            width: 96,
-            height: 96,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: LinearGradient(
-                colors: [colors.primary, colors.tertiary],
-              ),
-              border: Border.all(
-                color: Colors.white.withValues(alpha: 0.6),
-                width: 3,
-              ),
-            ),
-            child: ClipOval(
-              child: _pickingAvatar
-                  ? const Center(
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.white,
-                      ),
-                    )
-                  : _buildAvatarImage(),
-            ),
-          ),
-          Positioned(
-            bottom: 0,
-            right: 0,
-            child: Container(
-              padding: const EdgeInsets.all(6),
+    final l10n = AppLocalizations.of(context)!;
+    return Semantics(
+      button: true,
+      label: l10n.avatarSemanticLabel,
+      child: GestureDetector(
+        onTap: _pickingAvatar ? null : _pickAvatar,
+        child: Stack(
+          children: [
+            Container(
+              width: 96,
+              height: 96,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.white,
-                border: Border.all(color: colors.primary, width: 2),
+                gradient: LinearGradient(
+                  colors: [colors.primary, colors.tertiary],
+                ),
+                border: Border.all(
+                  color: Colors.white.withValues(alpha: 0.6),
+                  width: 3,
+                ),
               ),
-              child: Icon(Icons.camera_alt, size: 15, color: colors.primary),
+              child: ClipOval(
+                child: _pickingAvatar
+                    ? const Center(
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : _buildAvatarImage(),
+              ),
             ),
-          ),
-        ],
+            Positioned(
+              bottom: 0,
+              right: 0,
+              child: Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.white,
+                  border: Border.all(color: colors.primary, width: 2),
+                ),
+                child: Icon(Icons.camera_alt, size: 15, color: colors.primary),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

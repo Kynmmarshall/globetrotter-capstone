@@ -249,6 +249,7 @@ class _TripMapState extends State<TripMap> {
   }
 
   Widget _locateButton() {
+    final l10n = AppLocalizations.of(context)!;
     return Positioned(
       // Left, not right - the dashboard's AI chat FAB sits fixed at the
       // bottom-right of every screen and would otherwise sit on top of this.
@@ -274,7 +275,12 @@ class _TripMapState extends State<TripMap> {
                       color: Colors.white,
                     ),
                   )
-                : const Icon(Icons.my_location, color: Colors.white, size: 20),
+                : Icon(
+                    Icons.my_location,
+                    color: Colors.white,
+                    size: 20,
+                    semanticLabel: l10n.mapUseMyLocation,
+                  ),
           ),
         ),
       ),

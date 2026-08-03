@@ -7,7 +7,9 @@ import 'package:trip_io/services/session_controller.dart';
 /// a raw error string.
 bool isAuthError(Object error) {
   final message = error.toString().toLowerCase();
-  return message.contains('token') || message.contains('authenticat') || message.contains('401');
+  return message.contains('token') ||
+      message.contains('authenticat') ||
+      message.contains('401');
 }
 
 class SessionExpiredCard extends StatelessWidget {
@@ -26,7 +28,11 @@ class SessionExpiredCard extends StatelessWidget {
           const SizedBox(height: 12),
           Text(
             l10n.sessionExpiredTitle,
-            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 16),
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w700,
+              fontSize: 16,
+            ),
           ),
           const SizedBox(height: 6),
           Text(
@@ -59,7 +65,11 @@ class ErrorStateCard extends StatelessWidget {
         children: [
           const Icon(Icons.error_outline, color: Colors.white54, size: 36),
           const SizedBox(height: 10),
-          Text(message, style: const TextStyle(color: Colors.white70), textAlign: TextAlign.center),
+          Text(
+            message,
+            style: const TextStyle(color: Colors.white70),
+            textAlign: TextAlign.center,
+          ),
         ],
       ),
     );
@@ -67,7 +77,12 @@ class ErrorStateCard extends StatelessWidget {
 }
 
 class EmptyStateCard extends StatelessWidget {
-  const EmptyStateCard({super.key, required this.icon, required this.title, this.subtitle});
+  const EmptyStateCard({
+    super.key,
+    required this.icon,
+    required this.title,
+    this.subtitle,
+  });
 
   final IconData icon;
   final String title;
@@ -83,12 +98,20 @@ class EmptyStateCard extends StatelessWidget {
           const SizedBox(height: 12),
           Text(
             title,
-            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 15),
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w700,
+              fontSize: 15,
+            ),
             textAlign: TextAlign.center,
           ),
           if (subtitle != null) ...[
             const SizedBox(height: 6),
-            Text(subtitle!, style: const TextStyle(color: Colors.white60), textAlign: TextAlign.center),
+            Text(
+              subtitle!,
+              style: const TextStyle(color: Colors.white60),
+              textAlign: TextAlign.center,
+            ),
           ],
         ],
       ),

@@ -13,6 +13,7 @@ import 'package:trip_io/widgets/feature_pill.dart';
 import 'package:trip_io/widgets/glass_panel.dart';
 import 'package:trip_io/widgets/new_comments_badge.dart';
 import 'package:trip_io/widgets/session_expired_card.dart';
+import 'package:trip_io/widgets/skeleton_loaders.dart';
 import 'package:trip_io/widgets/star_rating.dart';
 
 class RecommendationsPage extends StatefulWidget {
@@ -88,131 +89,136 @@ class _RecommendationsPageState extends State<RecommendationsPage> {
   }
 
   Widget _buildCard(BuildContext context, Destination item) {
+    final l10n = AppLocalizations.of(context)!;
     final heroTag = 'destination-${item.id}';
-    return GestureDetector(
-      onTap: () {
-        Analytics.instance.trackEvent('destination', 'view', name: item.id);
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (_) => DestinationDetailPage(
-              destination: item,
-              heroTag: heroTag,
-              session: widget.session,
-            ),
-          ),
-        );
-      },
-      child: GlassPanel(
-        borderRadius: BorderRadius.circular(18),
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildThumbnail(context, item, heroTag),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          item.name,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w700,
-                            fontSize: 15,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      NewCommentsBadge(
-                        session: widget.session,
-                        destination: item,
-                      ),
-                      const SizedBox(width: 6),
-                      DirectionsButton(
-                        session: widget.session,
-                        destination: item,
-                        size: 18,
-                      ),
-                      const SizedBox(width: 2),
-                      AddToItineraryButton(
-                        session: widget.session,
-                        destinationId: item.id,
-                        size: 18,
-                      ),
-                      const SizedBox(width: 2),
-                      FavoriteToggleButton(
-                        session: widget.session,
-                        destinationId: item.id,
-                        size: 18,
-                      ),
-                    ],
-                  ),
-                  if (item.hasRatings) ...[
-                    const SizedBox(height: 2),
-                    StarRating(
-                      average: item.ratingAverage,
-                      count: item.ratingCount,
-                      size: 12.5,
-                    ),
-                  ],
-                  const SizedBox(height: 2),
-                  Row(
-                    children: [
-                      const Icon(
-                        Icons.location_on,
-                        size: 13,
-                        color: Colors.white70,
-                      ),
-                      const SizedBox(width: 3),
-                      Expanded(
-                        child: Text(
-                          item.location ?? item.country,
-                          style: const TextStyle(
-                            color: Colors.white70,
-                            fontSize: 12,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      CommentCountButton(
-                        session: widget.session,
-                        destination: item,
-                      ),
-                    ],
-                  ),
-                  if ((item.description ?? '').isNotEmpty) ...[
-                    const SizedBox(height: 6),
-                    Text(
-                      item.description!,
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.85),
-                        fontSize: 12.5,
-                        height: 1.3,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                  if (item.tags.isNotEmpty) ...[
-                    const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 6,
-                      runSpacing: 6,
-                      children: item.tags
-                          .map((t) => FeaturePill(icon: Icons.sell, label: t))
-                          .toList(),
-                    ),
-                  ],
-                ],
+    return Semantics(
+      button: true,
+      label: l10n.destinationCardSemanticLabel(item.name),
+      child: GestureDetector(
+        onTap: () {
+          Analytics.instance.trackEvent('destination', 'view', name: item.id);
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => DestinationDetailPage(
+                destination: item,
+                heroTag: heroTag,
+                session: widget.session,
               ),
             ),
-          ],
+          );
+        },
+        child: GlassPanel(
+          borderRadius: BorderRadius.circular(18),
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildThumbnail(context, item, heroTag),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            item.name,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 15,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        NewCommentsBadge(
+                          session: widget.session,
+                          destination: item,
+                        ),
+                        const SizedBox(width: 6),
+                        DirectionsButton(
+                          session: widget.session,
+                          destination: item,
+                          size: 18,
+                        ),
+                        const SizedBox(width: 2),
+                        AddToItineraryButton(
+                          session: widget.session,
+                          destinationId: item.id,
+                          size: 18,
+                        ),
+                        const SizedBox(width: 2),
+                        FavoriteToggleButton(
+                          session: widget.session,
+                          destinationId: item.id,
+                          size: 18,
+                        ),
+                      ],
+                    ),
+                    if (item.hasRatings) ...[
+                      const SizedBox(height: 2),
+                      StarRating(
+                        average: item.ratingAverage,
+                        count: item.ratingCount,
+                        size: 12.5,
+                      ),
+                    ],
+                    const SizedBox(height: 2),
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.location_on,
+                          size: 13,
+                          color: Colors.white70,
+                        ),
+                        const SizedBox(width: 3),
+                        Expanded(
+                          child: Text(
+                            item.location ?? item.country,
+                            style: const TextStyle(
+                              color: Colors.white70,
+                              fontSize: 12,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        CommentCountButton(
+                          session: widget.session,
+                          destination: item,
+                        ),
+                      ],
+                    ),
+                    if ((item.description ?? '').isNotEmpty) ...[
+                      const SizedBox(height: 6),
+                      Text(
+                        item.description!,
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.85),
+                          fontSize: 12.5,
+                          height: 1.3,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                    if (item.tags.isNotEmpty) ...[
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 6,
+                        runSpacing: 6,
+                        children: item.tags
+                            .map((t) => FeaturePill(icon: Icons.sell, label: t))
+                            .toList(),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -273,10 +279,7 @@ class _RecommendationsPageState extends State<RecommendationsPage> {
             future: _future,
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 40),
-                  child: Center(child: CircularProgressIndicator()),
-                );
+                return const DestinationListSkeleton();
               }
               if (snapshot.hasError) {
                 if (isAuthError(snapshot.error!)) {

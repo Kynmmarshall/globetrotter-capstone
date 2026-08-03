@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart' show ChangeNotifier;
+import 'package:flutter/material.dart' show ThemeMode;
 import 'package:flutter/widgets.dart' show Locale;
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -17,6 +18,7 @@ class SessionController extends ChangeNotifier {
   static const _bioKey = 'gt_bio';
   static const _memberSinceKey = 'gt_member_since';
   static const _localeKey = 'gt_locale';
+  static const _themeModeKey = 'gt_theme_mode';
   static const _interestsKey = 'gt_interests';
   static const _favoriteIdsKey = 'gt_favorite_ids';
   static const _roleKey = 'gt_role';
@@ -41,6 +43,11 @@ class SessionController extends ChangeNotifier {
   String? _bio;
   DateTime? _memberSince;
   Locale? _locale;
+  // Defaults to always-dark (the app's original, only look) rather than
+  // ThemeMode.system - switching an existing user's appearance out from
+  // under them on an unrelated update would be a surprise; light mode and
+  // system-follow are both opt-in via the profile screen.
+  ThemeMode _themeMode = ThemeMode.dark;
   List<String> _interests = [];
   Set<String> _favoriteIds = {};
   String? _role;
@@ -56,6 +63,7 @@ class SessionController extends ChangeNotifier {
   DateTime? get memberSince => _memberSince;
   // Null means "follow the device's system language".
   Locale? get locale => _locale;
+  ThemeMode get themeMode => _themeMode;
   List<String> get interests => _interests;
   bool isFavorite(String destinationId) => _favoriteIds.contains(destinationId);
   bool get isAdmin => _role == 'admin';
@@ -78,6 +86,11 @@ class SessionController extends ChangeNotifier {
         : null;
     final localeCode = prefs.getString(_localeKey);
     _locale = localeCode != null ? Locale(localeCode) : null;
+    final themeModeName = prefs.getString(_themeModeKey);
+    _themeMode = ThemeMode.values.firstWhere(
+      (m) => m.name == themeModeName,
+      orElse: () => ThemeMode.dark,
+    );
     _interests = prefs.getStringList(_interestsKey) ?? [];
     _favoriteIds = (prefs.getStringList(_favoriteIdsKey) ?? []).toSet();
     _role = prefs.getString(_roleKey);
@@ -132,6 +145,13 @@ class SessionController extends ChangeNotifier {
       throw Exception('Your session expired. Please sign in again.');
     }
     return token;
+  }
+
+  Future<void> setThemeMode(ThemeMode mode) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_themeModeKey, mode.name);
+    _themeMode = mode;
+    notifyListeners();
   }
 
   Future<void> setLocale(Locale? locale) async {
@@ -448,6 +468,19 @@ class SessionController extends ChangeNotifier {
     final token = _requireToken();
     await ApiClient().deleteItinerary(token, itineraryId);
     Analytics.instance.trackEvent('itinerary', 'deleted', name: itineraryId);
+  }
+
+  Future<String> shareItinerary(String itineraryId) async {
+    final token = _requireToken();
+    final shareToken = await ApiClient().shareItinerary(token, itineraryId);
+    Analytics.instance.trackEvent('itinerary', 'shared', name: itineraryId);
+    return shareToken;
+  }
+
+  Future<void> unshareItinerary(String itineraryId) async {
+    final token = _requireToken();
+    await ApiClient().unshareItinerary(token, itineraryId);
+    Analytics.instance.trackEvent('itinerary', 'unshared', name: itineraryId);
   }
 
   Future<RouteResult> getRoute(

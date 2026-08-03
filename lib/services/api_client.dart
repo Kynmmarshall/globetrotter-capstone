@@ -52,6 +52,17 @@ class ApiClient {
     return '$normalizedBase$normalizedPath';
   }
 
+  /// Builds the public, no-login-required link for a shared itinerary - a
+  /// static page the Gateway serves itself (see `website/shared.html`),
+  /// which then calls `GET /shared/itineraries/{token}` for the content.
+  static String resolveShareUrl(String shareToken) {
+    final base = _defaultBaseUrl();
+    final normalizedBase = base.endsWith('/')
+        ? base.substring(0, base.length - 1)
+        : base;
+    return '$normalizedBase/shared.html?token=$shareToken';
+  }
+
   Future<String> register(
     String username,
     String password, {
@@ -417,6 +428,24 @@ class ApiClient {
   Future<void> deleteItinerary(String token, String itineraryId) async {
     final response = await _client.delete(
       _uri('/itineraries/$itineraryId'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+    _throwIfNotOk(response);
+  }
+
+  Future<String> shareItinerary(String token, String itineraryId) async {
+    final response = await _client.post(
+      _uri('/itineraries/$itineraryId/share'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+    _throwIfNotOk(response);
+    final decoded = jsonDecode(response.body) as Map<String, dynamic>;
+    return decoded['share_token'] as String;
+  }
+
+  Future<void> unshareItinerary(String token, String itineraryId) async {
+    final response = await _client.delete(
+      _uri('/itineraries/$itineraryId/share'),
       headers: {'Authorization': 'Bearer $token'},
     );
     _throwIfNotOk(response);

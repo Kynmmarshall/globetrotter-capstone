@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show Clipboard, ClipboardData;
 import 'package:trip_io/l10n/gen/app_localizations.dart';
 import 'package:trip_io/models/models.dart';
 import 'package:trip_io/screens/map_page.dart';
@@ -39,6 +40,74 @@ class ItineraryDetailPage extends StatelessWidget {
           itineraryTitle: itinerary.title,
           itineraryDestinationIds: orderedIds,
         ),
+      ),
+    );
+  }
+
+  Future<void> _shareItinerary(BuildContext context) async {
+    final l10n = AppLocalizations.of(context)!;
+    final messenger = ScaffoldMessenger.of(context);
+    String shareToken;
+    try {
+      shareToken = await session.shareItinerary(itinerary.id);
+    } catch (_) {
+      if (!context.mounted) return;
+      messenger.showSnackBar(
+        SnackBar(content: Text(l10n.shareItineraryErrorSnackbar)),
+      );
+      return;
+    }
+    if (!context.mounted) return;
+
+    final shareUrl = ApiClient.resolveShareUrl(shareToken);
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(l10n.shareItineraryDialogTitle(itinerary.title)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(l10n.shareItineraryDialogMessage),
+            const SizedBox(height: 14),
+            SelectableText(
+              shareUrl,
+              style: const TextStyle(fontWeight: FontWeight.w600),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () async {
+              Navigator.of(dialogContext).pop();
+              try {
+                await session.unshareItinerary(itinerary.id);
+              } catch (_) {
+                return;
+              }
+              if (!context.mounted) return;
+              messenger.showSnackBar(
+                SnackBar(content: Text(l10n.shareItineraryTurnedOffSnackbar)),
+              );
+            },
+            child: Text(l10n.shareItineraryTurnOffButton),
+          ),
+          TextButton(
+            onPressed: () async {
+              await Clipboard.setData(ClipboardData(text: shareUrl));
+              if (!dialogContext.mounted) return;
+              Navigator.of(dialogContext).pop();
+              messenger.showSnackBar(
+                SnackBar(content: Text(l10n.shareItineraryLinkCopiedSnackbar)),
+              );
+            },
+            child: Text(l10n.shareItineraryCopyLinkButton),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: Text(l10n.closeButton),
+          ),
+        ],
       ),
     );
   }
@@ -386,19 +455,36 @@ class ItineraryDetailPage extends StatelessWidget {
               SafeArea(
                 child: Padding(
                   padding: const EdgeInsets.all(16),
-                  child: Align(
-                    alignment: Alignment.topLeft,
-                    child: GlassPanel(
-                      borderRadius: BorderRadius.circular(999),
-                      padding: EdgeInsets.zero,
-                      child: IconButton(
-                        onPressed: () => Navigator.of(context).pop(),
-                        icon: const Icon(Icons.arrow_back, color: Colors.white),
-                        tooltip: MaterialLocalizations.of(
-                          context,
-                        ).backButtonTooltip,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      GlassPanel(
+                        borderRadius: BorderRadius.circular(999),
+                        padding: EdgeInsets.zero,
+                        child: IconButton(
+                          onPressed: () => Navigator.of(context).pop(),
+                          icon: const Icon(
+                            Icons.arrow_back,
+                            color: Colors.white,
+                          ),
+                          tooltip: MaterialLocalizations.of(
+                            context,
+                          ).backButtonTooltip,
+                        ),
                       ),
-                    ),
+                      GlassPanel(
+                        borderRadius: BorderRadius.circular(999),
+                        padding: EdgeInsets.zero,
+                        child: IconButton(
+                          onPressed: () => _shareItinerary(context),
+                          icon: const Icon(
+                            Icons.ios_share,
+                            color: Colors.white,
+                          ),
+                          tooltip: l10n.shareItineraryTooltip,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),

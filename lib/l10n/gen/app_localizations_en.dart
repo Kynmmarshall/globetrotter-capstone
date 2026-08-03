@@ -237,6 +237,11 @@ class AppLocalizationsEn extends AppLocalizations {
       'No destinations match the selected filters.';
 
   @override
+  String destinationCardSemanticLabel(String name) {
+    return 'View $name';
+  }
+
+  @override
   String get suggestDestinationButton => 'Suggest a destination';
 
   @override
@@ -623,6 +628,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get yourItinerariesTitle => 'Your itineraries';
 
   @override
+  String itineraryCardSemanticLabel(String title) {
+    return 'Open itinerary $title';
+  }
+
+  @override
   String destinationsLoadError(String error) {
     return 'Could not load destinations.\n$error';
   }
@@ -714,6 +724,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get travellerFallback => 'Traveller';
 
   @override
+  String get avatarSemanticLabel => 'Tap to change your profile photo';
+
+  @override
   String couldNotPickImage(String error) {
     return 'Could not pick image: $error';
   }
@@ -764,4 +777,36 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get signInAgainButton => 'Sign in again';
+
+  @override
+  String get shareItineraryTooltip => 'Share this itinerary';
+
+  @override
+  String shareItineraryDialogTitle(String title) {
+    return 'Share \"$title\"';
+  }
+
+  @override
+  String get shareItineraryDialogMessage =>
+      'Anyone with this link can view this itinerary\'s stops - no account needed. It stays visible until you turn sharing off.';
+
+  @override
+  String get shareItineraryCopyLinkButton => 'Copy link';
+
+  @override
+  String get shareItineraryLinkCopiedSnackbar => 'Link copied to clipboard.';
+
+  @override
+  String get shareItineraryTurnOffButton => 'Turn off sharing';
+
+  @override
+  String get shareItineraryTurnedOffSnackbar =>
+      'Sharing turned off. The old link no longer works.';
+
+  @override
+  String get shareItineraryErrorSnackbar =>
+      'Couldn\'t create a share link right now.';
+
+  @override
+  String get closeButton => 'Close';
 }

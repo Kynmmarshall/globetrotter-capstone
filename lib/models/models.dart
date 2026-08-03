@@ -22,7 +22,9 @@ class NearbyPlace {
       name: (json['name'] ?? '').toString(),
       category: (json['category'] ?? '').toString(),
       description: json['description']?.toString(),
-      tags: (json['tags'] as List<dynamic>? ?? <dynamic>[]).map((e) => e.toString()).toList(),
+      tags: (json['tags'] as List<dynamic>? ?? <dynamic>[])
+          .map((e) => e.toString())
+          .toList(),
       location: json['location']?.toString(),
     );
   }
@@ -117,7 +119,11 @@ class Destination {
 
   /// Returns a copy with just the rating fields replaced - used after
   /// rating/un-rating to update a single card in place.
-  Destination withRating({double? ratingAverage, required int ratingCount, int? userRating}) {
+  Destination withRating({
+    double? ratingAverage,
+    required int ratingCount,
+    int? userRating,
+  }) {
     return Destination(
       id: id,
       name: name,
@@ -183,9 +189,13 @@ class UserProfile {
     return UserProfile(
       username: (json['username'] ?? '').toString(),
       email: json['email']?.toString(),
-      interests: (json['interests'] as List<dynamic>? ?? <dynamic>[]).map((e) => e.toString()).toList(),
+      interests: (json['interests'] as List<dynamic>? ?? <dynamic>[])
+          .map((e) => e.toString())
+          .toList(),
       avatarUrl: json['avatar_url']?.toString(),
-      favoriteIds: (json['favorite_ids'] as List<dynamic>? ?? <dynamic>[]).map((e) => e.toString()).toList(),
+      favoriteIds: (json['favorite_ids'] as List<dynamic>? ?? <dynamic>[])
+          .map((e) => e.toString())
+          .toList(),
       role: json['role']?.toString(),
     );
   }

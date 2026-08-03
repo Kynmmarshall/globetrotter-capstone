@@ -84,6 +84,10 @@
   "destinationsFilterLabel": "Filter by interest",
   "destinationsFilterClear": "Clear",
   "destinationsFilterEmpty": "No destinations match the selected filters.",
+  "destinationCardSemanticLabel": "View {name}",
+  "@destinationCardSemanticLabel": {
+    "placeholders": { "name": { "type": "String" } }
+  },
   "suggestDestinationButton": "Suggest a destination",
   "submitDestinationTitle": "Suggest a destination",
   "submitDestinationSubtitle": "Know a real spot in Yaoundé that's missing? Suggest it here - an admin reviews every submission before it goes live.",
@@ -245,6 +249,10 @@
   "itinerariesEmptyTitle": "No itineraries yet",
   "itinerariesEmptySubtitle": "Pick a few destinations above and create your first plan.",
   "yourItinerariesTitle": "Your itineraries",
+  "itineraryCardSemanticLabel": "Open itinerary {title}",
+  "@itineraryCardSemanticLabel": {
+    "placeholders": { "title": { "type": "String" } }
+  },
   "destinationsLoadError": "Could not load destinations.\n{error}",
   "@destinationsLoadError": {
     "placeholders": { "error": { "type": "String" } }
@@ -295,6 +303,7 @@
   "unknownUser": "unknown",
   "logoutButton": "Logout",
   "travellerFallback": "Traveller",
+  "avatarSemanticLabel": "Tap to change your profile photo",
   "couldNotPickImage": "Could not pick image: {error}",
   "@couldNotPickImage": {
     "placeholders": { "error": { "type": "String" } }
@@ -317,5 +326,18 @@
 
   "sessionExpiredTitle": "Your session has expired",
   "sessionExpiredSubtitle": "Please sign in again to continue.",
-  "signInAgainButton": "Sign in again"
+  "signInAgainButton": "Sign in again",
+
+  "shareItineraryTooltip": "Share this itinerary",
+  "shareItineraryDialogTitle": "Share \"{title}\"",
+  "@shareItineraryDialogTitle": {
+    "placeholders": { "title": { "type": "String" } }
+  },
+  "shareItineraryDialogMessage": "Anyone with this link can view this itinerary's stops - no account needed. It stays visible until you turn sharing off.",
+  "shareItineraryCopyLinkButton": "Copy link",
+  "shareItineraryLinkCopiedSnackbar": "Link copied to clipboard.",
+  "shareItineraryTurnOffButton": "Turn off sharing",
+  "shareItineraryTurnedOffSnackbar": "Sharing turned off. The old link no longer works.",
+  "shareItineraryErrorSnackbar": "Couldn't create a share link right now.",
+  "closeButton": "Close"
 }

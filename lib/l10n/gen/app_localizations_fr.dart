@@ -247,6 +247,11 @@ class AppLocalizationsFr extends AppLocalizations {
       'Aucune destination ne correspond aux filtres sélectionnés.';
 
   @override
+  String destinationCardSemanticLabel(String name) {
+    return 'Voir $name';
+  }
+
+  @override
   String get suggestDestinationButton => 'Suggérer une destination';
 
   @override
@@ -639,6 +644,11 @@ class AppLocalizationsFr extends AppLocalizations {
   String get yourItinerariesTitle => 'Vos itinéraires';
 
   @override
+  String itineraryCardSemanticLabel(String title) {
+    return 'Ouvrir l\'itinéraire $title';
+  }
+
+  @override
   String destinationsLoadError(String error) {
     return 'Impossible de charger les destinations.\n$error';
   }
@@ -731,6 +741,10 @@ class AppLocalizationsFr extends AppLocalizations {
   String get travellerFallback => 'Voyageur';
 
   @override
+  String get avatarSemanticLabel =>
+      'Appuyez pour changer votre photo de profil';
+
+  @override
   String couldNotPickImage(String error) {
     return 'Impossible de sélectionner l\'image : $error';
   }
@@ -782,4 +796,37 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get signInAgainButton => 'Se reconnecter';
+
+  @override
+  String get shareItineraryTooltip => 'Partager cet itinéraire';
+
+  @override
+  String shareItineraryDialogTitle(String title) {
+    return 'Partager « $title »';
+  }
+
+  @override
+  String get shareItineraryDialogMessage =>
+      'Toute personne disposant de ce lien peut voir les arrêts de cet itinéraire - aucun compte requis. Il reste visible jusqu\'à ce que vous désactiviez le partage.';
+
+  @override
+  String get shareItineraryCopyLinkButton => 'Copier le lien';
+
+  @override
+  String get shareItineraryLinkCopiedSnackbar =>
+      'Lien copié dans le presse-papiers.';
+
+  @override
+  String get shareItineraryTurnOffButton => 'Désactiver le partage';
+
+  @override
+  String get shareItineraryTurnedOffSnackbar =>
+      'Partage désactivé. L\'ancien lien ne fonctionne plus.';
+
+  @override
+  String get shareItineraryErrorSnackbar =>
+      'Impossible de créer un lien de partage pour le moment.';
+
+  @override
+  String get closeButton => 'Fermer';
 }

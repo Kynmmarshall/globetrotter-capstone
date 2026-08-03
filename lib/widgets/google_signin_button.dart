@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 import 'google_signin_button_stub.dart'
-    if (dart.library.html) 'google_signin_button_web.dart' as impl;
+    if (dart.library.html) 'google_signin_button_web.dart'
+    as impl;
 
 /// Platform-specific Google sign-in trigger. On mobile this is a normal
 /// button that calls `signIn.signIn()` directly. On web, Google's SDK

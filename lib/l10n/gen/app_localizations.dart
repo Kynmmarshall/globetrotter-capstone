@@ -524,6 +524,12 @@ abstract class AppLocalizations {
   /// **'No destinations match the selected filters.'**
   String get destinationsFilterEmpty;
 
+  /// No description provided for @destinationCardSemanticLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'View {name}'**
+  String destinationCardSemanticLabel(String name);
+
   /// No description provided for @suggestDestinationButton.
   ///
   /// In en, this message translates to:
@@ -1196,6 +1202,12 @@ abstract class AppLocalizations {
   /// **'Your itineraries'**
   String get yourItinerariesTitle;
 
+  /// No description provided for @itineraryCardSemanticLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Open itinerary {title}'**
+  String itineraryCardSemanticLabel(String title);
+
   /// No description provided for @destinationsLoadError.
   ///
   /// In en, this message translates to:
@@ -1346,6 +1358,12 @@ abstract class AppLocalizations {
   /// **'Traveller'**
   String get travellerFallback;
 
+  /// No description provided for @avatarSemanticLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap to change your profile photo'**
+  String get avatarSemanticLabel;
+
   /// No description provided for @couldNotPickImage.
   ///
   /// In en, this message translates to:
@@ -1441,6 +1459,60 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Sign in again'**
   String get signInAgainButton;
+
+  /// No description provided for @shareItineraryTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Share this itinerary'**
+  String get shareItineraryTooltip;
+
+  /// No description provided for @shareItineraryDialogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Share \"{title}\"'**
+  String shareItineraryDialogTitle(String title);
+
+  /// No description provided for @shareItineraryDialogMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Anyone with this link can view this itinerary\'s stops - no account needed. It stays visible until you turn sharing off.'**
+  String get shareItineraryDialogMessage;
+
+  /// No description provided for @shareItineraryCopyLinkButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy link'**
+  String get shareItineraryCopyLinkButton;
+
+  /// No description provided for @shareItineraryLinkCopiedSnackbar.
+  ///
+  /// In en, this message translates to:
+  /// **'Link copied to clipboard.'**
+  String get shareItineraryLinkCopiedSnackbar;
+
+  /// No description provided for @shareItineraryTurnOffButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn off sharing'**
+  String get shareItineraryTurnOffButton;
+
+  /// No description provided for @shareItineraryTurnedOffSnackbar.
+  ///
+  /// In en, this message translates to:
+  /// **'Sharing turned off. The old link no longer works.'**
+  String get shareItineraryTurnedOffSnackbar;
+
+  /// No description provided for @shareItineraryErrorSnackbar.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t create a share link right now.'**
+  String get shareItineraryErrorSnackbar;
+
+  /// No description provided for @closeButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Close'**
+  String get closeButton;
 }
 
 class _AppLocalizationsDelegate

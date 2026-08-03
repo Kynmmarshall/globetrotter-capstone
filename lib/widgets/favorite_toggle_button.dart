@@ -54,7 +54,10 @@ class _FavoriteToggleButtonState extends State<FavoriteToggleButton> {
             ? SizedBox(
                 width: widget.size,
                 height: widget.size,
-                child: const CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                child: const CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Colors.white,
+                ),
               )
             : Icon(
                 isFavorite ? Icons.favorite : Icons.favorite_border,

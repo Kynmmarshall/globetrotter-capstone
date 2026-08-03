@@ -37,7 +37,9 @@ class _TripIoAppState extends State<TripIoApp> {
         return MaterialApp(
           title: 'trip_io',
           debugShowCheckedModeBanner: false,
-          theme: AppTheme.theme,
+          theme: AppTheme.lightTheme,
+          darkTheme: AppTheme.theme,
+          themeMode: _session.themeMode,
           locale: _session.locale,
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,

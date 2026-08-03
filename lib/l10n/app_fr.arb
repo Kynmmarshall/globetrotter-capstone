@@ -77,6 +77,7 @@
   "destinationsFilterLabel": "Filtrer par centre d'intérêt",
   "destinationsFilterClear": "Effacer",
   "destinationsFilterEmpty": "Aucune destination ne correspond aux filtres sélectionnés.",
+  "destinationCardSemanticLabel": "Voir {name}",
   "suggestDestinationButton": "Suggérer une destination",
   "submitDestinationTitle": "Suggérer une destination",
   "submitDestinationSubtitle": "Vous connaissez un vrai lieu à Yaoundé qui manque ? Suggérez-le ici - un administrateur examine chaque suggestion avant sa mise en ligne.",
@@ -211,6 +212,7 @@
   "itinerariesEmptyTitle": "Aucun itinéraire pour l'instant",
   "itinerariesEmptySubtitle": "Choisissez quelques destinations ci-dessus pour créer votre premier plan.",
   "yourItinerariesTitle": "Vos itinéraires",
+  "itineraryCardSemanticLabel": "Ouvrir l'itinéraire {title}",
   "destinationsLoadError": "Impossible de charger les destinations.\n{error}",
   "itineraryStartTime": "Heure de départ : {time}",
   "itineraryAvailableTime": "Temps disponible : {duration}",
@@ -237,6 +239,7 @@
   "unknownUser": "inconnu",
   "logoutButton": "Déconnexion",
   "travellerFallback": "Voyageur",
+  "avatarSemanticLabel": "Appuyez pour changer votre photo de profil",
   "couldNotPickImage": "Impossible de sélectionner l'image : {error}",
   "languageLabel": "Langue",
   "languageEnglish": "Anglais",
@@ -256,5 +259,15 @@
 
   "sessionExpiredTitle": "Votre session a expiré",
   "sessionExpiredSubtitle": "Veuillez vous reconnecter pour continuer.",
-  "signInAgainButton": "Se reconnecter"
+  "signInAgainButton": "Se reconnecter",
+
+  "shareItineraryTooltip": "Partager cet itinéraire",
+  "shareItineraryDialogTitle": "Partager « {title} »",
+  "shareItineraryDialogMessage": "Toute personne disposant de ce lien peut voir les arrêts de cet itinéraire - aucun compte requis. Il reste visible jusqu'à ce que vous désactiviez le partage.",
+  "shareItineraryCopyLinkButton": "Copier le lien",
+  "shareItineraryLinkCopiedSnackbar": "Lien copié dans le presse-papiers.",
+  "shareItineraryTurnOffButton": "Désactiver le partage",
+  "shareItineraryTurnedOffSnackbar": "Partage désactivé. L'ancien lien ne fonctionne plus.",
+  "shareItineraryErrorSnackbar": "Impossible de créer un lien de partage pour le moment.",
+  "closeButton": "Fermer"
 }

@@ -80,6 +80,30 @@ class TripColors extends ThemeExtension<TripColors> {
     myLocation: const Color(0xFF2ECC71),
   );
 
+  /// Not a naive inversion - glass panels stay dark-tinted even in light
+  /// mode (a white-on-white blurred panel over a bright photo would have
+  /// no visible edge at all), so only the *content* - text, panel borders,
+  /// the background scrim - actually flips to work on a light ground. The
+  /// map/accent colors stay put either way, since they're not
+  /// brightness-dependent (a route line or a "you are here" marker needs
+  /// to read the same regardless of theme).
+  static final TripColors light = TripColors(
+    glassFill: const Color(0xFF0B1A24).withValues(alpha: 0.55),
+    glassFlatFill: const Color(0xFF0B1A24).withValues(alpha: 0.06),
+    glassSolidFill: const Color(0xFF0B1A24).withValues(alpha: 0.88),
+    glassBorder: const Color(0xFF0B1A24).withValues(alpha: 0.14),
+    glassBorderSolid: Colors.white.withValues(alpha: 0.18),
+    scrim: Colors.black.withValues(alpha: 0.32),
+    textPrimary: const Color(0xFF10171C),
+    textSecondary: const Color(0xFF3D4C52),
+    textMuted: const Color(0xFF63737A),
+    textFaint: const Color(0xFF8B9AA0),
+    accentSelected: const Color(0xFFC97A1F),
+    accentLink: const Color(0xFF1565C0),
+    destructive: Colors.red.shade700,
+    myLocation: const Color(0xFF1E8449),
+  );
+
   @override
   TripColors copyWith({
     Color? glassFill,

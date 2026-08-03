@@ -599,85 +599,89 @@ class _ItinerariesPageState extends State<ItinerariesPage> {
                 .toList();
             return Padding(
               padding: const EdgeInsets.only(bottom: 12),
-              child: Material(
-                color: Colors.transparent,
-                borderRadius: BorderRadius.circular(16),
-                clipBehavior: Clip.antiAlias,
-                child: InkWell(
-                  onTap: () {
-                    Analytics.instance.trackEvent(
-                      'itinerary',
-                      'view',
-                      name: item.id,
-                    );
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => ItineraryDetailPage(
-                          itinerary: item,
-                          destinationsById: destinationsById,
-                          session: widget.session,
+              child: Semantics(
+                button: true,
+                label: l10n.itineraryCardSemanticLabel(item.title),
+                child: Material(
+                  color: Colors.transparent,
+                  borderRadius: BorderRadius.circular(16),
+                  clipBehavior: Clip.antiAlias,
+                  child: InkWell(
+                    onTap: () {
+                      Analytics.instance.trackEvent(
+                        'itinerary',
+                        'view',
+                        name: item.id,
+                      );
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => ItineraryDetailPage(
+                            itinerary: item,
+                            destinationsById: destinationsById,
+                            session: widget.session,
+                          ),
                         ),
-                      ),
-                    );
-                  },
-                  child: GlassPanel(
-                    borderRadius: BorderRadius.circular(16),
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Container(
-                              width: 40,
-                              height: 40,
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(12),
-                                gradient: LinearGradient(
-                                  colors: [
-                                    Theme.of(context).colorScheme.primary,
-                                    Theme.of(context).colorScheme.tertiary,
-                                  ],
+                      );
+                    },
+                    child: GlassPanel(
+                      borderRadius: BorderRadius.circular(16),
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                width: 40,
+                                height: 40,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(12),
+                                  gradient: LinearGradient(
+                                    colors: [
+                                      Theme.of(context).colorScheme.primary,
+                                      Theme.of(context).colorScheme.tertiary,
+                                    ],
+                                  ),
                                 ),
-                              ),
-                              child: const Icon(
-                                Icons.map,
-                                color: Colors.white,
-                                size: 18,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Text(
-                                item.title,
-                                style: const TextStyle(
+                                child: const Icon(
+                                  Icons.map,
                                   color: Colors.white,
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 15,
+                                  size: 18,
                                 ),
                               ),
-                            ),
-                            IconButton(
-                              onPressed: () => _deleteItinerary(item),
-                              icon: const Icon(
-                                Icons.delete_outline,
-                                color: Colors.white70,
-                                size: 20,
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  item.title,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 15,
+                                  ),
+                                ),
                               ),
-                              tooltip: AppLocalizations.of(
-                                context,
-                              )!.deleteItineraryButton,
-                              visualDensity: VisualDensity.compact,
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 10),
-                        Wrap(
-                          spacing: 6,
-                          runSpacing: 6,
-                          children: names.map(_buildDestinationTag).toList(),
-                        ),
-                      ],
+                              IconButton(
+                                onPressed: () => _deleteItinerary(item),
+                                icon: const Icon(
+                                  Icons.delete_outline,
+                                  color: Colors.white70,
+                                  size: 20,
+                                ),
+                                tooltip: AppLocalizations.of(
+                                  context,
+                                )!.deleteItineraryButton,
+                                visualDensity: VisualDensity.compact,
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 10),
+                          Wrap(
+                            spacing: 6,
+                            runSpacing: 6,
+                            children: names.map(_buildDestinationTag).toList(),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),

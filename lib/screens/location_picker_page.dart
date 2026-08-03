@@ -50,7 +50,11 @@ class _LocationPickerPageState extends State<LocationPickerPage> {
     if (!granted) {
       setState(() => _locating = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AppLocalizations.of(context)!.mapLocationPermissionDenied)),
+        SnackBar(
+          content: Text(
+            AppLocalizations.of(context)!.mapLocationPermissionDenied,
+          ),
+        ),
       );
       return;
     }
@@ -112,7 +116,15 @@ class _LocationPickerPageState extends State<LocationPickerPage> {
             child: TripMap(
               key: ValueKey(_mapEpoch),
               markers: hasPoint
-                  ? [TripMapMarker(id: 'picked', name: '', lat: _lat!, lon: _lon!, selected: true)]
+                  ? [
+                      TripMapMarker(
+                        id: 'picked',
+                        name: '',
+                        lat: _lat!,
+                        lon: _lon!,
+                        selected: true,
+                      ),
+                    ]
                   : const [],
               initialLat: _lat ?? yaoundeCenterLat,
               initialLon: _lon ?? yaoundeCenterLon,
