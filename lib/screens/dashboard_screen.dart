@@ -11,6 +11,7 @@ import 'package:trip_io/screens/itineraries_page.dart';
 import 'package:trip_io/screens/map_page.dart';
 import 'package:trip_io/screens/profile_page.dart';
 import 'package:trip_io/screens/recommendations_page.dart';
+import 'package:trip_io/themes/trip_colors.dart';
 import 'package:trip_io/widgets/ai_chat_sheet.dart';
 import 'package:trip_io/widgets/ai_fab_button.dart';
 
@@ -82,15 +83,23 @@ class _DashboardScreenState extends State<DashboardScreen> {
   // dashboard tab as an overlay sheet rather than a nav item - asking the
   // AI something no longer means navigating away from what you're browsing.
   Widget _aiFab(BuildContext context) {
-    return AiFabButton(onTap: () => showAiChatSheet(context, session: widget.session));
+    return AiFabButton(
+      onTap: () => showAiChatSheet(context, session: widget.session),
+    );
   }
 
-  Widget _frostedSurface({required Widget child, double blur = 18, double alpha = 0.16}) {
+  Widget _frostedSurface({
+    required Widget child,
+    double blur = 18,
+    double alpha = 0.16,
+  }) {
     return ClipRect(
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
         child: DecoratedBox(
-          decoration: BoxDecoration(color: Colors.white.withValues(alpha: alpha)),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: alpha),
+          ),
           child: child,
         ),
       ),
@@ -130,7 +139,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     labels[i],
                     style: TextStyle(
                       color: _index == i ? Colors.white : Colors.white70,
-                      fontWeight: _index == i ? FontWeight.w700 : FontWeight.w500,
+                      fontWeight: _index == i
+                          ? FontWeight.w700
+                          : FontWeight.w500,
                     ),
                   ),
                   selected: _index == i,
@@ -162,7 +173,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
       builder: (context, constraints) {
         final wide = constraints.maxWidth >= 900;
         final medium = constraints.maxWidth >= 700;
-        final isCompactBackground = constraints.maxWidth < _backgroundBreakpoint;
+        final isCompactBackground =
+            constraints.maxWidth < _backgroundBreakpoint;
         final labels = _labels(context);
 
         final appBar = PreferredSize(
@@ -185,7 +197,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
               backgroundColor: Colors.transparent,
               selectedIndex: _index,
               unselectedLabelTextStyle: const TextStyle(color: Colors.white70),
-              selectedLabelTextStyle: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+              selectedLabelTextStyle: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w700,
+              ),
               unselectedIconTheme: const IconThemeData(color: Colors.white70),
               selectedIconTheme: const IconThemeData(color: Colors.white),
               onDestinationSelected: _selectTab,
@@ -209,7 +224,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
               labelTextStyle: WidgetStateProperty.resolveWith((states) {
                 final selected = states.contains(WidgetState.selected);
                 return TextStyle(
-                  color: selected ? Colors.white : Colors.white.withValues(alpha: 0.85),
+                  color: selected
+                      ? Colors.white
+                      : Colors.white.withValues(alpha: 0.85),
                   fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
                   fontSize: 12,
                 );
@@ -260,12 +277,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
           fit: StackFit.expand,
           children: [
             Image.asset(
-              isCompactBackground ? 'assets/backgrounds/mobile.png' : 'assets/backgrounds/pc.png',
+              isCompactBackground
+                  ? 'assets/backgrounds/mobile.png'
+                  : 'assets/backgrounds/pc.png',
               fit: BoxFit.cover,
               alignment: Alignment.topCenter,
             ),
             DecoratedBox(
-              decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.58)),
+              decoration: BoxDecoration(color: context.tripColors.scrim),
             ),
             scaffold,
           ],

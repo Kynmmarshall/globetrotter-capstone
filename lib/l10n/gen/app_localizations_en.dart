@@ -513,6 +513,59 @@ class AppLocalizationsEn extends AppLocalizations {
   String get cancelButton => 'Cancel';
 
   @override
+  String get forgotPasswordLink => 'Forgot password?';
+
+  @override
+  String get forgotPasswordTitle => 'Reset your password';
+
+  @override
+  String get forgotPasswordStep1Subtitle =>
+      'Enter your username or email and we\'ll send you a reset code.';
+
+  @override
+  String get forgotPasswordIdentifierLabel => 'Username or email';
+
+  @override
+  String get forgotPasswordIdentifierRequired => 'Enter your username or email';
+
+  @override
+  String get forgotPasswordSendCodeButton => 'Send code';
+
+  @override
+  String forgotPasswordCodeSentMessage(String identifier) {
+    return 'If an account exists for \"$identifier\", a reset code has been sent.';
+  }
+
+  @override
+  String get forgotPasswordStep2Subtitle =>
+      'Enter the code we sent you, along with a new password.';
+
+  @override
+  String get forgotPasswordCodeLabel => 'Reset code';
+
+  @override
+  String get forgotPasswordCodeHint => '6-digit code';
+
+  @override
+  String get forgotPasswordCodeRequired => 'Enter the code from your email';
+
+  @override
+  String get forgotPasswordNewPasswordLabel => 'New password';
+
+  @override
+  String get forgotPasswordResetButton => 'Reset password';
+
+  @override
+  String get forgotPasswordSuccessMessage =>
+      'Password updated. You can now sign in.';
+
+  @override
+  String get forgotPasswordResendCodeButton => 'Resend code';
+
+  @override
+  String get forgotPasswordChangeIdentifierButton => 'Use a different account';
+
+  @override
   String get itinerariesPlanTitle => 'Plan a new itinerary';
 
   @override

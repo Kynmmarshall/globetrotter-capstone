@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'package:trip_io/themes/trip_colors.dart';
 import 'package:trip_io/widgets/brand_logo_lockup.dart';
 
 /// Shown while [SessionController] resolves whether a saved session is
@@ -30,9 +31,7 @@ class SplashScreen extends StatelessWidget {
                 alignment: Alignment.topCenter,
               ),
               DecoratedBox(
-                decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.58),
-                ),
+                decoration: BoxDecoration(color: context.tripColors.scrim),
               ),
               const Center(
                 child: Column(

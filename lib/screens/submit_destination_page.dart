@@ -6,6 +6,7 @@ import 'package:trip_io/l10n/gen/app_localizations.dart';
 import 'package:trip_io/models/interest_tags.dart';
 import 'package:trip_io/screens/location_picker_page.dart';
 import 'package:trip_io/services/session_controller.dart';
+import 'package:trip_io/themes/trip_colors.dart';
 import 'package:trip_io/widgets/glass_panel.dart';
 
 /// Lets any signed-in user propose a new destination. It never touches the
@@ -306,9 +307,7 @@ class _SubmitDestinationPageState extends State<SubmitDestinationPage> {
                 alignment: Alignment.topCenter,
               ),
               DecoratedBox(
-                decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.58),
-                ),
+                decoration: BoxDecoration(color: context.tripColors.scrim),
               ),
               SafeArea(
                 child: SingleChildScrollView(

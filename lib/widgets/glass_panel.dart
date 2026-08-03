@@ -2,6 +2,8 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 
+import 'package:trip_io/themes/trip_colors.dart';
+
 /// Which background a [GlassPanel] sits over - this changes what "glass"
 /// effect actually works, so it's a real functional choice, not a purely
 /// stylistic one.
@@ -46,21 +48,22 @@ class GlassPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.tripColors;
     final radius = borderRadius ?? BorderRadius.circular(18);
+    final fill = switch (style) {
+      GlassPanelStyle.solid => colors.glassSolidFill,
+      GlassPanelStyle.flat => colors.glassFlatFill,
+      GlassPanelStyle.blurred => colors.glassFill,
+    };
+    final borderColor = style == GlassPanelStyle.solid
+        ? colors.glassBorderSolid
+        : colors.glassBorder;
     final content = Container(
       padding: padding,
       decoration: BoxDecoration(
-        color: style == GlassPanelStyle.solid
-            ? const Color(0xFF0B1A24).withValues(alpha: 0.88)
-            : Colors.white.withValues(
-                alpha: style == GlassPanelStyle.flat ? 0.1 : 0.12,
-              ),
+        color: fill,
         borderRadius: radius,
-        border: Border.all(
-          color: Colors.white.withValues(
-            alpha: style == GlassPanelStyle.solid ? 0.18 : 0.2,
-          ),
-        ),
+        border: Border.all(color: borderColor),
       ),
       child: child,
     );

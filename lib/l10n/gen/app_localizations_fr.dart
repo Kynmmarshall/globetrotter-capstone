@@ -526,6 +526,60 @@ class AppLocalizationsFr extends AppLocalizations {
   String get cancelButton => 'Annuler';
 
   @override
+  String get forgotPasswordLink => 'Mot de passe oublié ?';
+
+  @override
+  String get forgotPasswordTitle => 'Réinitialiser votre mot de passe';
+
+  @override
+  String get forgotPasswordStep1Subtitle =>
+      'Entrez votre nom d\'utilisateur ou votre email et nous vous enverrons un code de réinitialisation.';
+
+  @override
+  String get forgotPasswordIdentifierLabel => 'Nom d\'utilisateur ou email';
+
+  @override
+  String get forgotPasswordIdentifierRequired =>
+      'Entrez votre nom d\'utilisateur ou votre email';
+
+  @override
+  String get forgotPasswordSendCodeButton => 'Envoyer le code';
+
+  @override
+  String forgotPasswordCodeSentMessage(String identifier) {
+    return 'Si un compte existe pour « $identifier », un code de réinitialisation a été envoyé.';
+  }
+
+  @override
+  String get forgotPasswordStep2Subtitle =>
+      'Entrez le code que nous vous avons envoyé, ainsi qu\'un nouveau mot de passe.';
+
+  @override
+  String get forgotPasswordCodeLabel => 'Code de réinitialisation';
+
+  @override
+  String get forgotPasswordCodeHint => 'Code à 6 chiffres';
+
+  @override
+  String get forgotPasswordCodeRequired => 'Entrez le code reçu par email';
+
+  @override
+  String get forgotPasswordNewPasswordLabel => 'Nouveau mot de passe';
+
+  @override
+  String get forgotPasswordResetButton => 'Réinitialiser le mot de passe';
+
+  @override
+  String get forgotPasswordSuccessMessage =>
+      'Mot de passe mis à jour. Vous pouvez maintenant vous connecter.';
+
+  @override
+  String get forgotPasswordResendCodeButton => 'Renvoyer le code';
+
+  @override
+  String get forgotPasswordChangeIdentifierButton => 'Utiliser un autre compte';
+
+  @override
   String get itinerariesPlanTitle => 'Planifier un nouvel itinéraire';
 
   @override

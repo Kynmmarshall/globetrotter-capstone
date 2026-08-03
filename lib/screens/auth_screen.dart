@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:trip_io/l10n/gen/app_localizations.dart';
 import 'package:trip_io/models/interest_tags.dart';
+import 'package:trip_io/screens/forgot_password_page.dart';
 import 'package:trip_io/services/session_controller.dart';
 import 'package:trip_io/widgets/brand_logo_lockup.dart';
 import 'package:trip_io/widgets/feature_pill.dart';
@@ -320,7 +321,7 @@ class _AuthScreenState extends State<AuthScreen> {
             const SizedBox(height: 16),
             _buildInterestsPicker(context, l10n, colorScheme),
           ],
-          if (_loginMode)
+          if (_loginMode) ...[
             Padding(
               padding: const EdgeInsets.only(top: 10),
               child: Text(
@@ -330,6 +331,23 @@ class _AuthScreenState extends State<AuthScreen> {
                 ),
               ),
             ),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton(
+                onPressed: () => Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => ForgotPasswordPage(session: widget.session),
+                  ),
+                ),
+                style: TextButton.styleFrom(
+                  padding: EdgeInsets.zero,
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+                child: Text(l10n.forgotPasswordLink),
+              ),
+            ),
+          ],
           if (widget.session.error != null) ...[
             const SizedBox(height: 14),
             Container(

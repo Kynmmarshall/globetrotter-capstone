@@ -195,6 +195,22 @@ class SessionController extends ChangeNotifier {
     });
   }
 
+  /// Not run through [_runGuarded] like login/register - this doesn't touch
+  /// auth state at all (no token yet to save), and the "forgot password"
+  /// flow manages its own local busy/error state rather than the global
+  /// one login/register share.
+  Future<void> requestPasswordReset(String identifier) async {
+    await ApiClient().requestPasswordReset(identifier);
+  }
+
+  Future<void> resetPassword(
+    String identifier,
+    String code,
+    String newPassword,
+  ) async {
+    await ApiClient().resetPassword(identifier, code, newPassword);
+  }
+
   Future<void> logout() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_tokenKey);

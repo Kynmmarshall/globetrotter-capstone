@@ -1004,6 +1004,102 @@ abstract class AppLocalizations {
   /// **'Cancel'**
   String get cancelButton;
 
+  /// No description provided for @forgotPasswordLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Forgot password?'**
+  String get forgotPasswordLink;
+
+  /// No description provided for @forgotPasswordTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset your password'**
+  String get forgotPasswordTitle;
+
+  /// No description provided for @forgotPasswordStep1Subtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your username or email and we\'ll send you a reset code.'**
+  String get forgotPasswordStep1Subtitle;
+
+  /// No description provided for @forgotPasswordIdentifierLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Username or email'**
+  String get forgotPasswordIdentifierLabel;
+
+  /// No description provided for @forgotPasswordIdentifierRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your username or email'**
+  String get forgotPasswordIdentifierRequired;
+
+  /// No description provided for @forgotPasswordSendCodeButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Send code'**
+  String get forgotPasswordSendCodeButton;
+
+  /// No description provided for @forgotPasswordCodeSentMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'If an account exists for \"{identifier}\", a reset code has been sent.'**
+  String forgotPasswordCodeSentMessage(String identifier);
+
+  /// No description provided for @forgotPasswordStep2Subtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the code we sent you, along with a new password.'**
+  String get forgotPasswordStep2Subtitle;
+
+  /// No description provided for @forgotPasswordCodeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset code'**
+  String get forgotPasswordCodeLabel;
+
+  /// No description provided for @forgotPasswordCodeHint.
+  ///
+  /// In en, this message translates to:
+  /// **'6-digit code'**
+  String get forgotPasswordCodeHint;
+
+  /// No description provided for @forgotPasswordCodeRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the code from your email'**
+  String get forgotPasswordCodeRequired;
+
+  /// No description provided for @forgotPasswordNewPasswordLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'New password'**
+  String get forgotPasswordNewPasswordLabel;
+
+  /// No description provided for @forgotPasswordResetButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset password'**
+  String get forgotPasswordResetButton;
+
+  /// No description provided for @forgotPasswordSuccessMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Password updated. You can now sign in.'**
+  String get forgotPasswordSuccessMessage;
+
+  /// No description provided for @forgotPasswordResendCodeButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Resend code'**
+  String get forgotPasswordResendCodeButton;
+
+  /// No description provided for @forgotPasswordChangeIdentifierButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Use a different account'**
+  String get forgotPasswordChangeIdentifierButton;
+
   /// No description provided for @itinerariesPlanTitle.
   ///
   /// In en, this message translates to:

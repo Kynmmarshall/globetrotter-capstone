@@ -89,6 +89,32 @@ class ApiClient {
     return _extractToken(response);
   }
 
+  Future<void> requestPasswordReset(String identifier) async {
+    final response = await _client.post(
+      _uri('/auth/request-password-reset'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'identifier': identifier}),
+    );
+    _throwIfNotOk(response);
+  }
+
+  Future<void> resetPassword(
+    String identifier,
+    String code,
+    String newPassword,
+  ) async {
+    final response = await _client.post(
+      _uri('/auth/reset-password'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'identifier': identifier,
+        'code': code,
+        'new_password': newPassword,
+      }),
+    );
+    _throwIfNotOk(response);
+  }
+
   Future<UserProfile> getProfile(String token) async {
     final response = await _client.get(
       _uri('/me'),

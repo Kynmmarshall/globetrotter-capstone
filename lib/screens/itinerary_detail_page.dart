@@ -6,6 +6,7 @@ import 'package:trip_io/services/api_client.dart';
 import 'package:trip_io/services/itinerary_scheduler.dart';
 import 'package:trip_io/services/session_controller.dart';
 import 'package:trip_io/screens/itineraries_page.dart' show formatDuration;
+import 'package:trip_io/themes/trip_colors.dart';
 import 'package:trip_io/widgets/glass_panel.dart';
 import 'package:trip_io/widgets/order_destinations_sheet.dart';
 
@@ -351,9 +352,7 @@ class ItineraryDetailPage extends StatelessWidget {
                 alignment: Alignment.topCenter,
               ),
               DecoratedBox(
-                decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.58),
-                ),
+                decoration: BoxDecoration(color: context.tripColors.scrim),
               ),
               SafeArea(
                 child: SingleChildScrollView(

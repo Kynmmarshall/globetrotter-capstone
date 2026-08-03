@@ -9,6 +9,7 @@ import 'package:trip_io/screens/destination_detail_page.dart';
 import 'package:trip_io/screens/itineraries_page.dart' show formatDuration;
 import 'package:trip_io/services/analytics.dart';
 import 'package:trip_io/services/session_controller.dart';
+import 'package:trip_io/themes/trip_colors.dart';
 import 'package:trip_io/widgets/glass_panel.dart';
 import 'package:trip_io/widgets/order_destinations_sheet.dart';
 import 'package:trip_io/widgets/session_expired_card.dart';
@@ -949,9 +950,7 @@ class _MapPageState extends State<MapPage> {
               alignment: Alignment.topCenter,
             ),
             DecoratedBox(
-              decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.58),
-              ),
+              decoration: BoxDecoration(color: context.tripColors.scrim),
             ),
             scaffold,
           ],
