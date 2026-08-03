@@ -481,6 +481,10 @@ class AppLocalizationsFr extends AppLocalizations {
       'Impossible d\'obtenir votre position. Veuillez réessayer.';
 
   @override
+  String get mapLocationApproximate =>
+      'Votre position est approximative - sans GPS (par ex. sur un navigateur de bureau), elle est estimée à partir des données WiFi/réseau.';
+
+  @override
   String get mapRetryButton => 'Réessayer';
 
   @override

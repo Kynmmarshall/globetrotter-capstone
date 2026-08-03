@@ -926,6 +926,12 @@ abstract class AppLocalizations {
   /// **'Couldn\'t get your location. Please try again.'**
   String get mapLocateFailed;
 
+  /// No description provided for @mapLocationApproximate.
+  ///
+  /// In en, this message translates to:
+  /// **'Your location is approximate - without GPS (e.g. on a desktop browser), position is estimated from WiFi/network data instead.'**
+  String get mapLocationApproximate;
+
   /// No description provided for @mapRetryButton.
   ///
   /// In en, this message translates to:

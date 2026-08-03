@@ -182,6 +182,7 @@
   "mapLocationPermissionDenied": "Location access is needed to show your position on the map. Please allow it in your device settings.",
   "mapLocationServicesDisabled": "Turn on location services on your device to show your position on the map.",
   "mapLocateFailed": "Couldn't get your location. Please try again.",
+  "mapLocationApproximate": "Your location is approximate - without GPS (e.g. on a desktop browser), position is estimated from WiFi/network data instead.",
   "mapRetryButton": "Retry",
   "mapUseMyLocation": "Use my current location",
   "mapMyLocationLabel": "My current location",

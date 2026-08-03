@@ -154,9 +154,8 @@ class _MapPageState extends State<MapPage> {
     }
     try {
       final position = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.high,
-          timeLimit: Duration(seconds: 12),
+        locationSettings: buildLocationSettings(
+          timeLimit: const Duration(seconds: 12),
         ),
       );
       if (!mounted) return;
@@ -196,7 +195,11 @@ class _MapPageState extends State<MapPage> {
       return;
     }
     try {
-      final position = await Geolocator.getCurrentPosition();
+      final position = await Geolocator.getCurrentPosition(
+        locationSettings: buildLocationSettings(
+          timeLimit: const Duration(seconds: 12),
+        ),
+      );
       if (!mounted) return;
       _applyPosition(position);
       setState(() => _resolvingMyLocation = false);
@@ -214,10 +217,7 @@ class _MapPageState extends State<MapPage> {
     // close enough to a checkpoint to count it as visited.
     unawaited(_positionSub?.cancel());
     _positionSub = Geolocator.getPositionStream(
-      locationSettings: const LocationSettings(
-        accuracy: LocationAccuracy.high,
-        distanceFilter: 15,
-      ),
+      locationSettings: buildLocationSettings(distanceFilter: 15),
     ).listen(_applyPosition);
   }
 
@@ -543,7 +543,14 @@ class _MapPageState extends State<MapPage> {
                                       }
                                       try {
                                         final position =
-                                            await Geolocator.getCurrentPosition();
+                                            await Geolocator.getCurrentPosition(
+                                              locationSettings:
+                                                  buildLocationSettings(
+                                                    timeLimit: const Duration(
+                                                      seconds: 12,
+                                                    ),
+                                                  ),
+                                            );
                                         if (!context.mounted) return;
                                         Navigator.of(context).pop(
                                           Destination(
