@@ -95,9 +95,9 @@ class _FavoritesPageState extends State<FavoritesPage> {
       button: true,
       label: l10n.destinationCardSemanticLabel(item.name),
       child: GestureDetector(
-        onTap: () {
+        onTap: () async {
           Analytics.instance.trackEvent('destination', 'view', name: item.id);
-          Navigator.of(context).push(
+          await Navigator.of(context).push(
             MaterialPageRoute(
               builder: (_) => DestinationDetailPage(
                 destination: item,
@@ -106,6 +106,9 @@ class _FavoritesPageState extends State<FavoritesPage> {
               ),
             ),
           );
+          // Forces NewCommentsBadge to re-check the just-updated "last
+          // seen" comment count rather than showing stale "New" pills.
+          if (mounted) setState(() {});
         },
         child: GlassPanel(
           borderRadius: BorderRadius.circular(18),

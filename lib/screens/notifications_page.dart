@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:trip_io/l10n/gen/app_localizations.dart';
 import 'package:trip_io/models/models.dart';
@@ -28,7 +30,20 @@ class _NotificationsPageState extends State<NotificationsPage> {
   @override
   void initState() {
     super.initState();
-    _future = widget.session.notifications();
+    _future = _loadAndMarkAllRead();
+  }
+
+  // Returns the list as fetched (still carrying each item's original `read`
+  // flag, so the unread dot renders for whatever was new when this page was
+  // opened) while marking every currently-unread item read in the
+  // background - opening the inbox is what clears the dashboard's badge
+  // count, not needing to tap each entry one at a time.
+  Future<List<AppNotification>> _loadAndMarkAllRead() async {
+    final items = await widget.session.notifications();
+    for (final n in items.where((n) => !n.read)) {
+      unawaited(widget.session.markNotificationRead(n.id));
+    }
+    return items;
   }
 
   Future<void> _markRead(AppNotification notification) async {

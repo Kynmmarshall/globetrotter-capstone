@@ -157,9 +157,9 @@ class _DestinationsPageState extends State<DestinationsPage> {
       button: true,
       label: l10n.destinationCardSemanticLabel(d.name),
       child: GestureDetector(
-        onTap: () {
+        onTap: () async {
           Analytics.instance.trackEvent('destination', 'view', name: d.id);
-          Navigator.of(context).push(
+          await Navigator.of(context).push(
             MaterialPageRoute(
               builder: (_) => DestinationDetailPage(
                 destination: d,
@@ -168,6 +168,11 @@ class _DestinationsPageState extends State<DestinationsPage> {
               ),
             ),
           );
+          // Forces NewCommentsBadge (built fresh below) to re-check
+          // SharedPreferences for this destination's just-updated "last
+          // seen" comment count - otherwise coming straight back here still
+          // shows the "New" pill from before the comments were opened.
+          if (mounted) setState(() {});
         },
         child: GlassPanel(
           borderRadius: BorderRadius.circular(20),
