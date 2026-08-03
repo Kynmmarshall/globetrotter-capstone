@@ -330,6 +330,8 @@ async def get_route(payload: RouteRequest, user: str = Depends(get_current_user)
         )
     except routing.RoutingNotConfiguredError:
         raise HTTPException(status_code=503, detail="Routing is not configured")
+    except routing.RoutingNoRouteFoundError:
+        raise HTTPException(status_code=422, detail="No route could be found between these points")
     except routing.RoutingRequestError:
         raise HTTPException(status_code=502, detail="Routing service is temporarily unavailable")
     return result

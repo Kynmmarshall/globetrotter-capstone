@@ -5,7 +5,7 @@ import pytest
 from httpx import AsyncClient
 
 from app.main import app
-from app import ai, clients
+from app import ai, clients, routing
 from app.auth import create_access_token, INTERNAL_SERVICE_TOKEN
 
 
@@ -190,6 +190,39 @@ async def test_admin_endpoints_require_admin_role(tmp_path, monkeypatch):
         r2 = await ac.get("/admin/destinations", headers=headers)
         assert r2.status_code == 200
         assert len(r2.json()) == 1
+
+
+@pytest.mark.asyncio
+async def test_route_endpoint_maps_error_types_to_distinct_status_codes(tmp_path, monkeypatch):
+    _use_temp_data(tmp_path)
+    token = create_access_token("alice")
+    headers = {"Authorization": f"Bearer {token}"}
+    body = {"waypoints": [{"lat": 3.8, "lon": 11.5}, {"lat": 3.9, "lon": 11.6}]}
+
+    async def raise_no_route(waypoints, profile="driving-car"):
+        raise routing.RoutingNoRouteFoundError("no routable point")
+
+    async def raise_unavailable(waypoints, profile="driving-car"):
+        raise routing.RoutingRequestError("boom")
+
+    async def raise_not_configured(waypoints, profile="driving-car"):
+        raise routing.RoutingNotConfiguredError("no key")
+
+    async with AsyncClient(app=app, base_url="http://test") as ac:
+        # A genuinely unreachable point is a 422 ("no route"), distinct from
+        # a transient service failure - retrying can't fix it, so the
+        # frontend shouldn't offer a retry for this one.
+        monkeypatch.setattr(routing, "get_route", raise_no_route)
+        r1 = await ac.post("/route", json=body, headers=headers)
+        assert r1.status_code == 422
+
+        monkeypatch.setattr(routing, "get_route", raise_unavailable)
+        r2 = await ac.post("/route", json=body, headers=headers)
+        assert r2.status_code == 502
+
+        monkeypatch.setattr(routing, "get_route", raise_not_configured)
+        r3 = await ac.post("/route", json=body, headers=headers)
+        assert r3.status_code == 503
 
 
 @pytest.mark.asyncio

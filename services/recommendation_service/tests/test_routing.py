@@ -88,6 +88,26 @@ async def test_get_route_fails_fast_on_non_retryable_status(monkeypatch):
 
 
 @pytest.mark.asyncio
+async def test_get_route_raises_no_route_found_on_404_without_retrying(monkeypatch):
+    monkeypatch.setattr(routing, "ORS_API_KEY", "test-key")
+    monkeypatch.setattr(routing, "_RETRY_DELAYS", (0, 0))
+
+    calls = {"count": 0}
+
+    async def fake_post(self, url, headers=None, json=None):
+        calls["count"] += 1
+        return _FakeResponse(404, {"error": {"code": 2010, "message": "no routable point"}})
+
+    monkeypatch.setattr(httpx.AsyncClient, "post", fake_post)
+
+    with pytest.raises(routing.RoutingNoRouteFoundError):
+        await routing.get_route([(3.8, 11.5), (3.9, 11.6)])
+    # A 404 means these specific points aren't reachable - a retry can't
+    # change that, so it should fail on the very first attempt.
+    assert calls["count"] == 1
+
+
+@pytest.mark.asyncio
 async def test_get_route_not_configured_without_api_key(monkeypatch):
     monkeypatch.setattr(routing, "ORS_API_KEY", None)
     with pytest.raises(routing.RoutingNotConfiguredError):

@@ -24,6 +24,12 @@ DEFAULT_PROFILE = "driving-car"
 _RETRYABLE_STATUSES = {429, 500, 502, 503, 504}
 _RETRY_DELAYS = (0.5, 1.5)
 
+# ORS uses 404 specifically to mean "no routable point/path near one of
+# these coordinates" - a data/reachability problem (e.g. a wildly wrong GPS
+# fix putting the origin in the ocean, or a waypoint nowhere near a road),
+# never something a retry or "the service is down" message would explain.
+_NO_ROUTE_STATUS = 404
+
 
 class RoutingNotConfiguredError(Exception):
     pass
@@ -31,6 +37,12 @@ class RoutingNotConfiguredError(Exception):
 
 class RoutingRequestError(Exception):
     pass
+
+
+class RoutingNoRouteFoundError(Exception):
+    """Raised when ORS can't find a route between the given points at all -
+    distinct from a transient/service-level failure so callers can show a
+    "these points aren't reachable" message instead of "try again"."""
 
 
 async def get_route(waypoints: list[tuple[float, float]], profile: str = DEFAULT_PROFILE) -> dict:
@@ -81,14 +93,24 @@ async def _request_with_retries(profile: str, coordinates: list[list[float]]) ->
         if resp.status_code < 400:
             return resp.json()
 
+        if resp.status_code == _NO_ROUTE_STATUS:
+            logger.warning("ORS found no route for %s: %s", coordinates, _safe_body(resp))
+            raise RoutingNoRouteFoundError(_safe_body(resp))
+
         last_error = RoutingRequestError(f"ORS returned status {resp.status_code}")
         if resp.status_code not in _RETRYABLE_STATUSES or delay is None:
-            # A non-retryable status (bad request, no route found, ...)
-            # fails immediately instead of burning through every retry slot
-            # on an error a retry can't fix.
+            # A non-retryable status fails immediately instead of burning
+            # through every retry slot on an error a retry can't fix.
             break
         logger.warning("ORS returned %s, retrying in %.1fs", resp.status_code, delay)
         await asyncio.sleep(delay)
 
     logger.warning("ORS request failed after retries: %s", last_error)
     raise RoutingRequestError(str(last_error) if last_error else "Routing service returned an error")
+
+
+def _safe_body(resp: httpx.Response) -> str:
+    try:
+        return str(resp.json())
+    except ValueError:
+        return resp.text[:500]
