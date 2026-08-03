@@ -198,6 +198,96 @@ async def test_password_reset_rejects_wrong_or_expired_code(tmp_path, monkeypatc
 
 
 @pytest.mark.asyncio
+async def test_moderation_notification_flow(tmp_path, monkeypatch):
+    _use_temp_data(tmp_path)
+
+    async def no_itineraries(username):
+        return []
+
+    monkeypatch.setattr(clients, "get_itineraries_for_user", no_itineraries)
+
+    async with AsyncClient(app=app, base_url="http://test") as ac:
+        r = await ac.post("/register", json={"username": "hank", "password": "secret"})
+        token = r.json()["access_token"]
+        headers = {"Authorization": f"Bearer {token}"}
+
+        # Simulates what events_consumer.py does when a
+        # "destination.approved" event arrives for hank's submission.
+        from app import crud
+
+        crud.create_notification(
+            username="hank",
+            type_="moderation",
+            title_key="notificationDestinationStatusTitle",
+            body_key="notificationDestinationApprovedBody",
+            body_args={"name": "Mont Febe"},
+            destination_id="dest-1",
+        )
+
+        listed = await ac.get("/me/notifications", headers=headers)
+        assert listed.status_code == 200
+        items = listed.json()
+        assert len(items) == 1
+        assert items[0]["type"] == "moderation"
+        assert items[0]["body_args"] == {"name": "Mont Febe"}
+        assert items[0]["read"] is False
+
+        notification_id = items[0]["id"]
+        marked = await ac.post(
+            f"/me/notifications/{notification_id}/read", headers=headers
+        )
+        assert marked.status_code == 200
+
+        refetched = await ac.get("/me/notifications", headers=headers)
+        assert refetched.json()[0]["read"] is True
+
+
+@pytest.mark.asyncio
+async def test_trip_reminder_notification_is_computed_from_itineraries(
+    tmp_path, monkeypatch
+):
+    _use_temp_data(tmp_path)
+    from datetime import date, timedelta as td
+
+    upcoming_start = (date.today() + td(days=1)).isoformat()
+
+    async def one_upcoming_itinerary(username):
+        return [
+            {
+                "id": "itin-1",
+                "user": username,
+                "title": "Weekend in Yaoundé",
+                "destinations": [],
+                "start_date": upcoming_start,
+                "end_date": upcoming_start,
+            }
+        ]
+
+    monkeypatch.setattr(clients, "get_itineraries_for_user", one_upcoming_itinerary)
+
+    async with AsyncClient(app=app, base_url="http://test") as ac:
+        r = await ac.post("/register", json={"username": "iris", "password": "secret"})
+        token = r.json()["access_token"]
+        headers = {"Authorization": f"Bearer {token}"}
+
+        listed = await ac.get("/me/notifications", headers=headers)
+        assert listed.status_code == 200
+        items = listed.json()
+        assert len(items) == 1
+        assert items[0]["type"] == "trip_reminder"
+        assert items[0]["id"] == "trip-itin-1"
+        assert items[0]["body_args"]["title"] == "Weekend in Yaoundé"
+
+        # A reminder has no row of its own, but the read set should still
+        # let it be dismissed by its synthetic id.
+        marked = await ac.post("/me/notifications/trip-itin-1/read", headers=headers)
+        assert marked.status_code == 200
+
+        refetched = await ac.get("/me/notifications", headers=headers)
+        assert refetched.json()[0]["read"] is True
+
+
+@pytest.mark.asyncio
 async def test_internal_user_count_route_not_shadowed_by_username_route(tmp_path):
     # Regression test: /internal/users/count must be registered before
     # /internal/users/{username} in main.py, or FastAPI matches "count" as

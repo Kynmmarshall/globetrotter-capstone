@@ -177,6 +177,19 @@ def admin_update_destination(destination_id: str, payload: DestinationUpdate, ad
     updated = crud.update_destination(destination_id, changes)
     if not updated:
         raise HTTPException(status_code=404, detail="Destination not found")
+    # Only the submitter cares, and only for a real moderation decision -
+    # not every admin edit (a typo fix to an already-approved listing
+    # shouldn't re-notify anyone).
+    new_status = changes.get("status")
+    if new_status in (crud.APPROVED, crud.REJECTED) and updated.get("submitted_by"):
+        events.publish(
+            f"destination.{new_status}",
+            {
+                "destination_id": updated["id"],
+                "name": updated["name"],
+                "submitted_by": updated["submitted_by"],
+            },
+        )
     return updated
 
 

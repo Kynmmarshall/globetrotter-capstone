@@ -122,6 +122,68 @@ def remove_favorite(username: str, destination_id: str):
     return None
 
 
+def create_notification(
+    username: str,
+    type_: str,
+    title_key: str,
+    body_key: str,
+    body_args: dict | None = None,
+    destination_id: str | None = None,
+    itinerary_id: str | None = None,
+) -> dict:
+    """Notifications carry i18n *keys* (matching the Flutter app's own ARB
+    entries) plus interpolation args, not rendered English text - this
+    service has no idea what language the recipient reads the app in, and
+    duplicating the app's translations here would just let them drift.
+    """
+    data = read_data()
+    notification = {
+        "id": str(uuid.uuid4()),
+        "username": username,
+        "type": type_,
+        "title_key": title_key,
+        "body_key": body_key,
+        "body_args": body_args or {},
+        "destination_id": destination_id,
+        "itinerary_id": itinerary_id,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "read": False,
+    }
+    data.setdefault("notifications", []).append(notification)
+    write_data(data)
+    return notification
+
+
+def get_notifications_for(username: str) -> list[dict]:
+    data = read_data()
+    items = [n for n in data.get("notifications", []) if n["username"] == username]
+    items.sort(key=lambda n: n["created_at"], reverse=True)
+    return items
+
+
+def get_read_notification_ids(username: str) -> set[str]:
+    data = read_data()
+    return set((data.get("read_notification_ids") or {}).get(username, []))
+
+
+def mark_notification_read(username: str, notification_id: str) -> None:
+    """Covers both persisted notifications (moderation) and the synthetic,
+    computed-at-read-time ids trip reminders use (see main.py) - either
+    way, "read" just means this id is in the user's read set, so a
+    reminder that only ever exists as a computed value can still be
+    dismissed without needing a row of its own.
+    """
+    data = read_data()
+    for n in data.get("notifications", []):
+        if n["username"] == username and n["id"] == notification_id:
+            n["read"] = True
+    read_ids = data.setdefault("read_notification_ids", {})
+    ids = set(read_ids.get(username, []))
+    ids.add(notification_id)
+    read_ids[username] = sorted(ids)
+    write_data(data)
+
+
 def is_admin(username: str) -> bool:
     for u in read_data().get("users", []):
         if u.get("username") == username:

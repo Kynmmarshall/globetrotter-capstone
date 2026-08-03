@@ -40,6 +40,7 @@ services:
       <<: *shared-env
       USER_SERVICE_DATA_PATH: /srv/data/users.json
       RECOMMENDATION_SERVICE_URL: http://recommendation_service:8003
+      ITINERARY_SERVICE_URL: http://itinerary_service:8002
       GOOGLE_OAUTH_CLIENT_ID: ${GOOGLE_OAUTH_CLIENT_ID:-}
     volumes:
       - ./services/user_service/data:/srv/data
@@ -50,6 +51,8 @@ services:
     depends_on:
       rabbitmq:
         condition: service_healthy
+      itinerary_service:
+        condition: service_started
 
   itinerary_service:
     build: ./services/itinerary_service
