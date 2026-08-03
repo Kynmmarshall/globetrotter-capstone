@@ -9,6 +9,7 @@ import 'package:trip_io/screens/destination_detail_page.dart';
 import 'package:trip_io/screens/itineraries_page.dart' show formatDuration;
 import 'package:trip_io/services/analytics.dart';
 import 'package:trip_io/services/session_controller.dart';
+import 'package:trip_io/widgets/glass_panel.dart';
 import 'package:trip_io/widgets/order_destinations_sheet.dart';
 import 'package:trip_io/widgets/session_expired_card.dart';
 import 'package:trip_io/widgets/trip_map.dart';
@@ -363,32 +364,6 @@ class _MapPageState extends State<MapPage> {
     _searchController.dispose();
     unawaited(_positionSub?.cancel());
     super.dispose();
-  }
-
-  // Unlike the app's other glass panels, this one floats directly on top of
-  // TripMap - which on Android/Web renders as a native platform view
-  // (MapLibre), not ordinary Flutter pixels. BackdropFilter can't sample a
-  // platform view's own compositing layer, so its blur/tint silently no-ops
-  // there, leaving text with no readable background at all. A solid, mostly
-  // opaque fill works the same on every backend instead.
-  Widget _glassPanel({
-    required Widget child,
-    EdgeInsets? padding,
-    BorderRadius? borderRadius,
-  }) {
-    final radius = borderRadius ?? BorderRadius.circular(18);
-    return ClipRRect(
-      borderRadius: radius,
-      child: Container(
-        padding: padding ?? const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: const Color(0xFF0B1A24).withValues(alpha: 0.88),
-          borderRadius: radius,
-          border: Border.all(color: Colors.white.withValues(alpha: 0.18)),
-        ),
-        child: child,
-      ),
-    );
   }
 
   Future<Destination?> _pickDestination(
@@ -1119,7 +1094,8 @@ class _MapPageState extends State<MapPage> {
   }
 
   Widget _progressPill(AppLocalizations l10n, int visited, int total) {
-    return _glassPanel(
+    return GlassPanel(
+      style: GlassPanelStyle.solid,
       borderRadius: BorderRadius.circular(999),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       child: Row(
@@ -1145,8 +1121,10 @@ class _MapPageState extends State<MapPage> {
     List<Destination> withCoords,
     List<Destination> checkpoints,
   ) {
-    return _glassPanel(
+    return GlassPanel(
+      style: GlassPanelStyle.solid,
       borderRadius: BorderRadius.circular(20),
+      padding: const EdgeInsets.all(14),
       // Pinned on top+left+right but not bottom (see the Positioned above),
       // so its height constraint is unbounded - without `min` a Column
       // defaults to trying to be as tall as possible, which fails to lay

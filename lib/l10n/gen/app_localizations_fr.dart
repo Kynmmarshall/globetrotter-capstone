@@ -508,6 +508,13 @@ class AppLocalizationsFr extends AppLocalizations {
   String get deleteItineraryButton => 'Supprimer';
 
   @override
+  String get logoutConfirmTitle => 'Se déconnecter ?';
+
+  @override
+  String get logoutConfirmMessage =>
+      'Vous devrez vous reconnecter pour voir vos itinéraires et favoris.';
+
+  @override
   String get deleteItineraryConfirmTitle => 'Supprimer cet itinéraire ?';
 
   @override
@@ -638,10 +645,10 @@ class AppLocalizationsFr extends AppLocalizations {
   String get itinerariesStatLabel => 'Itinéraires';
 
   @override
-  String get regionStatLabel => 'Région';
+  String get favoritesStatLabel => 'Favoris';
 
   @override
-  String get featuredSpotsStatLabel => 'Lieux en vedette';
+  String get placesPlannedStatLabel => 'Lieux prévus';
 
   @override
   String get aboutMeTitle => 'À propos de moi';

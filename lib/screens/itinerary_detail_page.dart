@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:trip_io/l10n/gen/app_localizations.dart';
 import 'package:trip_io/models/models.dart';
@@ -8,6 +6,7 @@ import 'package:trip_io/services/api_client.dart';
 import 'package:trip_io/services/itinerary_scheduler.dart';
 import 'package:trip_io/services/session_controller.dart';
 import 'package:trip_io/screens/itineraries_page.dart' show formatDuration;
+import 'package:trip_io/widgets/glass_panel.dart';
 import 'package:trip_io/widgets/order_destinations_sheet.dart';
 
 class ItineraryDetailPage extends StatelessWidget {
@@ -43,29 +42,6 @@ class ItineraryDetailPage extends StatelessWidget {
     );
   }
 
-  Widget _glassPanel({
-    required Widget child,
-    EdgeInsets? padding,
-    BorderRadius? borderRadius,
-  }) {
-    final radius = borderRadius ?? BorderRadius.circular(18);
-    return ClipRRect(
-      borderRadius: radius,
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
-        child: Container(
-          padding: padding ?? const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.12),
-            borderRadius: radius,
-            border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
-          ),
-          child: child,
-        ),
-      ),
-    );
-  }
-
   Widget _buildHeader(BuildContext context, AppLocalizations l10n) {
     final schedule = itinerary.schedule;
     final totalDuration = schedule.isEmpty
@@ -81,8 +57,9 @@ class ItineraryDetailPage extends StatelessWidget {
           : '${dateFormat.formatMediumDate(startDate)} – '
                 '${dateFormat.formatMediumDate(endDate)}';
     }
-    return _glassPanel(
+    return GlassPanel(
       borderRadius: BorderRadius.circular(22),
+      padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -195,8 +172,9 @@ class ItineraryDetailPage extends StatelessWidget {
   Widget _buildTimeline(BuildContext context, AppLocalizations l10n) {
     final schedule = itinerary.schedule;
     if (schedule.isEmpty) {
-      return _glassPanel(
+      return GlassPanel(
         borderRadius: BorderRadius.circular(18),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -273,7 +251,7 @@ class ItineraryDetailPage extends StatelessWidget {
                 Expanded(
                   child: Padding(
                     padding: const EdgeInsets.only(bottom: 4),
-                    child: _glassPanel(
+                    child: GlassPanel(
                       borderRadius: BorderRadius.circular(16),
                       padding: const EdgeInsets.all(12),
                       child: Row(
@@ -411,7 +389,7 @@ class ItineraryDetailPage extends StatelessWidget {
                   padding: const EdgeInsets.all(16),
                   child: Align(
                     alignment: Alignment.topLeft,
-                    child: _glassPanel(
+                    child: GlassPanel(
                       borderRadius: BorderRadius.circular(999),
                       padding: EdgeInsets.zero,
                       child: IconButton(

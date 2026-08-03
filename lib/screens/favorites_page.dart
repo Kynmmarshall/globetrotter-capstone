@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:trip_io/l10n/gen/app_localizations.dart';
 import 'package:trip_io/models/models.dart';
@@ -12,6 +10,7 @@ import 'package:trip_io/widgets/comment_count_button.dart';
 import 'package:trip_io/widgets/directions_button.dart';
 import 'package:trip_io/widgets/favorite_toggle_button.dart';
 import 'package:trip_io/widgets/feature_pill.dart';
+import 'package:trip_io/widgets/glass_panel.dart';
 import 'package:trip_io/widgets/new_comments_badge.dart';
 import 'package:trip_io/widgets/session_expired_card.dart';
 import 'package:trip_io/widgets/star_rating.dart';
@@ -32,29 +31,6 @@ class _FavoritesPageState extends State<FavoritesPage> {
   void initState() {
     super.initState();
     _future = widget.session.favorites();
-  }
-
-  Widget _glassPanel({
-    required Widget child,
-    EdgeInsets? padding,
-    BorderRadius? borderRadius,
-  }) {
-    final radius = borderRadius ?? BorderRadius.circular(18);
-    return ClipRRect(
-      borderRadius: radius,
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
-        child: Container(
-          padding: padding ?? const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.12),
-            borderRadius: radius,
-            border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
-          ),
-          child: child,
-        ),
-      ),
-    );
   }
 
   Widget _buildThumbnail(
@@ -126,8 +102,9 @@ class _FavoritesPageState extends State<FavoritesPage> {
           ),
         );
       },
-      child: _glassPanel(
+      child: GlassPanel(
         borderRadius: BorderRadius.circular(18),
+        padding: const EdgeInsets.all(16),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

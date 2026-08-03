@@ -974,6 +974,18 @@ abstract class AppLocalizations {
   /// **'Delete'**
   String get deleteItineraryButton;
 
+  /// No description provided for @logoutConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Log out?'**
+  String get logoutConfirmTitle;
+
+  /// No description provided for @logoutConfirmMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'ll need to sign back in to see your itineraries and favorites.'**
+  String get logoutConfirmMessage;
+
   /// No description provided for @deleteItineraryConfirmTitle.
   ///
   /// In en, this message translates to:
@@ -1178,17 +1190,17 @@ abstract class AppLocalizations {
   /// **'Itineraries'**
   String get itinerariesStatLabel;
 
-  /// No description provided for @regionStatLabel.
+  /// No description provided for @favoritesStatLabel.
   ///
   /// In en, this message translates to:
-  /// **'Region'**
-  String get regionStatLabel;
+  /// **'Favorites'**
+  String get favoritesStatLabel;
 
-  /// No description provided for @featuredSpotsStatLabel.
+  /// No description provided for @placesPlannedStatLabel.
   ///
   /// In en, this message translates to:
-  /// **'Featured spots'**
-  String get featuredSpotsStatLabel;
+  /// **'Places planned'**
+  String get placesPlannedStatLabel;
 
   /// No description provided for @aboutMeTitle.
   ///

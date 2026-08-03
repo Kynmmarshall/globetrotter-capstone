@@ -495,6 +495,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get deleteItineraryButton => 'Delete';
 
   @override
+  String get logoutConfirmTitle => 'Log out?';
+
+  @override
+  String get logoutConfirmMessage =>
+      'You\'ll need to sign back in to see your itineraries and favorites.';
+
+  @override
   String get deleteItineraryConfirmTitle => 'Delete this itinerary?';
 
   @override
@@ -622,10 +629,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get itinerariesStatLabel => 'Itineraries';
 
   @override
-  String get regionStatLabel => 'Region';
+  String get favoritesStatLabel => 'Favorites';
 
   @override
-  String get featuredSpotsStatLabel => 'Featured spots';
+  String get placesPlannedStatLabel => 'Places planned';
 
   @override
   String get aboutMeTitle => 'About me';

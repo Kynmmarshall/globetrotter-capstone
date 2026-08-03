@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:trip_io/l10n/gen/app_localizations.dart';
 import 'package:trip_io/models/interest_tags.dart';
@@ -13,6 +11,7 @@ import 'package:trip_io/widgets/add_to_itinerary_button.dart';
 import 'package:trip_io/widgets/comment_count_button.dart';
 import 'package:trip_io/widgets/directions_button.dart';
 import 'package:trip_io/widgets/favorite_toggle_button.dart';
+import 'package:trip_io/widgets/glass_panel.dart';
 import 'package:trip_io/widgets/new_comments_badge.dart';
 import 'package:trip_io/widgets/session_expired_card.dart';
 import 'package:trip_io/widgets/star_rating.dart';
@@ -117,29 +116,6 @@ class _DestinationsPageState extends State<DestinationsPage> {
     );
   }
 
-  Widget _glassPanel({
-    required Widget child,
-    EdgeInsets? padding,
-    BorderRadius? borderRadius,
-  }) {
-    final radius = borderRadius ?? BorderRadius.circular(18);
-    return ClipRRect(
-      borderRadius: radius,
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
-        child: Container(
-          padding: padding,
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.12),
-            borderRadius: radius,
-            border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
-          ),
-          child: child,
-        ),
-      ),
-    );
-  }
-
   Widget _buildDestinationImage(String url) {
     return Image.network(
       url,
@@ -187,7 +163,7 @@ class _DestinationsPageState extends State<DestinationsPage> {
           ),
         );
       },
-      child: _glassPanel(
+      child: GlassPanel(
         borderRadius: BorderRadius.circular(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -345,7 +321,7 @@ class _DestinationsPageState extends State<DestinationsPage> {
   }
 
   Widget _buildSearchBar(AppLocalizations l10n) {
-    return _glassPanel(
+    return GlassPanel(
       padding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
       child: Row(
         children: [
@@ -371,7 +347,7 @@ class _DestinationsPageState extends State<DestinationsPage> {
   }
 
   Widget _buildFilterBar(AppLocalizations l10n) {
-    return _glassPanel(
+    return GlassPanel(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -510,26 +486,16 @@ class _DestinationsPageState extends State<DestinationsPage> {
                   }
                   final allItems = snapshot.data ?? <Destination>[];
                   if (allItems.isEmpty) {
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 40),
-                      child: Center(
-                        child: Text(
-                          l10n.destinationsEmpty,
-                          style: const TextStyle(color: Colors.white70),
-                        ),
-                      ),
+                    return EmptyStateCard(
+                      icon: Icons.travel_explore,
+                      title: l10n.destinationsEmpty,
                     );
                   }
                   final items = _applyFilters(allItems);
                   if (items.isEmpty) {
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 40),
-                      child: Center(
-                        child: Text(
-                          l10n.destinationsFilterEmpty,
-                          style: const TextStyle(color: Colors.white70),
-                        ),
-                      ),
+                    return EmptyStateCard(
+                      icon: Icons.filter_alt_off,
+                      title: l10n.destinationsFilterEmpty,
                     );
                   }
                   final width = constraints.maxWidth;
