@@ -80,6 +80,18 @@ def unshare_itinerary(itinerary_id: str, user: str = Depends(get_current_user)):
     return {"revoked": itinerary_id}
 
 
+@app.post("/itineraries/claim/{token}", response_model=Itinerary)
+def claim_shared_itinerary(token: str, user: str = Depends(get_current_user)):
+    claimed = crud.claim_shared_itinerary(token, user)
+    if claimed is None:
+        raise HTTPException(status_code=404, detail="Shared itinerary not found")
+    events.publish(
+        "itinerary.created",
+        {"user": user, "id": claimed["id"], "destinations": claimed["destinations"]},
+    )
+    return claimed
+
+
 @app.get("/shared/itineraries/{token}", response_model=SharedItinerary)
 async def get_shared_itinerary(token: str):
     itinerary = crud.get_itinerary_by_share_token(token)

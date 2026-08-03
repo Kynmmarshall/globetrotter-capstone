@@ -208,3 +208,72 @@ async def test_unshare_itinerary_revokes_token(tmp_path):
 
         r3 = await ac.get(f"/shared/itineraries/{share_token}")
         assert r3.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_claim_shared_itinerary_copies_into_claiming_users_account(tmp_path):
+    _use_temp_data(tmp_path)
+    alice_headers = {"Authorization": f"Bearer {create_access_token('alice')}"}
+    bob_headers = {"Authorization": f"Bearer {create_access_token('bob')}"}
+
+    async with AsyncClient(app=app, base_url="http://test") as ac:
+        r = await ac.post(
+            "/itineraries",
+            json={"title": "Weekend in Yaoundé", "destinations": ["d1", "d2"]},
+            headers=alice_headers,
+        )
+        itin_id = r.json()["id"]
+        share = await ac.post(f"/itineraries/{itin_id}/share", headers=alice_headers)
+        share_token = share.json()["share_token"]
+
+        claimed = await ac.post(
+            f"/itineraries/claim/{share_token}", headers=bob_headers
+        )
+        assert claimed.status_code == 200
+        body = claimed.json()
+        assert body["user"] == "bob"
+        assert body["title"] == "Weekend in Yaoundé"
+        assert body["destinations"] == ["d1", "d2"]
+        assert body["id"] != itin_id
+
+        # bob now has his own independent copy, alice's is untouched
+        bob_list = await ac.get("/itineraries", headers=bob_headers)
+        assert len(bob_list.json()) == 1
+        alice_list = await ac.get("/itineraries", headers=alice_headers)
+        assert len(alice_list.json()) == 1
+
+        # the token is still valid - a second friend can claim their own copy
+        carla_headers = {"Authorization": f"Bearer {create_access_token('carla')}"}
+        claimed2 = await ac.post(
+            f"/itineraries/claim/{share_token}", headers=carla_headers
+        )
+        assert claimed2.status_code == 200
+        assert claimed2.json()["id"] != body["id"]
+
+        missing = await ac.post(
+            "/itineraries/claim/does-not-exist", headers=bob_headers
+        )
+        assert missing.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_claim_own_shared_itinerary_does_not_duplicate(tmp_path):
+    _use_temp_data(tmp_path)
+    headers = {"Authorization": f"Bearer {create_access_token('alice')}"}
+
+    async with AsyncClient(app=app, base_url="http://test") as ac:
+        r = await ac.post(
+            "/itineraries",
+            json={"title": "Trip", "destinations": ["d1"]},
+            headers=headers,
+        )
+        itin_id = r.json()["id"]
+        share = await ac.post(f"/itineraries/{itin_id}/share", headers=headers)
+        share_token = share.json()["share_token"]
+
+        claimed = await ac.post(f"/itineraries/claim/{share_token}", headers=headers)
+        assert claimed.status_code == 200
+        assert claimed.json()["id"] == itin_id
+
+        alice_list = await ac.get("/itineraries", headers=headers)
+        assert len(alice_list.json()) == 1

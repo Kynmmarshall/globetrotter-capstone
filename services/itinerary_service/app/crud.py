@@ -73,3 +73,34 @@ def get_itinerary_by_share_token(token: str) -> dict | None:
         if i.get("share_token") == token:
             return i
     return None
+
+
+def claim_shared_itinerary(token: str, claiming_username: str) -> dict | None:
+    """Copies a shared itinerary into the claiming user's own account -
+    None if the token doesn't match anything. The token stays valid after
+    this (not single-use), since one link is meant to be shared with a
+    whole group, each person claiming their own independent copy.
+
+    If the itinerary is already the claiming user's own (they opened their
+    own share link), returns it unchanged rather than creating a
+    redundant duplicate.
+    """
+    data = read_data()
+    source = next(
+        (i for i in data.get("itineraries", []) if i.get("share_token") == token),
+        None,
+    )
+    if source is None:
+        return None
+    if source.get("user") == claiming_username:
+        return source
+
+    copy = {
+        "user": claiming_username,
+        "title": source["title"],
+        "destinations": list(source.get("destinations", [])),
+        "schedule": source.get("schedule"),
+        "start_date": source.get("start_date"),
+        "end_date": source.get("end_date"),
+    }
+    return create_itinerary(copy)
