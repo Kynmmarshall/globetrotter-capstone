@@ -356,13 +356,15 @@
   "@shareItineraryDialogTitle": {
     "placeholders": { "title": { "type": "String" } }
   },
-  "shareItineraryDialogMessage": "Anyone with this link can view this itinerary's stops - no account needed. It stays visible until you turn sharing off.",
+  "shareItineraryDialogMessage": "Anyone who opens this link gets their own copy of this itinerary added straight to their trip_io account - they'll be asked to create one first if they don't have one yet. The link keeps working for everyone you send it to until you turn sharing off.",
   "shareItineraryCopyLinkButton": "Copy link",
   "shareItineraryLinkCopiedSnackbar": "Link copied to clipboard.",
   "shareItineraryTurnOffButton": "Turn off sharing",
   "shareItineraryTurnedOffSnackbar": "Sharing turned off. The old link no longer works.",
   "shareItineraryErrorSnackbar": "Couldn't create a share link right now.",
   "closeButton": "Close",
+  "claimedItinerarySnackbar": "Added to your itineraries.",
+  "claimedItineraryErrorSnackbar": "Couldn't add that shared itinerary to your account.",
 
   "onboardingSkip": "Skip",
   "onboardingNext": "Next",

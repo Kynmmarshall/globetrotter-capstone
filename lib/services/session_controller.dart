@@ -54,6 +54,12 @@ class SessionController extends ChangeNotifier {
   Set<String> _favoriteIds = {};
   String? _role;
 
+  // Set once at startup from a shared-itinerary link's `?claim=` query
+  // param (web only - see app.dart) and cleared as soon as it's been
+  // claimed. Deliberately in-memory only, not persisted: it only matters
+  // for the page load the link actually opened, not future sessions.
+  String? _pendingClaimToken;
+
   bool get ready => _ready;
   bool get isLoading => _loading;
   bool get isAuthenticated => (_token ?? '').isNotEmpty;
@@ -67,6 +73,12 @@ class SessionController extends ChangeNotifier {
   Locale? get locale => _locale;
   ThemeMode get themeMode => _themeMode;
   bool get hasSeenOnboarding => _hasSeenOnboarding;
+  String? get pendingClaimToken => _pendingClaimToken;
+
+  void setPendingClaimToken(String? token) {
+    _pendingClaimToken = token;
+    notifyListeners();
+  }
   List<String> get interests => _interests;
   bool isFavorite(String destinationId) => _favoriteIds.contains(destinationId);
   bool get isAdmin => _role == 'admin';
@@ -503,6 +515,17 @@ class SessionController extends ChangeNotifier {
     final token = _requireToken();
     await ApiClient().unshareItinerary(token, itineraryId);
     Analytics.instance.trackEvent('itinerary', 'unshared', name: itineraryId);
+  }
+
+  /// Copies a shared itinerary (opened via a `?claim=` link) into this
+  /// account. Callers should clear [pendingClaimToken] via
+  /// [setPendingClaimToken] once this resolves either way, so a failed or
+  /// already-claimed link doesn't keep retrying on every rebuild.
+  Future<Itinerary> claimSharedItinerary(String shareToken) async {
+    final token = _requireToken();
+    final itinerary = await ApiClient().claimSharedItinerary(token, shareToken);
+    Analytics.instance.trackEvent('itinerary', 'claimed', name: itinerary.id);
+    return itinerary;
   }
 
   Future<RouteResult> getRoute(

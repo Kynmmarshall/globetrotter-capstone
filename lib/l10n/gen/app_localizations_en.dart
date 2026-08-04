@@ -847,7 +847,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get shareItineraryDialogMessage =>
-      'Anyone with this link can view this itinerary\'s stops - no account needed. It stays visible until you turn sharing off.';
+      'Anyone who opens this link gets their own copy of this itinerary added straight to their trip_io account - they\'ll be asked to create one first if they don\'t have one yet. The link keeps working for everyone you send it to until you turn sharing off.';
 
   @override
   String get shareItineraryCopyLinkButton => 'Copy link';
@@ -868,6 +868,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get closeButton => 'Close';
+
+  @override
+  String get claimedItinerarySnackbar => 'Added to your itineraries.';
+
+  @override
+  String get claimedItineraryErrorSnackbar =>
+      'Couldn\'t add that shared itinerary to your account.';
 
   @override
   String get onboardingSkip => 'Skip';

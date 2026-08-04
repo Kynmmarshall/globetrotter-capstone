@@ -60,21 +60,50 @@ class _DashboardScreenState extends State<DashboardScreen> {
       defaultTargetPlatform == TargetPlatform.android ||
       defaultTargetPlatform == TargetPlatform.iOS;
 
+  // Index of ItinerariesPage in `pages`/`_icons`/`_screenNames` below - kept
+  // as a named constant since _claimPendingItineraryIfNeeded jumps straight
+  // there after a successful claim, and a bare "4" at that call site would
+  // silently go stale if the tab order ever changes.
+  static const int _itinerariesTabIndex = 4;
+
   @override
   void initState() {
     super.initState();
     Analytics.instance.trackScreen(_screenNames[_index]);
     _notificationsFuture = widget.session.notifications();
-    if (!widget.session.hasSeenOnboarding) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            fullscreenDialog: true,
-            builder: (_) => OnboardingWalkthrough(session: widget.session),
-          ),
-        );
-      });
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
+      await _claimPendingItineraryIfNeeded();
+      if (!mounted || widget.session.hasSeenOnboarding) return;
+      await Navigator.of(context).push(
+        MaterialPageRoute(
+          fullscreenDialog: true,
+          builder: (_) => OnboardingWalkthrough(session: widget.session),
+        ),
+      );
+    });
+  }
+
+  Future<void> _claimPendingItineraryIfNeeded() async {
+    final shareToken = widget.session.pendingClaimToken;
+    if (shareToken == null) return;
+    // Cleared up front, before the request resolves, so a slow/failed
+    // claim can never be retried in a loop on the next rebuild.
+    widget.session.setPendingClaimToken(null);
+    final l10n = AppLocalizations.of(context)!;
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      await widget.session.claimSharedItinerary(shareToken);
+      if (!mounted) return;
+      setState(() => _index = _itinerariesTabIndex);
+      messenger.showSnackBar(
+        SnackBar(content: Text(l10n.claimedItinerarySnackbar)),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      messenger.showSnackBar(
+        SnackBar(content: Text(l10n.claimedItineraryErrorSnackbar)),
+      );
     }
   }
 

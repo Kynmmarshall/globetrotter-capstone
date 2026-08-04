@@ -52,15 +52,20 @@ class ApiClient {
     return '$normalizedBase$normalizedPath';
   }
 
-  /// Builds the public, no-login-required link for a shared itinerary - a
-  /// static page the Gateway serves itself (see `website/shared.html`),
-  /// which then calls `GET /shared/itineraries/{token}` for the content.
+  /// Builds the shareable link for an itinerary - opens this same Flutter
+  /// web app (served at `/app/` by the Gateway) with a `claim` query param
+  /// the app reads on startup (see `app.dart`) to copy the shared
+  /// itinerary straight into whoever opens the link's own account,
+  /// prompting them to create one first if they don't have one yet.
+  /// Deliberately not a bare preview page - the point of the link is to
+  /// get the trip into the recipient's own account, not just show it to
+  /// them.
   static String resolveShareUrl(String shareToken) {
     final base = _defaultBaseUrl();
     final normalizedBase = base.endsWith('/')
         ? base.substring(0, base.length - 1)
         : base;
-    return '$normalizedBase/shared.html?token=$shareToken';
+    return '$normalizedBase/app/?claim=$shareToken';
   }
 
   Future<String> register(
@@ -469,6 +474,17 @@ class ApiClient {
       headers: {'Authorization': 'Bearer $token'},
     );
     _throwIfNotOk(response);
+  }
+
+  Future<Itinerary> claimSharedItinerary(String token, String shareToken) async {
+    final response = await _client.post(
+      _uri('/itineraries/claim/$shareToken'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+    _throwIfNotOk(response);
+    return Itinerary.fromJson(
+      jsonDecode(response.body) as Map<String, dynamic>,
+    );
   }
 
   Future<RouteResult> getRoute(

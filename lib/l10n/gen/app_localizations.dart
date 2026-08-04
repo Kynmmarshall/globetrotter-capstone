@@ -1583,7 +1583,7 @@ abstract class AppLocalizations {
   /// No description provided for @shareItineraryDialogMessage.
   ///
   /// In en, this message translates to:
-  /// **'Anyone with this link can view this itinerary\'s stops - no account needed. It stays visible until you turn sharing off.'**
+  /// **'Anyone who opens this link gets their own copy of this itinerary added straight to their trip_io account - they\'ll be asked to create one first if they don\'t have one yet. The link keeps working for everyone you send it to until you turn sharing off.'**
   String get shareItineraryDialogMessage;
 
   /// No description provided for @shareItineraryCopyLinkButton.
@@ -1621,6 +1621,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Close'**
   String get closeButton;
+
+  /// No description provided for @claimedItinerarySnackbar.
+  ///
+  /// In en, this message translates to:
+  /// **'Added to your itineraries.'**
+  String get claimedItinerarySnackbar;
+
+  /// No description provided for @claimedItineraryErrorSnackbar.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t add that shared itinerary to your account.'**
+  String get claimedItineraryErrorSnackbar;
 
   /// No description provided for @onboardingSkip.
   ///

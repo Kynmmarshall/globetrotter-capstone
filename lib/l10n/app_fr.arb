@@ -283,13 +283,15 @@
 
   "shareItineraryTooltip": "Partager cet itinéraire",
   "shareItineraryDialogTitle": "Partager « {title} »",
-  "shareItineraryDialogMessage": "Toute personne disposant de ce lien peut voir les arrêts de cet itinéraire - aucun compte requis. Il reste visible jusqu'à ce que vous désactiviez le partage.",
+  "shareItineraryDialogMessage": "Toute personne qui ouvre ce lien reçoit sa propre copie de cet itinéraire directement dans son compte trip_io - il lui sera demandé d'en créer un si elle n'en a pas encore. Le lien continue de fonctionner pour tous ceux à qui vous l'envoyez jusqu'à ce que vous désactiviez le partage.",
   "shareItineraryCopyLinkButton": "Copier le lien",
   "shareItineraryLinkCopiedSnackbar": "Lien copié dans le presse-papiers.",
   "shareItineraryTurnOffButton": "Désactiver le partage",
   "shareItineraryTurnedOffSnackbar": "Partage désactivé. L'ancien lien ne fonctionne plus.",
   "shareItineraryErrorSnackbar": "Impossible de créer un lien de partage pour le moment.",
   "closeButton": "Fermer",
+  "claimedItinerarySnackbar": "Ajouté à vos itinéraires.",
+  "claimedItineraryErrorSnackbar": "Impossible d'ajouter cet itinéraire partagé à votre compte.",
 
   "onboardingSkip": "Passer",
   "onboardingNext": "Suivant",

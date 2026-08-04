@@ -866,7 +866,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get shareItineraryDialogMessage =>
-      'Toute personne disposant de ce lien peut voir les arrêts de cet itinéraire - aucun compte requis. Il reste visible jusqu\'à ce que vous désactiviez le partage.';
+      'Toute personne qui ouvre ce lien reçoit sa propre copie de cet itinéraire directement dans son compte trip_io - il lui sera demandé d\'en créer un si elle n\'en a pas encore. Le lien continue de fonctionner pour tous ceux à qui vous l\'envoyez jusqu\'à ce que vous désactiviez le partage.';
 
   @override
   String get shareItineraryCopyLinkButton => 'Copier le lien';
@@ -888,6 +888,13 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get closeButton => 'Fermer';
+
+  @override
+  String get claimedItinerarySnackbar => 'Ajouté à vos itinéraires.';
+
+  @override
+  String get claimedItineraryErrorSnackbar =>
+      'Impossible d\'ajouter cet itinéraire partagé à votre compte.';
 
   @override
   String get onboardingSkip => 'Passer';

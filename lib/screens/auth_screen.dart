@@ -23,9 +23,18 @@ const _googleClientId = String.fromEnvironment(
 );
 
 class AuthScreen extends StatefulWidget {
-  const AuthScreen({super.key, required this.session});
+  const AuthScreen({
+    super.key,
+    required this.session,
+    this.initialLoginMode = true,
+  });
 
   final SessionController session;
+
+  /// False starts the form on the register tab instead of login - used
+  /// when arriving via a shared-itinerary claim link, where whoever opened
+  /// it most likely doesn't have an account yet.
+  final bool initialLoginMode;
 
   @override
   State<AuthScreen> createState() => _AuthScreenState();
@@ -37,7 +46,7 @@ class _AuthScreenState extends State<AuthScreen> {
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
-  bool _loginMode = true;
+  late bool _loginMode = widget.initialLoginMode;
   bool _showPassword = false;
   bool _showConfirmPassword = false;
   final Set<String> _selectedInterests = {};
