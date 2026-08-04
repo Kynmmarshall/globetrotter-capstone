@@ -40,12 +40,30 @@ def _destination_catalog() -> str:
 
 _BASE_INSTRUCTIONS = (
     "You are the in-app travel assistant for trip_io, a trip-planning app focused "
-    "exclusively on Yaoundé, Cameroon. Answer naturally in whatever language the "
-    "user writes in (English or French). Only recommend or describe destinations "
+    "exclusively on Yaoundé, Cameroon. Only recommend or describe destinations "
     "from the catalog below - never invent a place, address, opening hours, price, "
     "or review that isn't given to you. Keep answers concise and friendly, like a "
     "knowledgeable local friend.\n\nDestination catalog:\n"
 )
+
+
+def _language_instruction(language_code: str | None) -> str:
+    if language_code == "fr":
+        return "Answer exclusively in French, regardless of the language used by the user."
+    if language_code == "en":
+        return "Answer exclusively in English, regardless of the language used by the user."
+    return "Answer in the same language as the user unless the conversation clearly indicates a different app language."
+
+
+def _system_text(interests: list[str] | None = None, language_code: str | None = None) -> str:
+    system_text = _BASE_INSTRUCTIONS + _language_instruction(language_code) + "\n\n" + _destination_catalog()
+    if interests:
+        system_text += (
+            "\n\nThis user's stated interests: "
+            + ", ".join(interests)
+            + ". Lean on these when making suggestions, but don't ignore an explicit request for something else."
+        )
+    return system_text
 
 
 async def _generate(messages: list[dict]) -> str:
@@ -78,14 +96,12 @@ async def _generate(messages: list[dict]) -> str:
         raise AiRequestError("Unexpected response from AI service") from exc
 
 
-async def chat(messages: list[dict], interests: list[str] | None = None) -> str:
-    system_text = _BASE_INSTRUCTIONS + _destination_catalog()
-    if interests:
-        system_text += (
-            "\n\nThis user's stated interests: "
-            + ", ".join(interests)
-            + ". Lean on these when making suggestions, but don't ignore an explicit request for something else."
-        )
+async def chat(
+    messages: list[dict],
+    interests: list[str] | None = None,
+    language_code: str | None = None,
+) -> str:
+    system_text = _system_text(interests=interests, language_code=language_code)
     full_messages = [{"role": "system", "content": system_text}] + [
         {"role": "assistant" if m["role"] == "assistant" else "user", "content": m["content"]}
         for m in messages
@@ -93,7 +109,7 @@ async def chat(messages: list[dict], interests: list[str] | None = None) -> str:
     return await _generate(full_messages)
 
 
-async def explain_destination(destination: dict) -> str:
+async def explain_destination(destination: dict, language_code: str | None = None) -> str:
     detail_lines = [f"Name: {destination.get('name')}"]
     if destination.get("location"):
         detail_lines.append(f"Location: {destination['location']}")
@@ -114,7 +130,7 @@ async def explain_destination(destination: dict) -> str:
         "historical/cultural context, but do not invent specific facts (prices, "
         "hours, addresses, ratings) beyond what's given here:\n\n" + "\n".join(detail_lines)
     )
-    system_text = _BASE_INSTRUCTIONS + _destination_catalog()
+    system_text = _system_text(language_code=language_code)
     messages = [
         {"role": "system", "content": system_text},
         {"role": "user", "content": prompt},

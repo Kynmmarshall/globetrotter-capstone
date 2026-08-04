@@ -305,27 +305,39 @@ async def ai_chat(payload: ChatRequest, user: str = Depends(get_current_user)):
         raise HTTPException(status_code=400, detail="messages must not be empty")
     interests = await clients.get_user_interests(user)
     try:
-        reply = await ai.chat([m.dict() for m in payload.messages], interests=interests)
+        reply = await ai.chat(
+            [m.dict() for m in payload.messages],
+            interests=interests,
+            language_code=payload.language_code,
+        )
     except (ai.AiNotConfiguredError, ai.AiRequestError) as exc:
         raise _ai_error_response(exc)
     return {"reply": reply}
 
 
 @app.post("/ai/explain/{destination_id}", response_model=ChatResponse)
-async def ai_explain(destination_id: str, user: str = Depends(get_current_user)):
+async def ai_explain(
+    destination_id: str,
+    language_code: str | None = None,
+    user: str = Depends(get_current_user),
+):
     dest = crud.get_destination(destination_id)
     if not dest:
         raise HTTPException(status_code=404, detail="Destination not found")
 
+    # A cached explanation was only ever generated in one language - skip
+    # it whenever a specific language is requested, rather than handing
+    # back a stale-language answer just because it happened to be cached.
     cached = dest.get("ai_explanation")
-    if cached:
+    if cached and not language_code:
         return {"reply": cached}
 
     try:
-        reply = await ai.explain_destination(dest)
+        reply = await ai.explain_destination(dest, language_code=language_code)
     except (ai.AiNotConfiguredError, ai.AiRequestError) as exc:
         raise _ai_error_response(exc)
-    crud.set_destination_ai_explanation(destination_id, reply)
+    if not language_code:
+        crud.set_destination_ai_explanation(destination_id, reply)
     return {"reply": reply}
 
 

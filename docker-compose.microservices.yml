@@ -1,7 +1,7 @@
-# Phase 2 microservices stack - a separate deployment target from the
-# Phase 1 monolith's docker-compose.yml, not a replacement for it. The
-# monolith (app/) is untouched and can keep running independently on its
-# own systemd service until this stack is verified end-to-end.
+# The trip_io backend - user_service, itinerary_service,
+# recommendation_service, and the Gateway that fronts all three as a single
+# public entry point. This replaced an earlier single-process monolith
+# (removed once this stack was verified end-to-end in production).
 #
 # Usage:
 #   docker compose -f docker-compose.microservices.yml up --build

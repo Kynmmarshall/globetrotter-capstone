@@ -270,6 +270,72 @@ async def test_ai_chat_not_configured(tmp_path, monkeypatch):
 
 
 @pytest.mark.asyncio
+async def test_ai_chat_passes_language_instruction_to_groq(tmp_path, monkeypatch):
+    _use_temp_data(tmp_path)
+    token = create_access_token("alice")
+    headers = {"Authorization": f"Bearer {token}"}
+
+    captured = {}
+
+    async def fake_generate(messages):
+        captured["messages"] = messages
+        return "Bonjour !"
+
+    async def fake_interests(username):
+        return []
+
+    monkeypatch.setattr(ai, "_generate", fake_generate)
+    monkeypatch.setattr(clients, "get_user_interests", fake_interests)
+
+    async with AsyncClient(app=app, base_url="http://test") as ac:
+        r = await ac.post(
+            "/ai/chat",
+            json={
+                "messages": [{"role": "user", "content": "hi"}],
+                "language_code": "fr",
+            },
+            headers=headers,
+        )
+        assert r.status_code == 200
+        assert r.json()["reply"] == "Bonjour !"
+
+    system_message = captured["messages"][0]["content"]
+    assert "exclusively in French" in system_message
+
+
+@pytest.mark.asyncio
+async def test_ai_explain_bypasses_cache_when_language_requested(tmp_path, monkeypatch):
+    _use_temp_data(
+        tmp_path,
+        destinations=[_seed_destination(ai_explanation="Cached English text")],
+    )
+    token = create_access_token("alice")
+    headers = {"Authorization": f"Bearer {token}"}
+
+    captured = {}
+
+    async def fake_generate(messages):
+        captured["messages"] = messages
+        return "Texte en français"
+
+    monkeypatch.setattr(ai, "_generate", fake_generate)
+
+    async with AsyncClient(app=app, base_url="http://test") as ac:
+        # No language_code - should return the cached English text untouched.
+        cached = await ac.post("/ai/explain/d1", headers=headers)
+        assert cached.status_code == 200
+        assert cached.json()["reply"] == "Cached English text"
+
+        # A specific language should skip the cache and hit Groq instead.
+        fresh = await ac.post("/ai/explain/d1?language_code=fr", headers=headers)
+        assert fresh.status_code == 200
+        assert fresh.json()["reply"] == "Texte en français"
+
+    system_message = captured["messages"][0]["content"]
+    assert "exclusively in French" in system_message
+
+
+@pytest.mark.asyncio
 async def test_internal_destinations_endpoint(tmp_path):
     _use_temp_data(tmp_path, destinations=[_seed_destination()])
     async with AsyncClient(app=app, base_url="http://test") as ac:
