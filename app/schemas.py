@@ -141,6 +141,7 @@ class ChatMessage(BaseModel):
 
 class ChatRequest(BaseModel):
     messages: List[ChatMessage]
+    language_code: Optional[str] = None
 
 class ChatResponse(BaseModel):
     reply: str
