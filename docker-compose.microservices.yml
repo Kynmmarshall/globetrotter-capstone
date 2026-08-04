@@ -50,6 +50,9 @@ services:
       SMTP_USER: ${SMTP_USER:-}
       SMTP_PASSWORD: ${SMTP_PASSWORD:-}
       SMTP_FROM_ADDRESS: ${SMTP_FROM_ADDRESS:-}
+      # Only needed if the public website isn't at the default domain -
+      # used solely to build the logo <img> src in the reset email.
+      PUBLIC_SITE_URL: ${PUBLIC_SITE_URL:-https://trip-io.duckdns.org}
     volumes:
       - ./services/user_service/data:/srv/data
       - ./services/user_service/static:/srv/static
