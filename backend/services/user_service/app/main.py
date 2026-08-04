@@ -1,10 +1,11 @@
+from datetime import date, datetime, timezone
 from pathlib import Path
 
 from fastapi import FastAPI, File, HTTPException, Depends, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
-from . import clients, crud, events, google_auth
+from . import clients, crud, email_util, events, events_consumer, google_auth
 from .schemas import (
     UserCreate,
     Token,
@@ -13,6 +14,9 @@ from .schemas import (
     GoogleAuthRequest,
     Destination,
     InternalUserProfile,
+    Notification,
+    PasswordResetRequest,
+    PasswordReset,
 )
 from .auth import create_access_token, get_current_user, require_internal
 
@@ -24,6 +28,53 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.on_event("startup")
+def _startup():
+    events_consumer.start_background_consumer()
+
+
+# A trip starting further out than this doesn't need a reminder yet - keeps
+# the notifications inbox from filling up with every itinerary a user has
+# ever planned, days or weeks before it's actually relevant.
+TRIP_REMINDER_WINDOW_DAYS = 3
+
+
+def _compute_trip_reminders(itineraries: list[dict]) -> list[dict]:
+    today = datetime.now(timezone.utc).date()
+    now_iso = datetime.now(timezone.utc).isoformat()
+    reminders = []
+    for itin in itineraries:
+        start_raw = itin.get("start_date")
+        if not start_raw:
+            continue
+        try:
+            start = date.fromisoformat(start_raw)
+        except ValueError:
+            continue
+        days_until = (start - today).days
+        if 0 <= days_until <= TRIP_REMINDER_WINDOW_DAYS:
+            reminders.append(
+                {
+                    "id": f"trip-{itin['id']}",
+                    "type": "trip_reminder",
+                    "title_key": "notificationTripReminderTitle",
+                    "body_key": "notificationTripReminderBody",
+                    "body_args": {
+                        "title": itin.get("title", ""),
+                        "days": str(days_until),
+                    },
+                    "destination_id": None,
+                    "itinerary_id": itin["id"],
+                    # Always "now" - a reminder has no real creation time of
+                    # its own, and treating it as freshly created keeps
+                    # time-sensitive reminders sorted to the top of the inbox.
+                    "created_at": now_iso,
+                    "read": False,
+                }
+            )
+    return reminders
 
 _static_dir = Path(__file__).resolve().parents[1] / "static"
 _avatars_dir = _static_dir / "avatars"
@@ -77,6 +128,27 @@ async def auth_google(payload: GoogleAuthRequest):
     if not existing:
         events.publish("user.registered", {"username": user["username"], "interests": []})
     return {"access_token": token}
+
+
+@app.post("/auth/request-password-reset")
+def request_password_reset(payload: PasswordResetRequest):
+    result = crud.create_password_reset(payload.identifier)
+    if result:
+        user, code = result
+        email_util.send_password_reset_code(user["email"], code)
+    # Always the same response whether or not an account matched -
+    # otherwise this endpoint could be used to check which usernames or
+    # emails are registered.
+    return {"detail": "If an account exists, a reset code has been sent."}
+
+
+@app.post("/auth/reset-password")
+def reset_password(payload: PasswordReset):
+    if len(payload.new_password) < 6:
+        raise HTTPException(status_code=400, detail="Password must be at least 6 characters")
+    if not crud.reset_password(payload.identifier, payload.code, payload.new_password):
+        raise HTTPException(status_code=400, detail="Invalid or expired reset code")
+    return {"detail": "Password updated"}
 
 
 @app.get("/me", response_model=UserProfile)
@@ -146,6 +218,25 @@ def remove_favorite(destination_id: str, user: str = Depends(get_current_user)):
     if not profile:
         raise HTTPException(status_code=404, detail="User not found")
     return profile
+
+
+@app.get("/me/notifications", response_model=list[Notification])
+async def get_notifications(user: str = Depends(get_current_user)):
+    stored = crud.get_notifications_for(user)
+    itineraries = await clients.get_itineraries_for_user(user)
+    combined = stored + _compute_trip_reminders(itineraries)
+    read_ids = crud.get_read_notification_ids(user)
+    for n in combined:
+        if n["id"] in read_ids:
+            n["read"] = True
+    combined.sort(key=lambda n: n["created_at"], reverse=True)
+    return combined
+
+
+@app.post("/me/notifications/{notification_id}/read")
+def mark_notification_read(notification_id: str, user: str = Depends(get_current_user)):
+    crud.mark_notification_read(user, notification_id)
+    return {"read": notification_id}
 
 
 # ---------- Internal (service-to-service only, never through the Gateway) ----------

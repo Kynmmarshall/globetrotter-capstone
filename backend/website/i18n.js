@@ -83,6 +83,13 @@
       sectionRecommendations: 'Recommendations',
       sectionItineraries: 'Itineraries',
       sectionProfile: 'Profile',
+
+      sharedEyebrow: 'Shared itinerary',
+      sharedStopsSummary: '{count} stops in Yaoundé',
+      sharedOpenInApp: 'Open in trip_io',
+      sharedPlanYourOwn: 'Plan your own trip',
+      sharedLoadError: "This shared itinerary doesn't exist or is no longer available.",
+      sharedEmpty: 'This itinerary has no stops yet.',
     },
     fr: {
       navGetApp: "Télécharger l'app",
@@ -162,6 +169,13 @@
       sectionRecommendations: 'Recommandations',
       sectionItineraries: 'Itinéraires',
       sectionProfile: 'Profil',
+
+      sharedEyebrow: 'Itinéraire partagé',
+      sharedStopsSummary: '{count} arrêts à Yaoundé',
+      sharedOpenInApp: 'Ouvrir dans trip_io',
+      sharedPlanYourOwn: 'Planifiez votre propre voyage',
+      sharedLoadError: "Cet itinéraire partagé n'existe pas ou n'est plus disponible.",
+      sharedEmpty: "Cet itinéraire n'a pas encore d'arrêts.",
     },
   };
 

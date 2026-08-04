@@ -1,7 +1,18 @@
+import secrets
 import uuid
+from datetime import datetime, timedelta, timezone
 
 from .auth import hash_password, verify_password
 from .data import read_data, write_data
+
+RESET_CODE_TTL = timedelta(minutes=30)
+
+
+def _find_user(data: dict, identifier: str) -> dict | None:
+    for u in data.get("users", []):
+        if u.get("username") == identifier or u.get("email") == identifier:
+            return u
+    return None
 
 
 def register_user(username: str, password: str, email: str | None = None, interests: list[str] | None = None):
@@ -111,8 +122,129 @@ def remove_favorite(username: str, destination_id: str):
     return None
 
 
+def create_notification(
+    username: str,
+    type_: str,
+    title_key: str,
+    body_key: str,
+    body_args: dict | None = None,
+    destination_id: str | None = None,
+    itinerary_id: str | None = None,
+) -> dict:
+    """Notifications carry i18n *keys* (matching the Flutter app's own ARB
+    entries) plus interpolation args, not rendered English text - this
+    service has no idea what language the recipient reads the app in, and
+    duplicating the app's translations here would just let them drift.
+    """
+    data = read_data()
+    notification = {
+        "id": str(uuid.uuid4()),
+        "username": username,
+        "type": type_,
+        "title_key": title_key,
+        "body_key": body_key,
+        "body_args": body_args or {},
+        "destination_id": destination_id,
+        "itinerary_id": itinerary_id,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "read": False,
+    }
+    data.setdefault("notifications", []).append(notification)
+    write_data(data)
+    return notification
+
+
+def get_notifications_for(username: str) -> list[dict]:
+    data = read_data()
+    items = [n for n in data.get("notifications", []) if n["username"] == username]
+    items.sort(key=lambda n: n["created_at"], reverse=True)
+    return items
+
+
+def get_read_notification_ids(username: str) -> set[str]:
+    data = read_data()
+    return set((data.get("read_notification_ids") or {}).get(username, []))
+
+
+def mark_notification_read(username: str, notification_id: str) -> None:
+    """Covers both persisted notifications (moderation) and the synthetic,
+    computed-at-read-time ids trip reminders use (see main.py) - either
+    way, "read" just means this id is in the user's read set, so a
+    reminder that only ever exists as a computed value can still be
+    dismissed without needing a row of its own.
+    """
+    data = read_data()
+    for n in data.get("notifications", []):
+        if n["username"] == username and n["id"] == notification_id:
+            n["read"] = True
+    read_ids = data.setdefault("read_notification_ids", {})
+    ids = set(read_ids.get(username, []))
+    ids.add(notification_id)
+    read_ids[username] = sorted(ids)
+    write_data(data)
+
+
 def is_admin(username: str) -> bool:
     for u in read_data().get("users", []):
         if u.get("username") == username:
             return u.get("role") == "admin"
     return False
+
+
+def create_password_reset(identifier: str) -> tuple[dict, str] | None:
+    """identifier: username or email. Returns (user, plaintext_code) if a
+    matching account with an email on file exists, else None - the caller
+    must respond identically either way (see main.py) so this endpoint
+    can't be used to check which usernames/emails are registered.
+    """
+    data = read_data()
+    user = _find_user(data, identifier)
+    if user is None or not user.get("email"):
+        return None
+
+    # Six digits rather than a long token: typed into the app by hand, not
+    # clicked from a link - this app runs on Windows/Android/Web with no
+    # deep-link handling set up, so a manually-entered code works
+    # everywhere a clickable link wouldn't.
+    code = f"{secrets.randbelow(1_000_000):06d}"
+    reset = {
+        "username": user["username"],
+        # Reuses the same adaptive password hash as real passwords rather
+        # than storing the code in plain text or a fast hash - a 6-digit
+        # code is low-entropy, so resisting brute force on a stolen data
+        # file matters more here than it costs in extra CPU at reset time.
+        "code_hash": hash_password(code),
+        "expires_at": (datetime.now(timezone.utc) + RESET_CODE_TTL).isoformat(),
+    }
+    resets = [
+        r for r in data.get("password_resets", []) if r["username"] != user["username"]
+    ]
+    resets.append(reset)
+    data["password_resets"] = resets
+    write_data(data)
+    return user, code
+
+
+def reset_password(identifier: str, code: str, new_password: str) -> bool:
+    """True if the password was changed. False covers every failure case
+    uniformly (no such account, no pending reset, expired, wrong code) so
+    a caller can't distinguish "wrong code" from "no such account" either.
+    """
+    data = read_data()
+    user = _find_user(data, identifier)
+    if user is None:
+        return False
+
+    resets = data.get("password_resets", [])
+    reset = next((r for r in resets if r["username"] == user["username"]), None)
+    if reset is None:
+        return False
+    if datetime.now(timezone.utc) > datetime.fromisoformat(reset["expires_at"]):
+        return False
+    if not verify_password(code, reset["code_hash"]):
+        return False
+
+    user["password"] = hash_password(new_password)
+    data["password_resets"] = [r for r in resets if r["username"] != user["username"]]
+    write_data(data)
+    return True

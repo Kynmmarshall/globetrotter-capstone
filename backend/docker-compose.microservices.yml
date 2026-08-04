@@ -40,7 +40,19 @@ services:
       <<: *shared-env
       USER_SERVICE_DATA_PATH: /srv/data/users.json
       RECOMMENDATION_SERVICE_URL: http://recommendation_service:8003
+      ITINERARY_SERVICE_URL: http://itinerary_service:8002
       GOOGLE_OAUTH_CLIENT_ID: ${GOOGLE_OAUTH_CLIENT_ID:-}
+      # Password-reset email delivery (see app/email_util.py) - optional,
+      # degrades to logging the reset code instead of emailing it until
+      # all three of these are set.
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_FROM_ADDRESS: ${SMTP_FROM_ADDRESS:-}
+      # Only needed if the public website isn't at the default domain -
+      # used solely to build the logo <img> src in the reset email.
+      PUBLIC_SITE_URL: ${PUBLIC_SITE_URL:-https://trip-io.duckdns.org}
     volumes:
       - ./services/user_service/data:/srv/data
       - ./services/user_service/static:/srv/static
@@ -50,6 +62,8 @@ services:
     depends_on:
       rabbitmq:
         condition: service_healthy
+      itinerary_service:
+        condition: service_started
 
   itinerary_service:
     build: ./services/itinerary_service

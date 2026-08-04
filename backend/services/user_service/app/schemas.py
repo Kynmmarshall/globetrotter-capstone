@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Optional, List
+from typing import Dict, Optional, List
 
 
 class UserCreate(BaseModel):
@@ -29,6 +29,16 @@ class InterestsUpdate(BaseModel):
 
 class GoogleAuthRequest(BaseModel):
     id_token: str
+
+
+class PasswordResetRequest(BaseModel):
+    identifier: str  # username or email
+
+
+class PasswordReset(BaseModel):
+    identifier: str
+    code: str
+    new_password: str
 
 
 class NearbyPlace(BaseModel):
@@ -63,6 +73,20 @@ class Destination(BaseModel):
     rating_count: Optional[int] = 0
     user_rating: Optional[int] = None
     comment_count: Optional[int] = 0
+
+
+class Notification(BaseModel):
+    """title_key/body_key are Flutter ARB keys, not rendered text - see
+    events_consumer.py for why this service never renders English itself."""
+    id: str
+    type: str  # "moderation" | "trip_reminder"
+    title_key: str
+    body_key: str
+    body_args: Optional[Dict[str, str]] = {}
+    destination_id: Optional[str] = None
+    itinerary_id: Optional[str] = None
+    created_at: str
+    read: bool = False
 
 
 class InternalUserProfile(BaseModel):

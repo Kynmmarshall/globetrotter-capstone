@@ -1497,6 +1497,83 @@ footer .footer-brand img {
   margin-top: 8px;
 }
 
+/* ---------- Shared itinerary page ---------- */
+
+.shared-header {
+  text-align: center;
+  max-width: 640px;
+  padding-top: 140px;
+  padding-bottom: 40px;
+}
+
+.shared-eyebrow {
+  display: inline-block;
+  color: var(--brand-teal-light);
+  font-weight: 700;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 10px;
+}
+
+.shared-header h1 {
+  font-size: clamp(1.8rem, 4.5vw, 2.6rem);
+  margin: 0 0 10px;
+  font-weight: 800;
+  text-wrap: balance;
+}
+
+.shared-sub {
+  color: var(--text-dim);
+  margin: 0 0 24px;
+}
+
+.shared-cta-row {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.shared-stop-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 20px;
+  padding-bottom: 90px;
+}
+
+.shared-stop-card {
+  overflow: hidden;
+}
+
+.shared-stop-card img {
+  width: 100%;
+  height: 150px;
+  object-fit: cover;
+}
+
+.shared-stop-body {
+  padding: 14px 16px;
+}
+
+.shared-stop-body h3 {
+  margin: 0 0 4px;
+  font-size: 1.02rem;
+  font-weight: 700;
+}
+
+.shared-stop-location {
+  margin: 0;
+  color: var(--text-faint);
+  font-size: 0.85rem;
+}
+
+.shared-empty {
+  color: var(--text-faint);
+  text-align: center;
+  padding: 30px 0 90px;
+}
+
 @media (max-width: 640px) {
   .admin-item {
     flex-direction: column;
