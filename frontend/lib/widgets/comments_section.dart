@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:trip_io/l10n/gen/app_localizations.dart';
 import 'package:trip_io/models/models.dart';
 import 'package:trip_io/services/session_controller.dart';
+import 'package:trip_io/widgets/glass_panel.dart';
 
 /// Opens the comment thread as a draggable sheet that slides up over the
 /// current screen (TikTok/YouTube Shorts style) instead of living inline in
@@ -199,25 +200,6 @@ class _CommentsSectionState extends State<CommentsSection> {
     setState(() => _comments = _removeFromTree(_comments ?? [], commentId));
   }
 
-  Widget _glassPanel({
-    required Widget child,
-    EdgeInsets? padding,
-    BorderRadius? borderRadius,
-  }) {
-    final radius = borderRadius ?? BorderRadius.circular(16);
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.1),
-        borderRadius: radius,
-        border: Border.all(color: Colors.white.withValues(alpha: 0.18)),
-      ),
-      child: Padding(
-        padding: padding ?? const EdgeInsets.all(12),
-        child: child,
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
@@ -310,7 +292,8 @@ class _CommentsSectionState extends State<CommentsSection> {
           top: false,
           child: Padding(
             padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
-            child: _glassPanel(
+            child: GlassPanel(
+              style: GlassPanelStyle.flat,
               borderRadius: BorderRadius.circular(18),
               padding: const EdgeInsets.fromLTRB(14, 4, 6, 4),
               child: Row(

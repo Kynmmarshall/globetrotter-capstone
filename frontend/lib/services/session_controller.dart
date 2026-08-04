@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart' show ChangeNotifier;
+import 'package:flutter/material.dart' show ThemeMode;
 import 'package:flutter/widgets.dart' show Locale;
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -17,6 +18,8 @@ class SessionController extends ChangeNotifier {
   static const _bioKey = 'gt_bio';
   static const _memberSinceKey = 'gt_member_since';
   static const _localeKey = 'gt_locale';
+  static const _themeModeKey = 'gt_theme_mode';
+  static const _onboardingSeenKey = 'gt_onboarding_seen';
   static const _interestsKey = 'gt_interests';
   static const _favoriteIdsKey = 'gt_favorite_ids';
   static const _roleKey = 'gt_role';
@@ -41,9 +44,21 @@ class SessionController extends ChangeNotifier {
   String? _bio;
   DateTime? _memberSince;
   Locale? _locale;
+  // Defaults to always-dark (the app's original, only look) rather than
+  // ThemeMode.system - switching an existing user's appearance out from
+  // under them on an unrelated update would be a surprise; light mode and
+  // system-follow are both opt-in via the profile screen.
+  ThemeMode _themeMode = ThemeMode.dark;
+  bool _hasSeenOnboarding = false;
   List<String> _interests = [];
   Set<String> _favoriteIds = {};
   String? _role;
+
+  // Set once at startup from a shared-itinerary link's `?claim=` query
+  // param (web only - see app.dart) and cleared as soon as it's been
+  // claimed. Deliberately in-memory only, not persisted: it only matters
+  // for the page load the link actually opened, not future sessions.
+  String? _pendingClaimToken;
 
   bool get ready => _ready;
   bool get isLoading => _loading;
@@ -56,9 +71,25 @@ class SessionController extends ChangeNotifier {
   DateTime? get memberSince => _memberSince;
   // Null means "follow the device's system language".
   Locale? get locale => _locale;
+  ThemeMode get themeMode => _themeMode;
+  bool get hasSeenOnboarding => _hasSeenOnboarding;
+  String? get pendingClaimToken => _pendingClaimToken;
+
+  void setPendingClaimToken(String? token) {
+    _pendingClaimToken = token;
+    notifyListeners();
+  }
   List<String> get interests => _interests;
   bool isFavorite(String destinationId) => _favoriteIds.contains(destinationId);
   bool get isAdmin => _role == 'admin';
+
+  Future<void> markOnboardingSeen() async {
+    if (_hasSeenOnboarding) return;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_onboardingSeenKey, true);
+    _hasSeenOnboarding = true;
+    notifyListeners();
+  }
 
   void clearError() {
     _error = null;
@@ -78,6 +109,12 @@ class SessionController extends ChangeNotifier {
         : null;
     final localeCode = prefs.getString(_localeKey);
     _locale = localeCode != null ? Locale(localeCode) : null;
+    final themeModeName = prefs.getString(_themeModeKey);
+    _themeMode = ThemeMode.values.firstWhere(
+      (m) => m.name == themeModeName,
+      orElse: () => ThemeMode.dark,
+    );
+    _hasSeenOnboarding = prefs.getBool(_onboardingSeenKey) ?? false;
     _interests = prefs.getStringList(_interestsKey) ?? [];
     _favoriteIds = (prefs.getStringList(_favoriteIdsKey) ?? []).toSet();
     _role = prefs.getString(_roleKey);
@@ -132,6 +169,13 @@ class SessionController extends ChangeNotifier {
       throw Exception('Your session expired. Please sign in again.');
     }
     return token;
+  }
+
+  Future<void> setThemeMode(ThemeMode mode) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_themeModeKey, mode.name);
+    _themeMode = mode;
+    notifyListeners();
   }
 
   Future<void> setLocale(Locale? locale) async {
@@ -193,6 +237,22 @@ class SessionController extends ChangeNotifier {
       await _saveAuth(token, profile.username, email: profile.email);
       await _applyProfile(profile);
     });
+  }
+
+  /// Not run through [_runGuarded] like login/register - this doesn't touch
+  /// auth state at all (no token yet to save), and the "forgot password"
+  /// flow manages its own local busy/error state rather than the global
+  /// one login/register share.
+  Future<void> requestPasswordReset(String identifier) async {
+    await ApiClient().requestPasswordReset(identifier);
+  }
+
+  Future<void> resetPassword(
+    String identifier,
+    String code,
+    String newPassword,
+  ) async {
+    await ApiClient().resetPassword(identifier, code, newPassword);
   }
 
   Future<void> logout() async {
@@ -432,6 +492,40 @@ class SessionController extends ChangeNotifier {
     final token = _requireToken();
     await ApiClient().deleteItinerary(token, itineraryId);
     Analytics.instance.trackEvent('itinerary', 'deleted', name: itineraryId);
+  }
+
+  Future<List<AppNotification>> notifications() async {
+    final token = _requireToken();
+    return ApiClient().getNotifications(token);
+  }
+
+  Future<void> markNotificationRead(String notificationId) async {
+    final token = _requireToken();
+    await ApiClient().markNotificationRead(token, notificationId);
+  }
+
+  Future<String> shareItinerary(String itineraryId) async {
+    final token = _requireToken();
+    final shareToken = await ApiClient().shareItinerary(token, itineraryId);
+    Analytics.instance.trackEvent('itinerary', 'shared', name: itineraryId);
+    return shareToken;
+  }
+
+  Future<void> unshareItinerary(String itineraryId) async {
+    final token = _requireToken();
+    await ApiClient().unshareItinerary(token, itineraryId);
+    Analytics.instance.trackEvent('itinerary', 'unshared', name: itineraryId);
+  }
+
+  /// Copies a shared itinerary (opened via a `?claim=` link) into this
+  /// account. Callers should clear [pendingClaimToken] via
+  /// [setPendingClaimToken] once this resolves either way, so a failed or
+  /// already-claimed link doesn't keep retrying on every rebuild.
+  Future<Itinerary> claimSharedItinerary(String shareToken) async {
+    final token = _requireToken();
+    final itinerary = await ApiClient().claimSharedItinerary(token, shareToken);
+    Analytics.instance.trackEvent('itinerary', 'claimed', name: itinerary.id);
+    return itinerary;
   }
 
   Future<RouteResult> getRoute(

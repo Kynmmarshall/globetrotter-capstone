@@ -110,6 +110,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get navRecommendations => 'Recommendations';
 
   @override
+  String get navForYou => 'For You';
+
+  @override
   String get navFavorites => 'Favorites';
 
   @override
@@ -237,6 +240,11 @@ class AppLocalizationsEn extends AppLocalizations {
       'No destinations match the selected filters.';
 
   @override
+  String destinationCardSemanticLabel(String name) {
+    return 'View $name';
+  }
+
+  @override
   String get suggestDestinationButton => 'Suggest a destination';
 
   @override
@@ -318,6 +326,19 @@ class AppLocalizationsEn extends AppLocalizations {
       'Browse destinations and we\'ll start suggesting spots for you.';
 
   @override
+  String get forYouTitle => 'For You';
+
+  @override
+  String get forYouSubtitle =>
+      'A personalized mix of picks made for you and what\'s popular in Yaoundé.';
+
+  @override
+  String get forYouPersonalizedSectionTitle => 'Picked for you';
+
+  @override
+  String get forYouTrendingSectionTitle => 'Trending in Yaoundé';
+
+  @override
   String get favoritesTitle => 'Your favorites';
 
   @override
@@ -336,6 +357,37 @@ class AppLocalizationsEn extends AppLocalizations {
       'Tap the heart on any destination to save it here.';
 
   @override
+  String get viewMySubmissionsButton => 'My submissions';
+
+  @override
+  String get mySubmissionsTitle => 'Your submissions';
+
+  @override
+  String get mySubmissionsSubtitle =>
+      'Destinations you\'ve suggested, and their review status.';
+
+  @override
+  String mySubmissionsErrorMessage(String error) {
+    return 'Could not load your submissions.\n$error';
+  }
+
+  @override
+  String get mySubmissionsEmptyTitle => 'No submissions yet';
+
+  @override
+  String get mySubmissionsEmptySubtitle =>
+      'Suggest a destination and track its review status here.';
+
+  @override
+  String get submissionStatusPending => 'Pending review';
+
+  @override
+  String get submissionStatusApproved => 'Approved';
+
+  @override
+  String get submissionStatusRejected => 'Not approved';
+
+  @override
   String get itinerariesFormMissing =>
       'Add a title and pick at least one destination.';
 
@@ -344,6 +396,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get itineraryDeletedSnackbar => 'Itinerary deleted.';
+
+  @override
+  String get directionsButtonTooltip => 'Directions';
 
   @override
   String get addToItineraryTooltip => 'Add to itinerary';
@@ -442,6 +497,14 @@ class AppLocalizationsEn extends AppLocalizations {
       'Directions aren\'t set up yet. Please check back soon.';
 
   @override
+  String get mapNoRouteFound =>
+      'We couldn\'t find a route between these points. One of them may be unreachable - check the destinations and your location.';
+
+  @override
+  String get mapLocationTooFar =>
+      'Your current location seems far from these destinations. Check that location services are giving an accurate fix, then try again.';
+
+  @override
   String get viewOnMapButton => 'View on map';
 
   @override
@@ -455,6 +518,10 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get mapLocateFailed =>
       'Couldn\'t get your location. Please try again.';
+
+  @override
+  String get mapLocationApproximate =>
+      'Your location is approximate - without GPS (e.g. on a desktop browser), position is estimated from WiFi/network data instead.';
 
   @override
   String get mapRetryButton => 'Retry';
@@ -480,6 +547,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get deleteItineraryButton => 'Delete';
 
   @override
+  String get logoutConfirmTitle => 'Log out?';
+
+  @override
+  String get logoutConfirmMessage =>
+      'You\'ll need to sign back in to see your itineraries and favorites.';
+
+  @override
   String get deleteItineraryConfirmTitle => 'Delete this itinerary?';
 
   @override
@@ -489,6 +563,59 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get cancelButton => 'Cancel';
+
+  @override
+  String get forgotPasswordLink => 'Forgot password?';
+
+  @override
+  String get forgotPasswordTitle => 'Reset your password';
+
+  @override
+  String get forgotPasswordStep1Subtitle =>
+      'Enter your username or email and we\'ll send you a reset code.';
+
+  @override
+  String get forgotPasswordIdentifierLabel => 'Username or email';
+
+  @override
+  String get forgotPasswordIdentifierRequired => 'Enter your username or email';
+
+  @override
+  String get forgotPasswordSendCodeButton => 'Send code';
+
+  @override
+  String forgotPasswordCodeSentMessage(String identifier) {
+    return 'If an account exists for \"$identifier\", a reset code has been sent.';
+  }
+
+  @override
+  String get forgotPasswordStep2Subtitle =>
+      'Enter the code we sent you, along with a new password.';
+
+  @override
+  String get forgotPasswordCodeLabel => 'Reset code';
+
+  @override
+  String get forgotPasswordCodeHint => '6-digit code';
+
+  @override
+  String get forgotPasswordCodeRequired => 'Enter the code from your email';
+
+  @override
+  String get forgotPasswordNewPasswordLabel => 'New password';
+
+  @override
+  String get forgotPasswordResetButton => 'Reset password';
+
+  @override
+  String get forgotPasswordSuccessMessage =>
+      'Password updated. You can now sign in.';
+
+  @override
+  String get forgotPasswordResendCodeButton => 'Resend code';
+
+  @override
+  String get forgotPasswordChangeIdentifierButton => 'Use a different account';
 
   @override
   String get itinerariesPlanTitle => 'Plan a new itinerary';
@@ -546,6 +673,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get yourItinerariesTitle => 'Your itineraries';
+
+  @override
+  String itineraryCardSemanticLabel(String title) {
+    return 'Open itinerary $title';
+  }
 
   @override
   String destinationsLoadError(String error) {
@@ -607,10 +739,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get itinerariesStatLabel => 'Itineraries';
 
   @override
-  String get regionStatLabel => 'Region';
+  String get favoritesStatLabel => 'Favorites';
 
   @override
-  String get featuredSpotsStatLabel => 'Featured spots';
+  String get placesPlannedStatLabel => 'Places planned';
 
   @override
   String get aboutMeTitle => 'About me';
@@ -639,6 +771,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get travellerFallback => 'Traveller';
 
   @override
+  String get avatarSemanticLabel => 'Tap to change your profile photo';
+
+  @override
   String couldNotPickImage(String error) {
     return 'Could not pick image: $error';
   }
@@ -651,6 +786,18 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get languageFrench => 'French';
+
+  @override
+  String get themeLabel => 'Theme';
+
+  @override
+  String get themeSystem => 'System';
+
+  @override
+  String get themeLight => 'Light';
+
+  @override
+  String get themeDark => 'Dark';
 
   @override
   String get interestsLabel => 'Areas of interest';
@@ -689,4 +836,134 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get signInAgainButton => 'Sign in again';
+
+  @override
+  String get shareItineraryTooltip => 'Share this itinerary';
+
+  @override
+  String shareItineraryDialogTitle(String title) {
+    return 'Share \"$title\"';
+  }
+
+  @override
+  String get shareItineraryDialogMessage =>
+      'Anyone who opens this link gets their own copy of this itinerary added straight to their trip_io account - they\'ll be asked to create one first if they don\'t have one yet. The link keeps working for everyone you send it to until you turn sharing off.';
+
+  @override
+  String get shareItineraryCopyLinkButton => 'Copy link';
+
+  @override
+  String get shareItineraryLinkCopiedSnackbar => 'Link copied to clipboard.';
+
+  @override
+  String get shareItineraryTurnOffButton => 'Turn off sharing';
+
+  @override
+  String get shareItineraryTurnedOffSnackbar =>
+      'Sharing turned off. The old link no longer works.';
+
+  @override
+  String get shareItineraryErrorSnackbar =>
+      'Couldn\'t create a share link right now.';
+
+  @override
+  String get closeButton => 'Close';
+
+  @override
+  String get claimedItinerarySnackbar => 'Added to your itineraries.';
+
+  @override
+  String get claimedItineraryErrorSnackbar =>
+      'Couldn\'t add that shared itinerary to your account.';
+
+  @override
+  String get onboardingSkip => 'Skip';
+
+  @override
+  String get onboardingNext => 'Next';
+
+  @override
+  String get onboardingGetStarted => 'Get started';
+
+  @override
+  String get onboardingPage1Title => 'Discover Yaoundé';
+
+  @override
+  String get onboardingPage1Body =>
+      'Browse real, hand-picked landmarks, culture, markets and nature across Yaoundé, Cameroon.';
+
+  @override
+  String get onboardingPage2Title => 'Get picks made for you';
+
+  @override
+  String get onboardingPage2Body =>
+      'Tell us what you\'re into and we\'ll surface the spots you\'re most likely to enjoy.';
+
+  @override
+  String get onboardingPage3Title => 'Plan your day';
+
+  @override
+  String get onboardingPage3Body =>
+      'Pick your stops and how much time you have - trip_io builds a timed schedule for you.';
+
+  @override
+  String get onboardingPage4Title => 'Navigate as you go';
+
+  @override
+  String get onboardingPage4Body =>
+      'Follow turn-by-turn directions and see every stop, numbered in order, right on the map.';
+
+  @override
+  String get avatarCropTitle => 'Adjust photo';
+
+  @override
+  String get avatarCropConfirmButton => 'Done';
+
+  @override
+  String get avatarCropHint => 'Drag to reposition, pinch or scroll to zoom.';
+
+  @override
+  String get notificationsTitle => 'Notifications';
+
+  @override
+  String get notificationsSubtitle =>
+      'Trip reminders and updates on your submissions.';
+
+  @override
+  String notificationsErrorMessage(String error) {
+    return 'Could not load notifications.\n$error';
+  }
+
+  @override
+  String get notificationsEmptyTitle => 'You\'re all caught up';
+
+  @override
+  String get notificationsEmptySubtitle =>
+      'Moderation notices and trip reminders will show up here.';
+
+  @override
+  String get notificationDestinationStatusTitle => 'Submission update';
+
+  @override
+  String notificationDestinationApprovedBody(String name) {
+    return '\"$name\" was approved and is now live.';
+  }
+
+  @override
+  String notificationDestinationRejectedBody(String name) {
+    return '\"$name\" wasn\'t approved this time.';
+  }
+
+  @override
+  String get notificationTripReminderTitle => 'Upcoming trip';
+
+  @override
+  String notificationTripReminderBodyToday(String title) {
+    return '\"$title\" starts today.';
+  }
+
+  @override
+  String notificationTripReminderBodyInDays(String title, String days) {
+    return '\"$title\" starts in $days days.';
+  }
 }

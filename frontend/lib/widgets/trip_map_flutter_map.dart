@@ -47,22 +47,27 @@ class TripMapFlutterMapViewState extends State<TripMapFlutterMapView> {
   /// locate button each time it's pressed, rather than being inferred from
   /// prop changes, so every tap reliably pans the camera even if the fresh
   /// position happens to be the same as (or very close to) the last one.
-  void flyTo(double lat, double lon, {double zoom = 15}) {
+  void flyTo(double lat, double lon, {double zoom = 17}) {
     _mapController.move(ll.LatLng(lat, lon), zoom);
   }
 
+  // A friendly, clearly-visible green rather than the usual map-app blue -
+  // distinct from both the teal/orange destination pins and the blue route
+  // line, so "this one is you" reads at a glance.
+  static const Color _myLocationColor = Color(0xFF2ECC71);
+
   Widget _myLocationMarker({double? heading}) {
-    final dot = Container(
+    final node = Container(
       width: 16,
       height: 16,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: const Color(0xFF1E88E5),
+        color: _myLocationColor,
         border: Border.all(color: Colors.white, width: 3),
         boxShadow: const [BoxShadow(color: Colors.black45, blurRadius: 5)],
       ),
     );
-    if (heading == null) return Center(child: dot);
+    if (heading == null) return Center(child: node);
     return Stack(
       alignment: Alignment.center,
       children: [
@@ -73,12 +78,12 @@ class TripMapFlutterMapViewState extends State<TripMapFlutterMapView> {
           angle: heading * (math.pi / 180),
           child: const Icon(
             Icons.navigation,
-            color: Color(0xFF1E88E5),
+            color: _myLocationColor,
             size: 34,
             shadows: [Shadow(color: Colors.black45, blurRadius: 4)],
           ),
         ),
-        dot,
+        node,
       ],
     );
   }

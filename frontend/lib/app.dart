@@ -1,9 +1,11 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 
 import 'package:trip_io/l10n/gen/app_localizations.dart';
 import 'package:trip_io/services/session_controller.dart';
 import 'package:trip_io/screens/auth_screen.dart';
 import 'package:trip_io/screens/dashboard_screen.dart';
+import 'package:trip_io/screens/splash_screen.dart';
 import 'package:trip_io/themes/theme.dart';
 
 class TripIoApp extends StatefulWidget {
@@ -20,6 +22,17 @@ class _TripIoAppState extends State<TripIoApp> {
   void initState() {
     super.initState();
     _session.initialize();
+    // A shared-itinerary link opens this same web app with `?claim=<token>`
+    // (see ApiClient.resolveShareUrl) - the token is read once here, off
+    // the actual browser address bar, and carried in-session until
+    // DashboardScreen claims it (immediately if already signed in, or
+    // right after whoever opened the link creates an account).
+    if (kIsWeb) {
+      final claim = Uri.base.queryParameters['claim'];
+      if (claim != null && claim.isNotEmpty) {
+        _session.setPendingClaimToken(claim);
+      }
+    }
   }
 
   @override
@@ -36,7 +49,9 @@ class _TripIoAppState extends State<TripIoApp> {
         return MaterialApp(
           title: 'trip_io',
           debugShowCheckedModeBanner: false,
-          theme: AppTheme.theme,
+          theme: AppTheme.lightTheme,
+          darkTheme: AppTheme.theme,
+          themeMode: _session.themeMode,
           locale: _session.locale,
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
@@ -48,12 +63,17 @@ class _TripIoAppState extends State<TripIoApp> {
 
   Widget _buildHome() {
     if (!_session.ready) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      return const SplashScreen();
     }
     if (!_session.isAuthenticated) {
-      return AuthScreen(session: _session);
+      // Whoever opened a claim link almost certainly doesn't have an
+      // account yet - default to the register tab instead of login so
+      // they're not stuck guessing they need to switch first.
+      return AuthScreen(
+        session: _session,
+        initialLoginMode: _session.pendingClaimToken == null,
+      );
     }
     return DashboardScreen(session: _session);
   }
 }
-

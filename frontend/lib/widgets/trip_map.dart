@@ -50,6 +50,41 @@ Future<bool> ensureLocationPermission() async {
       permission == LocationPermission.whileInUse;
 }
 
+/// Builds [LocationSettings] for a location request, tuned per platform -
+/// shared by every place in the app that calls [Geolocator.getCurrentPosition]
+/// or [Geolocator.getPositionStream].
+///
+/// On web specifically, this sets `maximumAge` so a recent-enough fix can be
+/// served straight from the browser's own geolocation cache instead of
+/// forcing a brand new lookup on every single call. Desktop browsers have no
+/// GPS - position comes from a WiFi/IP-based lookup through the browser's
+/// location service, which can take several seconds - and [WebSettings]'
+/// own default `maximumAge` is [Duration.zero], meaning "never reuse a
+/// cached fix," so without this override every tap of the locate button (or
+/// every itinerary/direction request) pays that full lookup cost again even
+/// seconds later. This can't fix the *accuracy* of that lookup - desktop
+/// WiFi/IP geolocation is inherently coarser than a phone's GPS, and no
+/// setting here changes that - but it does fix repeat calls being slow.
+LocationSettings buildLocationSettings({
+  LocationAccuracy accuracy = LocationAccuracy.high,
+  int distanceFilter = 0,
+  Duration? timeLimit,
+}) {
+  if (kIsWeb) {
+    return WebSettings(
+      accuracy: accuracy,
+      distanceFilter: distanceFilter,
+      timeLimit: timeLimit,
+      maximumAge: const Duration(seconds: 60),
+    );
+  }
+  return LocationSettings(
+    accuracy: accuracy,
+    distanceFilter: distanceFilter,
+    timeLimit: timeLimit,
+  );
+}
+
 /// Shows a map with destination pins and an optional route line - backed by
 /// MapLibre on Android/Web (nicer vector-tile rendering, via the free
 /// OpenFreeMap style) or flutter_map on Windows, since MapLibre has no
@@ -96,6 +131,10 @@ class TripMap extends StatefulWidget {
 class _TripMapState extends State<TripMap> {
   bool _showMyLocation = false;
   bool _locating = false;
+
+  // Real GPS fixes are typically well under 50m of accuracy; anything past
+  // this is almost certainly a WiFi/IP-based estimate instead.
+  static const double _lowConfidenceAccuracyMeters = 1500;
 
   // MapLibre (Android/Web) renders the user-location puck itself, driven by
   // the native SDK's own GPS/compass; flutter_map (Windows) has no built-in
@@ -167,15 +206,25 @@ class _TripMapState extends State<TripMap> {
     var flown = false;
     try {
       final current = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.high,
-          timeLimit: Duration(seconds: 12),
+        locationSettings: buildLocationSettings(
+          accuracy: LocationAccuracy.best,
+          timeLimit: const Duration(seconds: 12),
         ),
       );
       if (mounted) {
         setState(() => _myPosition = current);
         _flyTo(current.latitude, current.longitude);
         flown = true;
+        // A large accuracy radius (real GPS is usually well under 50m) is
+        // the signature of a WiFi/IP-based fix rather than GPS - common on
+        // desktop browsers, which have no GPS hardware to fall back on.
+        // Surfacing that here explains an off-target pin instead of leaving
+        // it looking like the app just got it wrong.
+        if (current.accuracy > _lowConfidenceAccuracyMeters) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(l10n.mapLocationApproximate)));
+        }
       }
     } catch (_) {
       if (mounted) {
@@ -187,10 +236,7 @@ class _TripMapState extends State<TripMap> {
     unawaited(_positionSub?.cancel());
     _positionSub =
         Geolocator.getPositionStream(
-          locationSettings: const LocationSettings(
-            accuracy: LocationAccuracy.high,
-            distanceFilter: 5,
-          ),
+          locationSettings: buildLocationSettings(distanceFilter: 5),
         ).listen((position) {
           if (!mounted) return;
           setState(() => _myPosition = position);
@@ -203,6 +249,7 @@ class _TripMapState extends State<TripMap> {
   }
 
   Widget _locateButton() {
+    final l10n = AppLocalizations.of(context)!;
     return Positioned(
       // Left, not right - the dashboard's AI chat FAB sits fixed at the
       // bottom-right of every screen and would otherwise sit on top of this.
@@ -228,7 +275,12 @@ class _TripMapState extends State<TripMap> {
                       color: Colors.white,
                     ),
                   )
-                : const Icon(Icons.my_location, color: Colors.white, size: 20),
+                : Icon(
+                    Icons.my_location,
+                    color: Colors.white,
+                    size: 20,
+                    semanticLabel: l10n.mapUseMyLocation,
+                  ),
           ),
         ),
       ),
@@ -237,6 +289,19 @@ class _TripMapState extends State<TripMap> {
 
   @override
   Widget build(BuildContext context) {
+    final myPosition = _myPosition;
+    final myLocation = myPosition == null
+        ? null
+        : (
+            lat: myPosition.latitude,
+            lon: myPosition.longitude,
+            // headingAccuracy is negative when the platform has no real
+            // heading to give (e.g. stationary, or no compass hardware) -
+            // only draw the arrow when it's genuine.
+            heading: myPosition.headingAccuracy >= 0
+                ? myPosition.heading
+                : null,
+          );
     final map = TripMap.usesMapLibre
         ? TripMapLibreView(
             key: _mapLibreKey,
@@ -247,7 +312,7 @@ class _TripMapState extends State<TripMap> {
             initialLat: widget.initialLat,
             initialLon: widget.initialLon,
             initialZoom: widget.initialZoom,
-            showMyLocation: _showMyLocation,
+            myLocation: myLocation,
           )
         : TripMapFlutterMapView(
             key: _flutterMapKey,
@@ -258,18 +323,7 @@ class _TripMapState extends State<TripMap> {
             initialLat: widget.initialLat,
             initialLon: widget.initialLon,
             initialZoom: widget.initialZoom,
-            myLocation: _myPosition == null
-                ? null
-                : (
-                    lat: _myPosition!.latitude,
-                    lon: _myPosition!.longitude,
-                    // headingAccuracy is negative when the platform has no
-                    // real heading to give (e.g. stationary, or no compass
-                    // hardware) - only draw the arrow when it's genuine.
-                    heading: _myPosition!.headingAccuracy >= 0
-                        ? _myPosition!.heading
-                        : null,
-                  ),
+            myLocation: myLocation,
           );
 
     return Stack(

@@ -9,7 +9,11 @@ import 'package:trip_io/services/session_controller.dart';
 /// SessionController.lastSeenCommentCount), so viewing the comments there
 /// clears this too.
 class NewCommentsBadge extends StatelessWidget {
-  const NewCommentsBadge({super.key, required this.session, required this.destination});
+  const NewCommentsBadge({
+    super.key,
+    required this.session,
+    required this.destination,
+  });
 
   final SessionController session;
   final Destination destination;
@@ -39,7 +43,11 @@ class NewCommentsBadge extends StatelessWidget {
                 const SizedBox(width: 3),
                 Text(
                   l10n.commentsNewBadge,
-                  style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w800),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
               ],
             ),

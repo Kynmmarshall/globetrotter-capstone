@@ -84,10 +84,7 @@ class Analytics {
   // Matomo requires exactly 16 hex characters for a custom visitor id.
   String _generateVisitorId() {
     final rand = Random.secure();
-    return List.generate(
-      16,
-      (_) => rand.nextInt(16).toRadixString(16),
-    ).join();
+    return List.generate(16, (_) => rand.nextInt(16).toRadixString(16)).join();
   }
 
   String _platform() {

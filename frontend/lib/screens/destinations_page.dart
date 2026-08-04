@@ -1,18 +1,21 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:trip_io/l10n/gen/app_localizations.dart';
 import 'package:trip_io/models/interest_tags.dart';
 import 'package:trip_io/models/models.dart';
 import 'package:trip_io/screens/destination_detail_page.dart';
+import 'package:trip_io/screens/my_submissions_page.dart';
 import 'package:trip_io/screens/submit_destination_page.dart';
 import 'package:trip_io/services/analytics.dart';
 import 'package:trip_io/services/api_client.dart';
 import 'package:trip_io/services/session_controller.dart';
 import 'package:trip_io/widgets/add_to_itinerary_button.dart';
+import 'package:trip_io/widgets/comment_count_button.dart';
+import 'package:trip_io/widgets/directions_button.dart';
 import 'package:trip_io/widgets/favorite_toggle_button.dart';
+import 'package:trip_io/widgets/glass_panel.dart';
 import 'package:trip_io/widgets/new_comments_badge.dart';
 import 'package:trip_io/widgets/session_expired_card.dart';
+import 'package:trip_io/widgets/skeleton_loaders.dart';
 import 'package:trip_io/widgets/star_rating.dart';
 
 class DestinationsPage extends StatefulWidget {
@@ -115,29 +118,6 @@ class _DestinationsPageState extends State<DestinationsPage> {
     );
   }
 
-  Widget _glassPanel({
-    required Widget child,
-    EdgeInsets? padding,
-    BorderRadius? borderRadius,
-  }) {
-    final radius = borderRadius ?? BorderRadius.circular(18);
-    return ClipRRect(
-      borderRadius: radius,
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
-        child: Container(
-          padding: padding,
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.12),
-            borderRadius: radius,
-            border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
-          ),
-          child: child,
-        ),
-      ),
-    );
-  }
-
   Widget _buildDestinationImage(String url) {
     return Image.network(
       url,
@@ -170,162 +150,190 @@ class _DestinationsPageState extends State<DestinationsPage> {
   }
 
   Widget _buildResultCard(BuildContext context, Destination d) {
+    final l10n = AppLocalizations.of(context)!;
     final imageUrl = ApiClient.resolveAssetUrl(d.imageUrl);
     final heroTag = 'destination-${d.id}';
-    return GestureDetector(
-      onTap: () {
-        Analytics.instance.trackEvent('destination', 'view', name: d.id);
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (_) => DestinationDetailPage(
-              destination: d,
-              heroTag: heroTag,
-              session: widget.session,
-            ),
-          ),
-        );
-      },
-      child: _glassPanel(
-        borderRadius: BorderRadius.circular(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Stack(
-              children: [
-                AspectRatio(
-                  aspectRatio: 4 / 3,
-                  child: Hero(
-                    tag: heroTag,
-                    child: imageUrl != null
-                        ? _buildDestinationImage(imageUrl)
-                        : const ColoredBox(
-                            color: Colors.white10,
-                            child: Center(
-                              child: Icon(
-                                Icons.place,
-                                color: Colors.white38,
-                                size: 32,
-                              ),
-                            ),
-                          ),
-                  ),
-                ),
-                Positioned(
-                  top: 8,
-                  right: 8,
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.35),
-                      shape: BoxShape.circle,
-                    ),
-                    child: FavoriteToggleButton(
-                      session: widget.session,
-                      destinationId: d.id,
-                    ),
-                  ),
-                ),
-                Positioned(
-                  top: 8,
-                  left: 8,
-                  child: NewCommentsBadge(
-                    session: widget.session,
-                    destination: d,
-                  ),
-                ),
-                Positioned(
-                  bottom: 8,
-                  right: 8,
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.35),
-                      shape: BoxShape.circle,
-                    ),
-                    child: AddToItineraryButton(
-                      session: widget.session,
-                      destinationId: d.id,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    d.name,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w800,
-                      fontSize: 16,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  if (d.hasRatings) ...[
-                    const SizedBox(height: 4),
-                    StarRating(
-                      average: d.ratingAverage,
-                      count: d.ratingCount,
-                      size: 13,
-                    ),
-                  ],
-                  const SizedBox(height: 6),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Icon(
-                        Icons.location_on,
-                        size: 15,
-                        color: Colors.white70,
-                      ),
-                      const SizedBox(width: 4),
-                      Expanded(
-                        child: Text(
-                          d.location ?? d.country,
-                          style: const TextStyle(
-                            color: Colors.white70,
-                            fontSize: 12.5,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
-                  ),
-                  if ((d.description ?? '').isNotEmpty) ...[
-                    const SizedBox(height: 8),
-                    Text(
-                      d.description!,
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.88),
-                        fontSize: 13,
-                        height: 1.35,
-                      ),
-                      maxLines: 3,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                  if (d.tags.isNotEmpty) ...[
-                    const SizedBox(height: 10),
-                    Wrap(
-                      spacing: 6,
-                      runSpacing: 6,
-                      children: d.tags.map((t) => _buildTagChip(t)).toList(),
-                    ),
-                  ],
-                ],
+    return Semantics(
+      button: true,
+      label: l10n.destinationCardSemanticLabel(d.name),
+      child: GestureDetector(
+        onTap: () async {
+          Analytics.instance.trackEvent('destination', 'view', name: d.id);
+          await Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => DestinationDetailPage(
+                destination: d,
+                heroTag: heroTag,
+                session: widget.session,
               ),
             ),
-          ],
+          );
+          // Forces NewCommentsBadge (built fresh below) to re-check
+          // SharedPreferences for this destination's just-updated "last
+          // seen" comment count - otherwise coming straight back here still
+          // shows the "New" pill from before the comments were opened.
+          if (mounted) setState(() {});
+        },
+        child: GlassPanel(
+          borderRadius: BorderRadius.circular(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Stack(
+                children: [
+                  AspectRatio(
+                    aspectRatio: 4 / 3,
+                    child: Hero(
+                      tag: heroTag,
+                      child: imageUrl != null
+                          ? _buildDestinationImage(imageUrl)
+                          : const ColoredBox(
+                              color: Colors.white10,
+                              child: Center(
+                                child: Icon(
+                                  Icons.place,
+                                  color: Colors.white38,
+                                  size: 32,
+                                ),
+                              ),
+                            ),
+                    ),
+                  ),
+                  Positioned(
+                    top: 8,
+                    right: 8,
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.35),
+                        shape: BoxShape.circle,
+                      ),
+                      child: FavoriteToggleButton(
+                        session: widget.session,
+                        destinationId: d.id,
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    top: 8,
+                    left: 8,
+                    child: NewCommentsBadge(
+                      session: widget.session,
+                      destination: d,
+                    ),
+                  ),
+                  Positioned(
+                    bottom: 8,
+                    right: 8,
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.35),
+                        shape: BoxShape.circle,
+                      ),
+                      child: AddToItineraryButton(
+                        session: widget.session,
+                        destinationId: d.id,
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    bottom: 8,
+                    left: 8,
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.35),
+                        shape: BoxShape.circle,
+                      ),
+                      child: DirectionsButton(
+                        session: widget.session,
+                        destination: d,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      d.name,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 16,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    if (d.hasRatings) ...[
+                      const SizedBox(height: 4),
+                      StarRating(
+                        average: d.ratingAverage,
+                        count: d.ratingCount,
+                        size: 13,
+                      ),
+                    ],
+                    const SizedBox(height: 6),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Icon(
+                          Icons.location_on,
+                          size: 15,
+                          color: Colors.white70,
+                        ),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            d.location ?? d.country,
+                            style: const TextStyle(
+                              color: Colors.white70,
+                              fontSize: 12.5,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        CommentCountButton(
+                          session: widget.session,
+                          destination: d,
+                        ),
+                      ],
+                    ),
+                    if ((d.description ?? '').isNotEmpty) ...[
+                      const SizedBox(height: 8),
+                      Text(
+                        d.description!,
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.88),
+                          fontSize: 13,
+                          height: 1.35,
+                        ),
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                    if (d.tags.isNotEmpty) ...[
+                      const SizedBox(height: 10),
+                      Wrap(
+                        spacing: 6,
+                        runSpacing: 6,
+                        children: d.tags.map((t) => _buildTagChip(t)).toList(),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
   Widget _buildSearchBar(AppLocalizations l10n) {
-    return _glassPanel(
+    return GlassPanel(
       padding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
       child: Row(
         children: [
@@ -351,7 +359,7 @@ class _DestinationsPageState extends State<DestinationsPage> {
   }
 
   Widget _buildFilterBar(AppLocalizations l10n) {
-    return _glassPanel(
+    return GlassPanel(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -447,23 +455,45 @@ class _DestinationsPageState extends State<DestinationsPage> {
                     ),
                   ),
                   const SizedBox(width: 12),
-                  OutlinedButton.icon(
-                    onPressed: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) =>
-                              SubmitDestinationPage(session: widget.session),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      OutlinedButton.icon(
+                        onPressed: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => SubmitDestinationPage(
+                                session: widget.session,
+                              ),
+                            ),
+                          );
+                        },
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.white,
+                          side: BorderSide(
+                            color: Colors.white.withValues(alpha: 0.4),
+                          ),
                         ),
-                      );
-                    },
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.white,
-                      side: BorderSide(
-                        color: Colors.white.withValues(alpha: 0.4),
+                        icon: const Icon(Icons.add_location_alt, size: 18),
+                        label: Text(l10n.suggestDestinationButton),
                       ),
-                    ),
-                    icon: const Icon(Icons.add_location_alt, size: 18),
-                    label: Text(l10n.suggestDestinationButton),
+                      const SizedBox(height: 8),
+                      TextButton.icon(
+                        onPressed: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) =>
+                                  MySubmissionsPage(session: widget.session),
+                            ),
+                          );
+                        },
+                        style: TextButton.styleFrom(
+                          foregroundColor: Colors.white70,
+                        ),
+                        icon: const Icon(Icons.checklist, size: 16),
+                        label: Text(l10n.viewMySubmissionsButton),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -476,10 +506,7 @@ class _DestinationsPageState extends State<DestinationsPage> {
                 future: _future,
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 40),
-                      child: Center(child: CircularProgressIndicator()),
-                    );
+                    return const DestinationGridSkeleton();
                   }
                   if (snapshot.hasError) {
                     return ErrorStateCard(
@@ -490,26 +517,16 @@ class _DestinationsPageState extends State<DestinationsPage> {
                   }
                   final allItems = snapshot.data ?? <Destination>[];
                   if (allItems.isEmpty) {
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 40),
-                      child: Center(
-                        child: Text(
-                          l10n.destinationsEmpty,
-                          style: const TextStyle(color: Colors.white70),
-                        ),
-                      ),
+                    return EmptyStateCard(
+                      icon: Icons.travel_explore,
+                      title: l10n.destinationsEmpty,
                     );
                   }
                   final items = _applyFilters(allItems);
                   if (items.isEmpty) {
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 40),
-                      child: Center(
-                        child: Text(
-                          l10n.destinationsFilterEmpty,
-                          style: const TextStyle(color: Colors.white70),
-                        ),
-                      ),
+                    return EmptyStateCard(
+                      icon: Icons.filter_alt_off,
+                      title: l10n.destinationsFilterEmpty,
                     );
                   }
                   final width = constraints.maxWidth;

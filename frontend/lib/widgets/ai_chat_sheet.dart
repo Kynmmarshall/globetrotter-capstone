@@ -4,13 +4,17 @@ import 'package:flutter/material.dart';
 import 'package:trip_io/l10n/gen/app_localizations.dart';
 import 'package:trip_io/models/models.dart';
 import 'package:trip_io/services/session_controller.dart';
+import 'package:trip_io/widgets/glass_panel.dart';
 import 'package:trip_io/widgets/session_expired_card.dart';
 
 /// Opens the AI chat as a draggable sheet over whatever screen the user is
 /// currently on - same pattern as [showCommentsSheet] - instead of a
 /// dedicated nav tab. That way asking the AI something never means losing
 /// your place in whatever you were browsing.
-Future<void> showAiChatSheet(BuildContext context, {required SessionController session}) {
+Future<void> showAiChatSheet(
+  BuildContext context, {
+  required SessionController session,
+}) {
   return showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
@@ -29,9 +33,16 @@ Future<void> showAiChatSheet(BuildContext context, {required SessionController s
               child: Container(
                 decoration: BoxDecoration(
                   color: const Color(0xFF0B1A24).withValues(alpha: 0.96),
-                  border: Border(top: BorderSide(color: Colors.white.withValues(alpha: 0.14))),
+                  border: Border(
+                    top: BorderSide(
+                      color: Colors.white.withValues(alpha: 0.14),
+                    ),
+                  ),
                 ),
-                child: AiChatSheet(session: session, scrollController: scrollController),
+                child: AiChatSheet(
+                  session: session,
+                  scrollController: scrollController,
+                ),
               ),
             ),
           );
@@ -42,7 +53,11 @@ Future<void> showAiChatSheet(BuildContext context, {required SessionController s
 }
 
 class AiChatSheet extends StatefulWidget {
-  const AiChatSheet({super.key, required this.session, required this.scrollController});
+  const AiChatSheet({
+    super.key,
+    required this.session,
+    required this.scrollController,
+  });
 
   final SessionController session;
   final ScrollController scrollController;
@@ -88,7 +103,9 @@ class _AiChatSheetState extends State<AiChatSheet> {
     _scrollToBottom();
     try {
       final reply = await widget.session.aiChat(_messages);
-      setState(() => _messages.add(ChatMessage(role: 'assistant', content: reply)));
+      setState(
+        () => _messages.add(ChatMessage(role: 'assistant', content: reply)),
+      );
     } catch (e) {
       setState(() => _error = e.toString().replaceFirst('Exception: ', ''));
     } finally {
@@ -117,29 +134,6 @@ class _AiChatSheetState extends State<AiChatSheet> {
         curve: Curves.easeOut,
       );
     });
-  }
-
-  Widget _glassPanel({
-    required Widget child,
-    EdgeInsets? padding,
-    BorderRadius? borderRadius,
-  }) {
-    final radius = borderRadius ?? BorderRadius.circular(18);
-    return ClipRRect(
-      borderRadius: radius,
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
-        child: Container(
-          padding: padding,
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.12),
-            borderRadius: radius,
-            border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
-          ),
-          child: child,
-        ),
-      ),
-    );
   }
 
   Widget _buildEmptyState(BuildContext context, AppLocalizations l10n) {
@@ -182,11 +176,18 @@ class _AiChatSheetState extends State<AiChatSheet> {
                   ActionChip(
                     label: Text(
                       suggestion,
-                      style: const TextStyle(color: Colors.white, fontSize: 12.5),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12.5,
+                      ),
                     ),
                     backgroundColor: const Color(0xFF13303B),
-                    side: BorderSide(color: Colors.white.withValues(alpha: 0.2)),
-                    onPressed: _sending ? null : () => _send(presetText: suggestion),
+                    side: BorderSide(
+                      color: Colors.white.withValues(alpha: 0.2),
+                    ),
+                    onPressed: _sending
+                        ? null
+                        : () => _send(presetText: suggestion),
                   ),
               ],
             ),
@@ -215,12 +216,18 @@ class _AiChatSheetState extends State<AiChatSheet> {
             border: Border.all(
               color: isUser
                   ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.6)
-                  : Theme.of(context).colorScheme.primary.withValues(alpha: 0.4),
+                  : Theme.of(
+                      context,
+                    ).colorScheme.primary.withValues(alpha: 0.4),
             ),
           ),
           child: Text(
             message.content,
-            style: const TextStyle(color: Colors.white, height: 1.4, fontSize: 13.5),
+            style: const TextStyle(
+              color: Colors.white,
+              height: 1.4,
+              fontSize: 13.5,
+            ),
           ),
         ),
       ),
@@ -263,7 +270,11 @@ class _AiChatSheetState extends State<AiChatSheet> {
                     ],
                   ),
                 ),
-                child: const Icon(Icons.smart_toy, color: Colors.white, size: 20),
+                child: const Icon(
+                  Icons.smart_toy,
+                  color: Colors.white,
+                  size: 20,
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -278,7 +289,10 @@ class _AiChatSheetState extends State<AiChatSheet> {
                       ),
                     ),
                     const SizedBox(height: 2),
-                    Text(l10n.aiChatSubtitle, style: const TextStyle(color: Colors.white70)),
+                    Text(
+                      l10n.aiChatSubtitle,
+                      style: const TextStyle(color: Colors.white70),
+                    ),
                   ],
                 ),
               ),
@@ -307,7 +321,10 @@ class _AiChatSheetState extends State<AiChatSheet> {
                           child: SizedBox(
                             width: 18,
                             height: 18,
-                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white70),
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white70,
+                            ),
                           ),
                         ),
                       );
@@ -326,7 +343,9 @@ class _AiChatSheetState extends State<AiChatSheet> {
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
               child: Text(
-                _error!.contains('not configured') ? l10n.aiChatNotConfigured : l10n.aiChatErrorMessage(_error!),
+                _error!.contains('not configured')
+                    ? l10n.aiChatNotConfigured
+                    : l10n.aiChatErrorMessage(_error!),
                 style: TextStyle(color: Colors.red.shade100, fontSize: 12.5),
               ),
             ),
@@ -334,7 +353,7 @@ class _AiChatSheetState extends State<AiChatSheet> {
             top: false,
             child: Padding(
               padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-              child: _glassPanel(
+              child: GlassPanel(
                 padding: const EdgeInsets.fromLTRB(16, 4, 8, 4),
                 child: Row(
                   children: [

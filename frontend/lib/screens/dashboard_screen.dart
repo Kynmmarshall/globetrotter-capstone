@@ -9,8 +9,12 @@ import 'package:trip_io/screens/destinations_page.dart';
 import 'package:trip_io/screens/favorites_page.dart';
 import 'package:trip_io/screens/itineraries_page.dart';
 import 'package:trip_io/screens/map_page.dart';
+import 'package:trip_io/screens/notifications_page.dart';
+import 'package:trip_io/screens/onboarding_walkthrough.dart';
 import 'package:trip_io/screens/profile_page.dart';
+import 'package:trip_io/models/models.dart';
 import 'package:trip_io/screens/recommendations_page.dart';
+import 'package:trip_io/themes/trip_colors.dart';
 import 'package:trip_io/widgets/ai_chat_sheet.dart';
 import 'package:trip_io/widgets/ai_fab_button.dart';
 
@@ -25,10 +29,11 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   int _index = 0;
+  late Future<List<AppNotification>> _notificationsFuture;
 
   static const _icons = <IconData>[
     Icons.public,
-    Icons.star,
+    Icons.auto_awesome,
     Icons.favorite,
     Icons.map,
     Icons.event_note,
@@ -39,7 +44,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   // user-facing (translated) tab labels below.
   static const _screenNames = <String>[
     'destinations',
-    'recommendations',
+    'for_you',
     'favorites',
     'map',
     'itineraries',
@@ -55,10 +60,51 @@ class _DashboardScreenState extends State<DashboardScreen> {
       defaultTargetPlatform == TargetPlatform.android ||
       defaultTargetPlatform == TargetPlatform.iOS;
 
+  // Index of ItinerariesPage in `pages`/`_icons`/`_screenNames` below - kept
+  // as a named constant since _claimPendingItineraryIfNeeded jumps straight
+  // there after a successful claim, and a bare "4" at that call site would
+  // silently go stale if the tab order ever changes.
+  static const int _itinerariesTabIndex = 4;
+
   @override
   void initState() {
     super.initState();
     Analytics.instance.trackScreen(_screenNames[_index]);
+    _notificationsFuture = widget.session.notifications();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
+      await _claimPendingItineraryIfNeeded();
+      if (!mounted || widget.session.hasSeenOnboarding) return;
+      await Navigator.of(context).push(
+        MaterialPageRoute(
+          fullscreenDialog: true,
+          builder: (_) => OnboardingWalkthrough(session: widget.session),
+        ),
+      );
+    });
+  }
+
+  Future<void> _claimPendingItineraryIfNeeded() async {
+    final shareToken = widget.session.pendingClaimToken;
+    if (shareToken == null) return;
+    // Cleared up front, before the request resolves, so a slow/failed
+    // claim can never be retried in a loop on the next rebuild.
+    widget.session.setPendingClaimToken(null);
+    final l10n = AppLocalizations.of(context)!;
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      await widget.session.claimSharedItinerary(shareToken);
+      if (!mounted) return;
+      setState(() => _index = _itinerariesTabIndex);
+      messenger.showSnackBar(
+        SnackBar(content: Text(l10n.claimedItinerarySnackbar)),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      messenger.showSnackBar(
+        SnackBar(content: Text(l10n.claimedItineraryErrorSnackbar)),
+      );
+    }
   }
 
   void _selectTab(int index) {
@@ -70,7 +116,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final l10n = AppLocalizations.of(context)!;
     return [
       l10n.navDestinations,
-      l10n.navRecommendations,
+      l10n.navForYou,
       l10n.navFavorites,
       l10n.navMap,
       l10n.navItineraries,
@@ -82,15 +128,54 @@ class _DashboardScreenState extends State<DashboardScreen> {
   // dashboard tab as an overlay sheet rather than a nav item - asking the
   // AI something no longer means navigating away from what you're browsing.
   Widget _aiFab(BuildContext context) {
-    return AiFabButton(onTap: () => showAiChatSheet(context, session: widget.session));
+    return AiFabButton(
+      onTap: () => showAiChatSheet(context, session: widget.session),
+    );
   }
 
-  Widget _frostedSurface({required Widget child, double blur = 18, double alpha = 0.16}) {
+  Future<void> _openNotifications() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => NotificationsPage(session: widget.session),
+      ),
+    );
+    // The inbox may have marked things read while it was open - refresh so
+    // the badge count reflects that as soon as it's popped, not on the next
+    // unrelated rebuild.
+    if (mounted) setState(() => _notificationsFuture = widget.session.notifications());
+  }
+
+  Widget _notificationsBell(BuildContext context) {
+    return FutureBuilder<List<AppNotification>>(
+      future: _notificationsFuture,
+      builder: (context, snapshot) {
+        final unread =
+            snapshot.data?.where((n) => !n.read).length ?? 0;
+        return IconButton(
+          onPressed: _openNotifications,
+          icon: Badge(
+            isLabelVisible: unread > 0,
+            label: Text(unread > 9 ? '9+' : '$unread'),
+            child: const Icon(Icons.notifications_outlined),
+          ),
+          tooltip: AppLocalizations.of(context)!.notificationsTitle,
+        );
+      },
+    );
+  }
+
+  Widget _frostedSurface({
+    required Widget child,
+    double blur = 18,
+    double alpha = 0.16,
+  }) {
     return ClipRect(
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
         child: DecoratedBox(
-          decoration: BoxDecoration(color: Colors.white.withValues(alpha: alpha)),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: alpha),
+          ),
           child: child,
         ),
       ),
@@ -130,7 +215,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     labels[i],
                     style: TextStyle(
                       color: _index == i ? Colors.white : Colors.white70,
-                      fontWeight: _index == i ? FontWeight.w700 : FontWeight.w500,
+                      fontWeight: _index == i
+                          ? FontWeight.w700
+                          : FontWeight.w500,
                     ),
                   ),
                   selected: _index == i,
@@ -162,7 +249,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
       builder: (context, constraints) {
         final wide = constraints.maxWidth >= 900;
         final medium = constraints.maxWidth >= 700;
-        final isCompactBackground = constraints.maxWidth < _backgroundBreakpoint;
+        final isCompactBackground =
+            constraints.maxWidth < _backgroundBreakpoint;
         final labels = _labels(context);
 
         final appBar = PreferredSize(
@@ -174,6 +262,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               foregroundColor: Colors.white,
               elevation: 0,
               scrolledUnderElevation: 0,
+              actions: [_notificationsBell(context)],
             ),
           ),
         );
@@ -185,7 +274,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
               backgroundColor: Colors.transparent,
               selectedIndex: _index,
               unselectedLabelTextStyle: const TextStyle(color: Colors.white70),
-              selectedLabelTextStyle: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+              selectedLabelTextStyle: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w700,
+              ),
               unselectedIconTheme: const IconThemeData(color: Colors.white70),
               selectedIconTheme: const IconThemeData(color: Colors.white),
               onDestinationSelected: _selectTab,
@@ -209,7 +301,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
               labelTextStyle: WidgetStateProperty.resolveWith((states) {
                 final selected = states.contains(WidgetState.selected);
                 return TextStyle(
-                  color: selected ? Colors.white : Colors.white.withValues(alpha: 0.85),
+                  color: selected
+                      ? Colors.white
+                      : Colors.white.withValues(alpha: 0.85),
                   fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
                   fontSize: 12,
                 );
@@ -260,12 +354,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
           fit: StackFit.expand,
           children: [
             Image.asset(
-              isCompactBackground ? 'assets/backgrounds/mobile.png' : 'assets/backgrounds/pc.png',
+              isCompactBackground
+                  ? 'assets/backgrounds/mobile.png'
+                  : 'assets/backgrounds/pc.png',
               fit: BoxFit.cover,
               alignment: Alignment.topCenter,
             ),
             DecoratedBox(
-              decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.58)),
+              decoration: BoxDecoration(color: context.tripColors.scrim),
             ),
             scaffold,
           ],

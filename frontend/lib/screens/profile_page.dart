@@ -1,4 +1,4 @@
-import 'dart:ui';
+import 'dart:typed_data' show Uint8List;
 
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -6,8 +6,10 @@ import 'package:intl/intl.dart';
 import 'package:trip_io/l10n/gen/app_localizations.dart';
 import 'package:trip_io/models/interest_tags.dart';
 import 'package:trip_io/models/models.dart';
+import 'package:trip_io/screens/avatar_cropper_page.dart';
 import 'package:trip_io/services/api_client.dart';
 import 'package:trip_io/services/session_controller.dart';
+import 'package:trip_io/widgets/glass_panel.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key, required this.session});
@@ -21,6 +23,7 @@ class ProfilePage extends StatefulWidget {
 class _ProfilePageState extends State<ProfilePage> {
   late final TextEditingController _bioController;
   late Future<List<Itinerary>> _itinerariesFuture;
+  late Future<List<Destination>> _favoritesFuture;
   late Set<String> _selectedInterests;
   bool _savingBio = false;
   bool _pickingAvatar = false;
@@ -31,6 +34,7 @@ class _ProfilePageState extends State<ProfilePage> {
     super.initState();
     _bioController = TextEditingController(text: widget.session.bio ?? '');
     _itinerariesFuture = widget.session.itineraries();
+    _favoritesFuture = widget.session.favorites();
     _selectedInterests = widget.session.interests.toSet();
   }
 
@@ -45,9 +49,14 @@ class _ProfilePageState extends State<ProfilePage> {
     if (username.isEmpty) {
       return '?';
     }
-    final parts = username.split(RegExp(r'[\s._-]+')).where((e) => e.isNotEmpty).toList();
+    final parts = username
+        .split(RegExp(r'[\s._-]+'))
+        .where((e) => e.isNotEmpty)
+        .toList();
     if (parts.length == 1) {
-      return parts.first.substring(0, parts.first.length >= 2 ? 2 : 1).toUpperCase();
+      return parts.first
+          .substring(0, parts.first.length >= 2 ? 2 : 1)
+          .toUpperCase();
     }
     return (parts[0][0] + parts[1][0]).toUpperCase();
   }
@@ -64,19 +73,59 @@ class _ProfilePageState extends State<ProfilePage> {
   Future<void> _pickAvatar() async {
     setState(() => _pickingAvatar = true);
     try {
-      final picked = await ImagePicker().pickImage(source: ImageSource.gallery, maxWidth: 900, imageQuality: 85);
-      if (picked != null) {
+      final picked = await ImagePicker().pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 1600,
+        imageQuality: 90,
+      );
+      if (picked != null && mounted) {
         final bytes = await picked.readAsBytes();
-        await widget.session.updateAvatar(bytes, picked.name);
+        if (!mounted) return;
+        final cropped = await Navigator.of(context).push<Uint8List>(
+          MaterialPageRoute(
+            fullscreenDialog: true,
+            builder: (_) => AvatarCropperPage(imageBytes: bytes),
+          ),
+        );
+        if (cropped != null) {
+          await widget.session.updateAvatar(cropped, 'avatar.png');
+        }
       }
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AppLocalizations.of(context)!.couldNotPickImage(e.toString()))),
+        SnackBar(
+          content: Text(
+            AppLocalizations.of(context)!.couldNotPickImage(e.toString()),
+          ),
+        ),
       );
     } finally {
       if (mounted) setState(() => _pickingAvatar = false);
     }
+  }
+
+  Future<void> _confirmLogout() async {
+    final l10n = AppLocalizations.of(context)!;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(l10n.logoutConfirmTitle),
+        content: Text(l10n.logoutConfirmMessage),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(l10n.cancelButton),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: FilledButton.styleFrom(backgroundColor: Colors.red.shade600),
+            child: Text(l10n.logoutButton),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true) widget.session.logout();
   }
 
   Future<void> _saveBio() async {
@@ -85,7 +134,9 @@ class _ProfilePageState extends State<ProfilePage> {
       await widget.session.updateBio(_bioController.text.trim());
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AppLocalizations.of(context)!.bioUpdatedSnackbar)),
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.bioUpdatedSnackbar),
+        ),
       );
     } finally {
       if (mounted) setState(() => _savingBio = false);
@@ -98,36 +149,22 @@ class _ProfilePageState extends State<ProfilePage> {
       await widget.session.updateInterests(_selectedInterests.toList());
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AppLocalizations.of(context)!.interestsUpdatedSnackbar)),
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.interestsUpdatedSnackbar),
+        ),
       );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
+      );
     } finally {
       if (mounted) setState(() => _savingInterests = false);
     }
   }
 
-  String _capitalize(String value) => value.isEmpty ? value : '${value[0].toUpperCase()}${value.substring(1)}';
-
-  Widget _glassPanel({required Widget child, EdgeInsets? padding, BorderRadius? borderRadius}) {
-    final radius = borderRadius ?? BorderRadius.circular(18);
-    return ClipRRect(
-      borderRadius: radius,
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
-        child: Container(
-          padding: padding ?? const EdgeInsets.all(18),
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.12),
-            borderRadius: radius,
-            border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
-          ),
-          child: child,
-        ),
-      ),
-    );
-  }
+  String _capitalize(String value) =>
+      value.isEmpty ? value : '${value[0].toUpperCase()}${value.substring(1)}';
 
   Widget _buildAvatarImage() {
     final url = ApiClient.resolveAssetUrl(widget.session.avatarUrl);
@@ -135,7 +172,11 @@ class _ProfilePageState extends State<ProfilePage> {
       return Center(
         child: Text(
           _initials(),
-          style: const TextStyle(fontSize: 30, color: Colors.white, fontWeight: FontWeight.w800),
+          style: const TextStyle(
+            fontSize: 30,
+            color: Colors.white,
+            fontWeight: FontWeight.w800,
+          ),
         ),
       );
     }
@@ -145,7 +186,11 @@ class _ProfilePageState extends State<ProfilePage> {
       errorBuilder: (context, error, stackTrace) => Center(
         child: Text(
           _initials(),
-          style: const TextStyle(fontSize: 30, color: Colors.white, fontWeight: FontWeight.w800),
+          style: const TextStyle(
+            fontSize: 30,
+            color: Colors.white,
+            fontWeight: FontWeight.w800,
+          ),
         ),
       ),
     );
@@ -153,51 +198,81 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Widget _buildAvatar(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
-    return GestureDetector(
-      onTap: _pickingAvatar ? null : _pickAvatar,
-      child: Stack(
-        children: [
-          Container(
-            width: 96,
-            height: 96,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: LinearGradient(colors: [colors.primary, colors.tertiary]),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.6), width: 3),
-            ),
-            child: ClipOval(
-              child: _pickingAvatar
-                  ? const Center(child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                  : _buildAvatarImage(),
-            ),
-          ),
-          Positioned(
-            bottom: 0,
-            right: 0,
-            child: Container(
-              padding: const EdgeInsets.all(6),
+    final l10n = AppLocalizations.of(context)!;
+    return Semantics(
+      button: true,
+      label: l10n.avatarSemanticLabel,
+      child: GestureDetector(
+        onTap: _pickingAvatar ? null : _pickAvatar,
+        child: Stack(
+          children: [
+            Container(
+              width: 96,
+              height: 96,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.white,
-                border: Border.all(color: colors.primary, width: 2),
+                gradient: LinearGradient(
+                  colors: [colors.primary, colors.tertiary],
+                ),
+                border: Border.all(
+                  color: Colors.white.withValues(alpha: 0.6),
+                  width: 3,
+                ),
               ),
-              child: Icon(Icons.camera_alt, size: 15, color: colors.primary),
+              child: ClipOval(
+                child: _pickingAvatar
+                    ? const Center(
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : _buildAvatarImage(),
+              ),
             ),
-          ),
-        ],
+            Positioned(
+              bottom: 0,
+              right: 0,
+              child: Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.white,
+                  border: Border.all(color: colors.primary, width: 2),
+                ),
+                child: Icon(Icons.camera_alt, size: 15, color: colors.primary),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildStatTile({required IconData icon, required String label, required String value}) {
+  Widget _buildStatTile({
+    required IconData icon,
+    required String label,
+    required String value,
+  }) {
     return Expanded(
       child: Column(
         children: [
           Icon(icon, color: Colors.white70, size: 20),
           const SizedBox(height: 6),
-          Text(value, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 16)),
+          Text(
+            value,
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w800,
+              fontSize: 16,
+            ),
+          ),
           const SizedBox(height: 2),
-          Text(label, style: const TextStyle(color: Colors.white60, fontSize: 11.5), textAlign: TextAlign.center),
+          Text(
+            label,
+            style: const TextStyle(color: Colors.white60, fontSize: 11.5),
+            textAlign: TextAlign.center,
+          ),
         ],
       ),
     );
@@ -205,14 +280,19 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Widget _buildInterestsPanel(BuildContext context, AppLocalizations l10n) {
     final colors = Theme.of(context).colorScheme;
-    return _glassPanel(
+    return GlassPanel(
       borderRadius: BorderRadius.circular(22),
+      padding: const EdgeInsets.all(18),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             l10n.interestsLabel,
-            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 15),
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w800,
+              fontSize: 15,
+            ),
           ),
           const SizedBox(height: 4),
           Text(
@@ -265,7 +345,10 @@ class _ProfilePageState extends State<ProfilePage> {
                   ? const SizedBox(
                       width: 14,
                       height: 14,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
                     )
                   : const Icon(Icons.check, size: 18),
               label: Text(l10n.saveButton),
@@ -277,12 +360,16 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Widget _buildLanguageSwitcher(BuildContext context, AppLocalizations l10n) {
-    final effective = (widget.session.locale?.languageCode ?? Localizations.localeOf(context).languageCode) == 'fr'
+    final effective =
+        (widget.session.locale?.languageCode ??
+                Localizations.localeOf(context).languageCode) ==
+            'fr'
         ? 'fr'
         : 'en';
     final colors = Theme.of(context).colorScheme;
-    return _glassPanel(
+    return GlassPanel(
       borderRadius: BorderRadius.circular(22),
+      padding: const EdgeInsets.all(18),
       child: Row(
         children: [
           const Icon(Icons.language, color: Colors.white70, size: 20),
@@ -290,7 +377,11 @@ class _ProfilePageState extends State<ProfilePage> {
           Expanded(
             child: Text(
               l10n.languageLabel,
-              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 15),
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w700,
+                fontSize: 15,
+              ),
             ),
           ),
           SegmentedButton<String>(
@@ -315,6 +406,54 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
+  Widget _buildThemeSwitcher(BuildContext context, AppLocalizations l10n) {
+    final colors = Theme.of(context).colorScheme;
+    return GlassPanel(
+      borderRadius: BorderRadius.circular(22),
+      padding: const EdgeInsets.all(18),
+      child: Row(
+        children: [
+          const Icon(Icons.brightness_6, color: Colors.white70, size: 20),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              l10n.themeLabel,
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w700,
+                fontSize: 15,
+              ),
+            ),
+          ),
+          SegmentedButton<ThemeMode>(
+            segments: [
+              ButtonSegment(
+                value: ThemeMode.system,
+                label: Text(l10n.themeSystem),
+              ),
+              ButtonSegment(
+                value: ThemeMode.light,
+                label: Text(l10n.themeLight),
+              ),
+              ButtonSegment(value: ThemeMode.dark, label: Text(l10n.themeDark)),
+            ],
+            selected: {widget.session.themeMode},
+            onSelectionChanged: (selection) {
+              widget.session.setThemeMode(selection.first);
+            },
+            style: SegmentedButton.styleFrom(
+              backgroundColor: Colors.white.withValues(alpha: 0.08),
+              foregroundColor: Colors.white70,
+              selectedForegroundColor: Colors.white,
+              selectedBackgroundColor: colors.primary.withValues(alpha: 0.85),
+              side: BorderSide(color: Colors.white.withValues(alpha: 0.2)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
@@ -325,19 +464,30 @@ class _ProfilePageState extends State<ProfilePage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            _glassPanel(
+            GlassPanel(
               borderRadius: BorderRadius.circular(22),
+              padding: const EdgeInsets.all(18),
               child: Column(
                 children: [
                   _buildAvatar(context),
                   const SizedBox(height: 14),
                   Text(
                     widget.session.username ?? l10n.travellerFallback,
-                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 20),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 20,
+                    ),
                   ),
                   if ((widget.session.email ?? '').isNotEmpty) ...[
                     const SizedBox(height: 4),
-                    Text(widget.session.email!, style: const TextStyle(color: Colors.white70, fontSize: 13)),
+                    Text(
+                      widget.session.email!,
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 13,
+                      ),
+                    ),
                   ],
                   const SizedBox(height: 10),
                   Wrap(
@@ -345,7 +495,10 @@ class _ProfilePageState extends State<ProfilePage> {
                     runSpacing: 8,
                     alignment: WrapAlignment.center,
                     children: [
-                      _buildInfoPill(Icons.calendar_today, _formatMemberSince(context, l10n)),
+                      _buildInfoPill(
+                        Icons.calendar_today,
+                        _formatMemberSince(context, l10n),
+                      ),
                       _buildInfoPill(Icons.location_on, l10n.basedInYaounde),
                     ],
                   ),
@@ -365,22 +518,50 @@ class _ProfilePageState extends State<ProfilePage> {
                           );
                         },
                       ),
-                      _buildStatTile(icon: Icons.explore, label: l10n.regionStatLabel, value: 'Yaoundé'),
-                      _buildStatTile(icon: Icons.favorite, label: l10n.featuredSpotsStatLabel, value: '4'),
+                      FutureBuilder<List<Destination>>(
+                        future: _favoritesFuture,
+                        builder: (context, snapshot) {
+                          final count = snapshot.data?.length;
+                          return _buildStatTile(
+                            icon: Icons.favorite,
+                            label: l10n.favoritesStatLabel,
+                            value: count?.toString() ?? '—',
+                          );
+                        },
+                      ),
+                      FutureBuilder<List<Itinerary>>(
+                        future: _itinerariesFuture,
+                        builder: (context, snapshot) {
+                          final places = snapshot.data
+                              ?.expand((i) => i.destinations)
+                              .toSet()
+                              .length;
+                          return _buildStatTile(
+                            icon: Icons.explore,
+                            label: l10n.placesPlannedStatLabel,
+                            value: places?.toString() ?? '—',
+                          );
+                        },
+                      ),
                     ],
                   ),
                 ],
               ),
             ),
             const SizedBox(height: 16),
-            _glassPanel(
+            GlassPanel(
               borderRadius: BorderRadius.circular(22),
+              padding: const EdgeInsets.all(18),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     l10n.aboutMeTitle,
-                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 15),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 15,
+                    ),
                   ),
                   const SizedBox(height: 10),
                   TextField(
@@ -395,11 +576,15 @@ class _ProfilePageState extends State<ProfilePage> {
                       fillColor: Colors.white.withValues(alpha: 0.08),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.2)),
+                        borderSide: BorderSide(
+                          color: Colors.white.withValues(alpha: 0.2),
+                        ),
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.2)),
+                        borderSide: BorderSide(
+                          color: Colors.white.withValues(alpha: 0.2),
+                        ),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -416,7 +601,10 @@ class _ProfilePageState extends State<ProfilePage> {
                           ? const SizedBox(
                               width: 14,
                               height: 14,
-                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
                             )
                           : const Icon(Icons.check, size: 18),
                       label: Text(l10n.saveButton),
@@ -430,21 +618,28 @@ class _ProfilePageState extends State<ProfilePage> {
             const SizedBox(height: 16),
             _buildLanguageSwitcher(context, l10n),
             const SizedBox(height: 16),
-            _glassPanel(
+            _buildThemeSwitcher(context, l10n),
+            const SizedBox(height: 16),
+            GlassPanel(
               borderRadius: BorderRadius.circular(22),
+              padding: const EdgeInsets.all(18),
               child: Row(
                 children: [
                   Expanded(
                     child: Text(
-                      l10n.signedInAs(widget.session.username ?? l10n.unknownUser),
+                      l10n.signedInAs(
+                        widget.session.username ?? l10n.unknownUser,
+                      ),
                       style: const TextStyle(color: Colors.white70),
                     ),
                   ),
                   OutlinedButton.icon(
-                    onPressed: () => widget.session.logout(),
+                    onPressed: _confirmLogout,
                     style: OutlinedButton.styleFrom(
                       foregroundColor: Colors.white,
-                      side: BorderSide(color: Colors.white.withValues(alpha: 0.4)),
+                      side: BorderSide(
+                        color: Colors.white.withValues(alpha: 0.4),
+                      ),
                     ),
                     icon: const Icon(Icons.logout, size: 18),
                     label: Text(l10n.logoutButton),
@@ -472,7 +667,10 @@ class _ProfilePageState extends State<ProfilePage> {
           children: [
             Icon(icon, size: 14, color: Colors.white70),
             const SizedBox(width: 6),
-            Text(label, style: const TextStyle(color: Colors.white, fontSize: 12)),
+            Text(
+              label,
+              style: const TextStyle(color: Colors.white, fontSize: 12),
+            ),
           ],
         ),
       ),

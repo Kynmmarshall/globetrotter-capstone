@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_tts/flutter_tts.dart';
@@ -8,9 +7,12 @@ import 'package:trip_io/models/models.dart';
 import 'package:trip_io/screens/map_page.dart';
 import 'package:trip_io/services/api_client.dart';
 import 'package:trip_io/services/session_controller.dart';
+import 'package:trip_io/themes/trip_colors.dart';
 import 'package:trip_io/widgets/comments_section.dart';
 import 'package:trip_io/widgets/add_to_itinerary_button.dart';
+import 'package:trip_io/widgets/directions_button.dart';
 import 'package:trip_io/widgets/favorite_toggle_button.dart';
+import 'package:trip_io/widgets/glass_panel.dart';
 import 'package:trip_io/widgets/star_rating.dart';
 
 class DestinationDetailPage extends StatefulWidget {
@@ -193,29 +195,6 @@ class _DestinationDetailPageState extends State<DestinationDetailPage> {
     }
   }
 
-  Widget _glassPanel({
-    required Widget child,
-    EdgeInsets? padding,
-    BorderRadius? borderRadius,
-  }) {
-    final radius = borderRadius ?? BorderRadius.circular(20);
-    return ClipRRect(
-      borderRadius: radius,
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
-        child: Container(
-          padding: padding ?? const EdgeInsets.all(18),
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.12),
-            borderRadius: radius,
-            border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
-          ),
-          child: child,
-        ),
-      ),
-    );
-  }
-
   Widget _buildTagChip(String label) {
     return DecoratedBox(
       decoration: BoxDecoration(
@@ -287,7 +266,7 @@ class _DestinationDetailPageState extends State<DestinationDetailPage> {
     final icon = place.isHotel ? Icons.hotel : Icons.restaurant;
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
-      child: _glassPanel(
+      child: GlassPanel(
         borderRadius: BorderRadius.circular(16),
         padding: const EdgeInsets.all(14),
         child: Row(
@@ -368,8 +347,9 @@ class _DestinationDetailPageState extends State<DestinationDetailPage> {
 
   Widget _buildAiExplainSection(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    return _glassPanel(
+    return GlassPanel(
       borderRadius: BorderRadius.circular(22),
+      padding: const EdgeInsets.all(18),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -468,8 +448,9 @@ class _DestinationDetailPageState extends State<DestinationDetailPage> {
             ),
           ),
         ),
-        child: _glassPanel(
+        child: GlassPanel(
           borderRadius: BorderRadius.circular(22),
+          padding: const EdgeInsets.all(18),
           child: Row(
             children: [
               const Icon(Icons.map_outlined, color: Colors.white, size: 20),
@@ -500,8 +481,9 @@ class _DestinationDetailPageState extends State<DestinationDetailPage> {
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: _openComments,
-        child: _glassPanel(
+        child: GlassPanel(
           borderRadius: BorderRadius.circular(22),
+          padding: const EdgeInsets.all(18),
           child: Row(
             children: [
               Stack(
@@ -615,9 +597,7 @@ class _DestinationDetailPageState extends State<DestinationDetailPage> {
                 alignment: Alignment.topCenter,
               ),
               DecoratedBox(
-                decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.58),
-                ),
+                decoration: BoxDecoration(color: context.tripColors.scrim),
               ),
               SafeArea(
                 child: SingleChildScrollView(
@@ -655,8 +635,9 @@ class _DestinationDetailPageState extends State<DestinationDetailPage> {
                               ),
                             ),
                             const SizedBox(height: 18),
-                            _glassPanel(
+                            GlassPanel(
                               borderRadius: BorderRadius.circular(22),
+                              padding: const EdgeInsets.all(18),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
@@ -695,6 +676,11 @@ class _DestinationDetailPageState extends State<DestinationDetailPage> {
                                             : AppLocalizations.of(
                                                 context,
                                               )!.readAloudTooltip,
+                                      ),
+                                      DirectionsButton(
+                                        session: widget.session,
+                                        destination: destination,
+                                        size: 24,
                                       ),
                                       AddToItineraryButton(
                                         session: widget.session,
@@ -795,7 +781,7 @@ class _DestinationDetailPageState extends State<DestinationDetailPage> {
                                 ),
                               ),
                               const SizedBox(height: 12),
-                              _glassPanel(
+                              GlassPanel(
                                 borderRadius: BorderRadius.circular(20),
                                 padding: const EdgeInsets.fromLTRB(
                                   16,
@@ -873,7 +859,7 @@ class _DestinationDetailPageState extends State<DestinationDetailPage> {
                   padding: const EdgeInsets.all(16),
                   child: Align(
                     alignment: Alignment.topLeft,
-                    child: _glassPanel(
+                    child: GlassPanel(
                       borderRadius: BorderRadius.circular(999),
                       padding: EdgeInsets.zero,
                       child: IconButton(

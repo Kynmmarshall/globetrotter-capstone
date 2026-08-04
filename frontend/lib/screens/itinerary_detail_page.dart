@@ -1,6 +1,5 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show Clipboard, ClipboardData;
 import 'package:trip_io/l10n/gen/app_localizations.dart';
 import 'package:trip_io/models/models.dart';
 import 'package:trip_io/screens/map_page.dart';
@@ -8,6 +7,8 @@ import 'package:trip_io/services/api_client.dart';
 import 'package:trip_io/services/itinerary_scheduler.dart';
 import 'package:trip_io/services/session_controller.dart';
 import 'package:trip_io/screens/itineraries_page.dart' show formatDuration;
+import 'package:trip_io/themes/trip_colors.dart';
+import 'package:trip_io/widgets/glass_panel.dart';
 import 'package:trip_io/widgets/order_destinations_sheet.dart';
 
 class ItineraryDetailPage extends StatelessWidget {
@@ -43,25 +44,70 @@ class ItineraryDetailPage extends StatelessWidget {
     );
   }
 
-  Widget _glassPanel({
-    required Widget child,
-    EdgeInsets? padding,
-    BorderRadius? borderRadius,
-  }) {
-    final radius = borderRadius ?? BorderRadius.circular(18);
-    return ClipRRect(
-      borderRadius: radius,
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
-        child: Container(
-          padding: padding ?? const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.12),
-            borderRadius: radius,
-            border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
-          ),
-          child: child,
+  Future<void> _shareItinerary(BuildContext context) async {
+    final l10n = AppLocalizations.of(context)!;
+    final messenger = ScaffoldMessenger.of(context);
+    String shareToken;
+    try {
+      shareToken = await session.shareItinerary(itinerary.id);
+    } catch (_) {
+      if (!context.mounted) return;
+      messenger.showSnackBar(
+        SnackBar(content: Text(l10n.shareItineraryErrorSnackbar)),
+      );
+      return;
+    }
+    if (!context.mounted) return;
+
+    final shareUrl = ApiClient.resolveShareUrl(shareToken);
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(l10n.shareItineraryDialogTitle(itinerary.title)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(l10n.shareItineraryDialogMessage),
+            const SizedBox(height: 14),
+            SelectableText(
+              shareUrl,
+              style: const TextStyle(fontWeight: FontWeight.w600),
+            ),
+          ],
         ),
+        actions: [
+          TextButton(
+            onPressed: () async {
+              Navigator.of(dialogContext).pop();
+              try {
+                await session.unshareItinerary(itinerary.id);
+              } catch (_) {
+                return;
+              }
+              if (!context.mounted) return;
+              messenger.showSnackBar(
+                SnackBar(content: Text(l10n.shareItineraryTurnedOffSnackbar)),
+              );
+            },
+            child: Text(l10n.shareItineraryTurnOffButton),
+          ),
+          TextButton(
+            onPressed: () async {
+              await Clipboard.setData(ClipboardData(text: shareUrl));
+              if (!dialogContext.mounted) return;
+              Navigator.of(dialogContext).pop();
+              messenger.showSnackBar(
+                SnackBar(content: Text(l10n.shareItineraryLinkCopiedSnackbar)),
+              );
+            },
+            child: Text(l10n.shareItineraryCopyLinkButton),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: Text(l10n.closeButton),
+          ),
+        ],
       ),
     );
   }
@@ -81,8 +127,9 @@ class ItineraryDetailPage extends StatelessWidget {
           : '${dateFormat.formatMediumDate(startDate)} – '
                 '${dateFormat.formatMediumDate(endDate)}';
     }
-    return _glassPanel(
+    return GlassPanel(
       borderRadius: BorderRadius.circular(22),
+      padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -195,8 +242,9 @@ class ItineraryDetailPage extends StatelessWidget {
   Widget _buildTimeline(BuildContext context, AppLocalizations l10n) {
     final schedule = itinerary.schedule;
     if (schedule.isEmpty) {
-      return _glassPanel(
+      return GlassPanel(
         borderRadius: BorderRadius.circular(18),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -273,7 +321,7 @@ class ItineraryDetailPage extends StatelessWidget {
                 Expanded(
                   child: Padding(
                     padding: const EdgeInsets.only(bottom: 4),
-                    child: _glassPanel(
+                    child: GlassPanel(
                       borderRadius: BorderRadius.circular(16),
                       padding: const EdgeInsets.all(12),
                       child: Row(
@@ -373,9 +421,7 @@ class ItineraryDetailPage extends StatelessWidget {
                 alignment: Alignment.topCenter,
               ),
               DecoratedBox(
-                decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.58),
-                ),
+                decoration: BoxDecoration(color: context.tripColors.scrim),
               ),
               SafeArea(
                 child: SingleChildScrollView(
@@ -409,19 +455,36 @@ class ItineraryDetailPage extends StatelessWidget {
               SafeArea(
                 child: Padding(
                   padding: const EdgeInsets.all(16),
-                  child: Align(
-                    alignment: Alignment.topLeft,
-                    child: _glassPanel(
-                      borderRadius: BorderRadius.circular(999),
-                      padding: EdgeInsets.zero,
-                      child: IconButton(
-                        onPressed: () => Navigator.of(context).pop(),
-                        icon: const Icon(Icons.arrow_back, color: Colors.white),
-                        tooltip: MaterialLocalizations.of(
-                          context,
-                        ).backButtonTooltip,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      GlassPanel(
+                        borderRadius: BorderRadius.circular(999),
+                        padding: EdgeInsets.zero,
+                        child: IconButton(
+                          onPressed: () => Navigator.of(context).pop(),
+                          icon: const Icon(
+                            Icons.arrow_back,
+                            color: Colors.white,
+                          ),
+                          tooltip: MaterialLocalizations.of(
+                            context,
+                          ).backButtonTooltip,
+                        ),
                       ),
-                    ),
+                      GlassPanel(
+                        borderRadius: BorderRadius.circular(999),
+                        padding: EdgeInsets.zero,
+                        child: IconButton(
+                          onPressed: () => _shareItinerary(context),
+                          icon: const Icon(
+                            Icons.ios_share,
+                            color: Colors.white,
+                          ),
+                          tooltip: l10n.shareItineraryTooltip,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),

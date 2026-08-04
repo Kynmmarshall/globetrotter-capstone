@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:trip_io/l10n/gen/app_localizations.dart';
 import 'package:trip_io/models/models.dart';
@@ -8,10 +6,14 @@ import 'package:trip_io/services/analytics.dart';
 import 'package:trip_io/services/api_client.dart';
 import 'package:trip_io/services/session_controller.dart';
 import 'package:trip_io/widgets/add_to_itinerary_button.dart';
+import 'package:trip_io/widgets/comment_count_button.dart';
+import 'package:trip_io/widgets/directions_button.dart';
 import 'package:trip_io/widgets/favorite_toggle_button.dart';
 import 'package:trip_io/widgets/feature_pill.dart';
+import 'package:trip_io/widgets/glass_panel.dart';
 import 'package:trip_io/widgets/new_comments_badge.dart';
 import 'package:trip_io/widgets/session_expired_card.dart';
+import 'package:trip_io/widgets/skeleton_loaders.dart';
 import 'package:trip_io/widgets/star_rating.dart';
 
 class FavoritesPage extends StatefulWidget {
@@ -30,29 +32,6 @@ class _FavoritesPageState extends State<FavoritesPage> {
   void initState() {
     super.initState();
     _future = widget.session.favorites();
-  }
-
-  Widget _glassPanel({
-    required Widget child,
-    EdgeInsets? padding,
-    BorderRadius? borderRadius,
-  }) {
-    final radius = borderRadius ?? BorderRadius.circular(18);
-    return ClipRRect(
-      borderRadius: radius,
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
-        child: Container(
-          padding: padding ?? const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.12),
-            borderRadius: radius,
-            border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
-          ),
-          child: child,
-        ),
-      ),
-    );
   }
 
   Widget _buildThumbnail(
@@ -110,120 +89,139 @@ class _FavoritesPageState extends State<FavoritesPage> {
   }
 
   Widget _buildCard(BuildContext context, Destination item) {
+    final l10n = AppLocalizations.of(context)!;
     final heroTag = 'destination-${item.id}';
-    return GestureDetector(
-      onTap: () {
-        Analytics.instance.trackEvent('destination', 'view', name: item.id);
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (_) => DestinationDetailPage(
-              destination: item,
-              heroTag: heroTag,
-              session: widget.session,
-            ),
-          ),
-        );
-      },
-      child: _glassPanel(
-        borderRadius: BorderRadius.circular(18),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildThumbnail(context, item, heroTag),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          item.name,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w700,
-                            fontSize: 15,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      NewCommentsBadge(
-                        session: widget.session,
-                        destination: item,
-                      ),
-                      const SizedBox(width: 6),
-                      AddToItineraryButton(
-                        session: widget.session,
-                        destinationId: item.id,
-                        size: 18,
-                      ),
-                      const SizedBox(width: 2),
-                      FavoriteToggleButton(
-                        session: widget.session,
-                        destinationId: item.id,
-                        size: 18,
-                      ),
-                    ],
-                  ),
-                  if (item.hasRatings) ...[
-                    const SizedBox(height: 2),
-                    StarRating(
-                      average: item.ratingAverage,
-                      count: item.ratingCount,
-                      size: 12.5,
-                    ),
-                  ],
-                  const SizedBox(height: 2),
-                  Row(
-                    children: [
-                      const Icon(
-                        Icons.location_on,
-                        size: 13,
-                        color: Colors.white70,
-                      ),
-                      const SizedBox(width: 3),
-                      Expanded(
-                        child: Text(
-                          item.location ?? item.country,
-                          style: const TextStyle(
-                            color: Colors.white70,
-                            fontSize: 12,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
-                  ),
-                  if ((item.description ?? '').isNotEmpty) ...[
-                    const SizedBox(height: 6),
-                    Text(
-                      item.description!,
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.85),
-                        fontSize: 12.5,
-                        height: 1.3,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                  if (item.tags.isNotEmpty) ...[
-                    const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 6,
-                      runSpacing: 6,
-                      children: item.tags
-                          .map((t) => FeaturePill(icon: Icons.sell, label: t))
-                          .toList(),
-                    ),
-                  ],
-                ],
+    return Semantics(
+      button: true,
+      label: l10n.destinationCardSemanticLabel(item.name),
+      child: GestureDetector(
+        onTap: () async {
+          Analytics.instance.trackEvent('destination', 'view', name: item.id);
+          await Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => DestinationDetailPage(
+                destination: item,
+                heroTag: heroTag,
+                session: widget.session,
               ),
             ),
-          ],
+          );
+          // Forces NewCommentsBadge to re-check the just-updated "last
+          // seen" comment count rather than showing stale "New" pills.
+          if (mounted) setState(() {});
+        },
+        child: GlassPanel(
+          borderRadius: BorderRadius.circular(18),
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildThumbnail(context, item, heroTag),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            item.name,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 15,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        NewCommentsBadge(
+                          session: widget.session,
+                          destination: item,
+                        ),
+                        const SizedBox(width: 6),
+                        DirectionsButton(
+                          session: widget.session,
+                          destination: item,
+                          size: 18,
+                        ),
+                        const SizedBox(width: 2),
+                        AddToItineraryButton(
+                          session: widget.session,
+                          destinationId: item.id,
+                          size: 18,
+                        ),
+                        const SizedBox(width: 2),
+                        FavoriteToggleButton(
+                          session: widget.session,
+                          destinationId: item.id,
+                          size: 18,
+                        ),
+                      ],
+                    ),
+                    if (item.hasRatings) ...[
+                      const SizedBox(height: 2),
+                      StarRating(
+                        average: item.ratingAverage,
+                        count: item.ratingCount,
+                        size: 12.5,
+                      ),
+                    ],
+                    const SizedBox(height: 2),
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.location_on,
+                          size: 13,
+                          color: Colors.white70,
+                        ),
+                        const SizedBox(width: 3),
+                        Expanded(
+                          child: Text(
+                            item.location ?? item.country,
+                            style: const TextStyle(
+                              color: Colors.white70,
+                              fontSize: 12,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        CommentCountButton(
+                          session: widget.session,
+                          destination: item,
+                        ),
+                      ],
+                    ),
+                    if ((item.description ?? '').isNotEmpty) ...[
+                      const SizedBox(height: 6),
+                      Text(
+                        item.description!,
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.85),
+                          fontSize: 12.5,
+                          height: 1.3,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                    if (item.tags.isNotEmpty) ...[
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 6,
+                        runSpacing: 6,
+                        children: item.tags
+                            .map((t) => FeaturePill(icon: Icons.sell, label: t))
+                            .toList(),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -284,10 +282,7 @@ class _FavoritesPageState extends State<FavoritesPage> {
             future: _future,
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 40),
-                  child: Center(child: CircularProgressIndicator()),
-                );
+                return const DestinationListSkeleton();
               }
               if (snapshot.hasError) {
                 if (isAuthError(snapshot.error!)) {

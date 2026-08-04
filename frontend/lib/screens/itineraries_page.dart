@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:trip_io/l10n/gen/app_localizations.dart';
 import 'package:trip_io/models/models.dart';
@@ -7,6 +5,7 @@ import 'package:trip_io/screens/itinerary_detail_page.dart';
 import 'package:trip_io/services/analytics.dart';
 import 'package:trip_io/services/itinerary_scheduler.dart';
 import 'package:trip_io/services/session_controller.dart';
+import 'package:trip_io/widgets/glass_panel.dart';
 import 'package:trip_io/widgets/session_expired_card.dart';
 
 String formatDuration(Duration d) {
@@ -89,13 +88,15 @@ class _ItinerariesPageState extends State<ItinerariesPage> {
       await widget.session.deleteItinerary(item.id);
       await _refresh();
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.itineraryDeletedSnackbar)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.itineraryDeletedSnackbar)));
     } catch (e) {
       if (!mounted) return;
       if (isAuthError(e)) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.sessionExpiredTitle)));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(l10n.sessionExpiredTitle)));
         await widget.session.logout();
         return;
       }
@@ -181,29 +182,6 @@ class _ItinerariesPageState extends State<ItinerariesPage> {
     }
   }
 
-  Widget _glassPanel({
-    required Widget child,
-    EdgeInsets? padding,
-    BorderRadius? borderRadius,
-  }) {
-    final radius = borderRadius ?? BorderRadius.circular(18);
-    return ClipRRect(
-      borderRadius: radius,
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
-        child: Container(
-          padding: padding ?? const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.12),
-            borderRadius: radius,
-            border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
-          ),
-          child: child,
-        ),
-      ),
-    );
-  }
-
   InputDecoration _fieldDecoration(String label, {String? hint}) {
     return InputDecoration(
       labelText: label,
@@ -264,11 +242,15 @@ class _ItinerariesPageState extends State<ItinerariesPage> {
   // narrowed down either by the search box or by "show all" - the full
   // 60+ destination list never renders unfiltered by default.
   List<Destination> _destinationCandidates(List<Destination> all) {
-    final unselected = all.where((d) => !_selectedDestinationIds.contains(d.id));
+    final unselected = all.where(
+      (d) => !_selectedDestinationIds.contains(d.id),
+    );
     if (_showAllDestinations) return unselected.toList();
     final query = _destinationSearchController.text.trim().toLowerCase();
     if (query.isEmpty) return const [];
-    return unselected.where((d) => d.name.toLowerCase().contains(query)).toList();
+    return unselected
+        .where((d) => d.name.toLowerCase().contains(query))
+        .toList();
   }
 
   Widget _buildDestinationPicker(List<Destination> destinations) {
@@ -303,16 +285,22 @@ class _ItinerariesPageState extends State<ItinerariesPage> {
           controller: _destinationSearchController,
           style: const TextStyle(color: Colors.white),
           cursorColor: Colors.white,
-          decoration: _fieldDecoration(l10n.itineraryDestinationSearchHint).copyWith(
-            prefixIcon: const Icon(Icons.search, color: Colors.white54, size: 20),
-          ),
+          decoration: _fieldDecoration(l10n.itineraryDestinationSearchHint)
+              .copyWith(
+                prefixIcon: const Icon(
+                  Icons.search,
+                  color: Colors.white54,
+                  size: 20,
+                ),
+              ),
           onChanged: (_) => setState(() {}),
         ),
         const SizedBox(height: 8),
         Align(
           alignment: Alignment.centerLeft,
           child: TextButton.icon(
-            onPressed: () => setState(() => _showAllDestinations = !_showAllDestinations),
+            onPressed: () =>
+                setState(() => _showAllDestinations = !_showAllDestinations),
             style: TextButton.styleFrom(
               padding: EdgeInsets.zero,
               minimumSize: Size.zero,
@@ -327,7 +315,11 @@ class _ItinerariesPageState extends State<ItinerariesPage> {
               _showAllDestinations
                   ? l10n.itineraryHideAllDestinations
                   : l10n.itineraryShowAllDestinations(destinations.length),
-              style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.w600, fontSize: 12.5),
+              style: const TextStyle(
+                color: Colors.white70,
+                fontWeight: FontWeight.w600,
+                fontSize: 12.5,
+              ),
             ),
           ),
         ),
@@ -337,15 +329,17 @@ class _ItinerariesPageState extends State<ItinerariesPage> {
             _showAllDestinations
                 ? l10n.itineraryAllDestinationsAdded
                 : (query.isEmpty
-                    ? l10n.itineraryDestinationSearchPrompt
-                    : l10n.itineraryDestinationSearchNoMatches(query)),
+                      ? l10n.itineraryDestinationSearchPrompt
+                      : l10n.itineraryDestinationSearchNoMatches(query)),
             style: const TextStyle(color: Colors.white54, fontSize: 12.5),
           )
         else
           Wrap(
             spacing: 8,
             runSpacing: 8,
-            children: candidates.map((d) => _destinationChip(d, colors)).toList(),
+            children: candidates
+                .map((d) => _destinationChip(d, colors))
+                .toList(),
           ),
       ],
     );
@@ -398,11 +392,7 @@ class _ItinerariesPageState extends State<ItinerariesPage> {
         ),
         child: Row(
           children: [
-            const Icon(
-              Icons.calendar_month,
-              size: 18,
-              color: Colors.white70,
-            ),
+            const Icon(Icons.calendar_month, size: 18, color: Colors.white70),
             const SizedBox(width: 10),
             Expanded(
               child: Text(
@@ -498,8 +488,9 @@ class _ItinerariesPageState extends State<ItinerariesPage> {
 
   Widget _buildCreateForm(List<Destination> destinations) {
     final l10n = AppLocalizations.of(context)!;
-    return _glassPanel(
+    return GlassPanel(
       borderRadius: BorderRadius.circular(20),
+      padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -608,78 +599,89 @@ class _ItinerariesPageState extends State<ItinerariesPage> {
                 .toList();
             return Padding(
               padding: const EdgeInsets.only(bottom: 12),
-              child: Material(
-                color: Colors.transparent,
-                borderRadius: BorderRadius.circular(16),
-                clipBehavior: Clip.antiAlias,
-                child: InkWell(
-                  onTap: () {
-                    Analytics.instance.trackEvent(
-                      'itinerary',
-                      'view',
-                      name: item.id,
-                    );
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => ItineraryDetailPage(
-                          itinerary: item,
-                          destinationsById: destinationsById,
-                          session: widget.session,
+              child: Semantics(
+                button: true,
+                label: l10n.itineraryCardSemanticLabel(item.title),
+                child: Material(
+                  color: Colors.transparent,
+                  borderRadius: BorderRadius.circular(16),
+                  clipBehavior: Clip.antiAlias,
+                  child: InkWell(
+                    onTap: () {
+                      Analytics.instance.trackEvent(
+                        'itinerary',
+                        'view',
+                        name: item.id,
+                      );
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => ItineraryDetailPage(
+                            itinerary: item,
+                            destinationsById: destinationsById,
+                            session: widget.session,
+                          ),
                         ),
-                      ),
-                    );
-                  },
-                  child: _glassPanel(
-                    borderRadius: BorderRadius.circular(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Container(
-                              width: 40,
-                              height: 40,
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(12),
-                                gradient: LinearGradient(
-                                  colors: [
-                                    Theme.of(context).colorScheme.primary,
-                                    Theme.of(context).colorScheme.tertiary,
-                                  ],
+                      );
+                    },
+                    child: GlassPanel(
+                      borderRadius: BorderRadius.circular(16),
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                width: 40,
+                                height: 40,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(12),
+                                  gradient: LinearGradient(
+                                    colors: [
+                                      Theme.of(context).colorScheme.primary,
+                                      Theme.of(context).colorScheme.tertiary,
+                                    ],
+                                  ),
                                 ),
-                              ),
-                              child: const Icon(
-                                Icons.map,
-                                color: Colors.white,
-                                size: 18,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Text(
-                                item.title,
-                                style: const TextStyle(
+                                child: const Icon(
+                                  Icons.map,
                                   color: Colors.white,
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 15,
+                                  size: 18,
                                 ),
                               ),
-                            ),
-                            IconButton(
-                              onPressed: () => _deleteItinerary(item),
-                              icon: const Icon(Icons.delete_outline, color: Colors.white70, size: 20),
-                              tooltip: AppLocalizations.of(context)!.deleteItineraryButton,
-                              visualDensity: VisualDensity.compact,
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 10),
-                        Wrap(
-                          spacing: 6,
-                          runSpacing: 6,
-                          children: names.map(_buildDestinationTag).toList(),
-                        ),
-                      ],
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  item.title,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 15,
+                                  ),
+                                ),
+                              ),
+                              IconButton(
+                                onPressed: () => _deleteItinerary(item),
+                                icon: const Icon(
+                                  Icons.delete_outline,
+                                  color: Colors.white70,
+                                  size: 20,
+                                ),
+                                tooltip: AppLocalizations.of(
+                                  context,
+                                )!.deleteItineraryButton,
+                                visualDensity: VisualDensity.compact,
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 10),
+                          Wrap(
+                            spacing: 6,
+                            runSpacing: 6,
+                            children: names.map(_buildDestinationTag).toList(),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),

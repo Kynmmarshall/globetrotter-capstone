@@ -6,7 +6,9 @@ import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:trip_io/l10n/gen/app_localizations.dart';
 import 'package:trip_io/models/interest_tags.dart';
+import 'package:trip_io/screens/forgot_password_page.dart';
 import 'package:trip_io/services/session_controller.dart';
+import 'package:trip_io/widgets/brand_logo_lockup.dart';
 import 'package:trip_io/widgets/feature_pill.dart';
 import 'package:trip_io/widgets/google_signin_button.dart';
 
@@ -15,12 +17,24 @@ import 'package:trip_io/widgets/google_signin_button.dart';
 // The same client ID is used for both web (as `clientId`) and Android (as
 // `serverClientId`) so every platform's idToken shares one `aud`, matching
 // the single GOOGLE_OAUTH_CLIENT_ID the backend validates against.
-const _googleClientId = String.fromEnvironment('GOOGLE_WEB_CLIENT_ID', defaultValue: '');
+const _googleClientId = String.fromEnvironment(
+  'GOOGLE_WEB_CLIENT_ID',
+  defaultValue: '',
+);
 
 class AuthScreen extends StatefulWidget {
-  const AuthScreen({super.key, required this.session});
+  const AuthScreen({
+    super.key,
+    required this.session,
+    this.initialLoginMode = true,
+  });
 
   final SessionController session;
+
+  /// False starts the form on the register tab instead of login - used
+  /// when arriving via a shared-itinerary claim link, where whoever opened
+  /// it most likely doesn't have an account yet.
+  final bool initialLoginMode;
 
   @override
   State<AuthScreen> createState() => _AuthScreenState();
@@ -32,7 +46,7 @@ class _AuthScreenState extends State<AuthScreen> {
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
-  bool _loginMode = true;
+  late bool _loginMode = widget.initialLoginMode;
   bool _showPassword = false;
   bool _showConfirmPassword = false;
   final Set<String> _selectedInterests = {};
@@ -96,7 +110,9 @@ class _AuthScreenState extends State<AuthScreen> {
       await widget.session.loginWithGoogle(idToken);
     } catch (e) {
       if (mounted) {
-        setState(() => _googleError = e.toString().replaceFirst('Exception: ', ''));
+        setState(
+          () => _googleError = e.toString().replaceFirst('Exception: ', ''),
+        );
       }
     } finally {
       if (mounted) setState(() => _googleBusy = false);
@@ -108,7 +124,10 @@ class _AuthScreenState extends State<AuthScreen> {
       return;
     }
     if (_loginMode) {
-      await widget.session.login(_usernameController.text.trim(), _passwordController.text);
+      await widget.session.login(
+        _usernameController.text.trim(),
+        _passwordController.text,
+      );
     } else {
       await widget.session.register(
         _usernameController.text.trim(),
@@ -136,31 +155,41 @@ class _AuthScreenState extends State<AuthScreen> {
       children: [
         Text(
           _loginMode ? l10n.authLoginTitle : l10n.authRegisterTitle,
-          style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w800),
+          style: Theme.of(
+            context,
+          ).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w800),
         ),
         const SizedBox(height: 8),
         Text(
           _loginMode ? l10n.authLoginSubtitle : l10n.authRegisterSubtitle,
           style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
         ),
       ],
     );
   }
 
-  Widget _buildInterestsPicker(BuildContext context, AppLocalizations l10n, ColorScheme colorScheme) {
+  Widget _buildInterestsPicker(
+    BuildContext context,
+    AppLocalizations l10n,
+    ColorScheme colorScheme,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           l10n.interestsLabel,
-          style: Theme.of(context).textTheme.labelLarge?.copyWith(color: colorScheme.onSurfaceVariant),
+          style: Theme.of(
+            context,
+          ).textTheme.labelLarge?.copyWith(color: colorScheme.onSurfaceVariant),
         ),
         const SizedBox(height: 4),
         Text(
           l10n.interestsHelper,
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
+          style: Theme.of(
+            context,
+          ).textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
         ),
         const SizedBox(height: 10),
         Wrap(
@@ -189,7 +218,8 @@ class _AuthScreenState extends State<AuthScreen> {
     );
   }
 
-  String _capitalize(String value) => value.isEmpty ? value : '${value[0].toUpperCase()}${value.substring(1)}';
+  String _capitalize(String value) =>
+      value.isEmpty ? value : '${value[0].toUpperCase()}${value.substring(1)}';
 
   Widget _buildPasswordField({
     required BuildContext context,
@@ -251,7 +281,9 @@ class _AuthScreenState extends State<AuthScreen> {
               labelText: l10n.authUsernameLabel,
               helperText: l10n.authUsernameHelper,
             ),
-            validator: (value) => (value == null || value.trim().isEmpty) ? l10n.authUsernameRequired : null,
+            validator: (value) => (value == null || value.trim().isEmpty)
+                ? l10n.authUsernameRequired
+                : null,
           ),
           const SizedBox(height: 14),
           _buildPasswordField(
@@ -260,7 +292,9 @@ class _AuthScreenState extends State<AuthScreen> {
             label: l10n.authPasswordLabel,
             visible: _showPassword,
             onToggle: (value) => setState(() => _showPassword = value),
-            validator: (value) => (value == null || value.isEmpty) ? l10n.authPasswordRequired : null,
+            validator: (value) => (value == null || value.isEmpty)
+                ? l10n.authPasswordRequired
+                : null,
           ),
           if (!_loginMode) ...[
             const SizedBox(height: 14),
@@ -270,9 +304,17 @@ class _AuthScreenState extends State<AuthScreen> {
               decoration: InputDecoration(
                 labelText: l10n.authConfirmPasswordLabel,
                 suffixIcon: IconButton(
-                  onPressed: () => setState(() => _showConfirmPassword = !_showConfirmPassword),
-                  icon: Icon(_showConfirmPassword ? Icons.visibility_off : Icons.visibility),
-                  tooltip: _showConfirmPassword ? l10n.authHidePassword : l10n.authShowPassword,
+                  onPressed: () => setState(
+                    () => _showConfirmPassword = !_showConfirmPassword,
+                  ),
+                  icon: Icon(
+                    _showConfirmPassword
+                        ? Icons.visibility_off
+                        : Icons.visibility,
+                  ),
+                  tooltip: _showConfirmPassword
+                      ? l10n.authHidePassword
+                      : l10n.authShowPassword,
                 ),
               ),
               validator: (value) {
@@ -288,16 +330,33 @@ class _AuthScreenState extends State<AuthScreen> {
             const SizedBox(height: 16),
             _buildInterestsPicker(context, l10n, colorScheme),
           ],
-          if (_loginMode)
+          if (_loginMode) ...[
             Padding(
               padding: const EdgeInsets.only(top: 10),
               child: Text(
                 l10n.authLoginTip,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
               ),
             ),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton(
+                onPressed: () => Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => ForgotPasswordPage(session: widget.session),
+                  ),
+                ),
+                style: TextButton.styleFrom(
+                  padding: EdgeInsets.zero,
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+                child: Text(l10n.forgotPasswordLink),
+              ),
+            ),
+          ],
           if (widget.session.error != null) ...[
             const SizedBox(height: 14),
             Container(
@@ -315,19 +374,27 @@ class _AuthScreenState extends State<AuthScreen> {
           const SizedBox(height: 18),
           FilledButton(
             onPressed: widget.session.isLoading ? null : _submit,
-            style: FilledButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16)),
+            style: FilledButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+            ),
             child: widget.session.isLoading
                 ? const SizedBox(
                     width: 18,
                     height: 18,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
-                : Text(_loginMode ? l10n.authLoginButton : l10n.authCreateAccountButton),
+                : Text(
+                    _loginMode
+                        ? l10n.authLoginButton
+                        : l10n.authCreateAccountButton,
+                  ),
           ),
           const SizedBox(height: 10),
           TextButton(
             onPressed: widget.session.isLoading ? null : _toggleMode,
-            child: Text(_loginMode ? l10n.authToggleToRegister : l10n.authToggleToLogin),
+            child: Text(
+              _loginMode ? l10n.authToggleToRegister : l10n.authToggleToLogin,
+            ),
           ),
           if (_supportsGoogleSignIn) ...[
             const SizedBox(height: 8),
@@ -338,7 +405,9 @@ class _AuthScreenState extends State<AuthScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 10),
                   child: Text(
                     l10n.authOrDivider,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                    ),
                   ),
                 ),
                 Expanded(child: Divider(color: colorScheme.outlineVariant)),
@@ -352,7 +421,10 @@ class _AuthScreenState extends State<AuthScreen> {
                   color: colorScheme.errorContainer,
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Text(_googleError!, style: TextStyle(color: colorScheme.onErrorContainer)),
+                child: Text(
+                  _googleError!,
+                  style: TextStyle(color: colorScheme.onErrorContainer),
+                ),
               ),
               const SizedBox(height: 10),
             ],
@@ -360,7 +432,11 @@ class _AuthScreenState extends State<AuthScreen> {
               const Center(
                 child: Padding(
                   padding: EdgeInsets.symmetric(vertical: 8),
-                  child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)),
+                  child: SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
                 ),
               )
             else if (_googleSignIn != null)
@@ -385,7 +461,11 @@ class _AuthScreenState extends State<AuthScreen> {
 
   /// Frosted glass card so the branded background photo stays visible
   /// around its edges instead of being hidden behind a solid panel.
-  Widget _glassCard(BuildContext context, {required Widget child, required BorderRadius borderRadius}) {
+  Widget _glassCard(
+    BuildContext context, {
+    required Widget child,
+    required BorderRadius borderRadius,
+  }) {
     final colorScheme = Theme.of(context).colorScheme;
     return ClipRRect(
       borderRadius: borderRadius,
@@ -420,7 +500,7 @@ class _AuthScreenState extends State<AuthScreen> {
         children: [
           Padding(
             padding: const EdgeInsets.only(top: 16),
-            child: _buildLogoLockup(iconSize: 40),
+            child: BrandLogoLockup(iconSize: 40),
           ),
           Expanded(
             child: LayoutBuilder(
@@ -429,7 +509,9 @@ class _AuthScreenState extends State<AuthScreen> {
                   reverse: true,
                   padding: const EdgeInsets.all(16),
                   child: ConstrainedBox(
-                    constraints: BoxConstraints(minHeight: inner.maxHeight - 16),
+                    constraints: BoxConstraints(
+                      minHeight: inner.maxHeight - 16,
+                    ),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
@@ -482,10 +564,7 @@ class _AuthScreenState extends State<AuthScreen> {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Expanded(
-                  flex: 6,
-                  child: _buildTaglineColumn(context),
-                ),
+                Expanded(flex: 6, child: _buildTaglineColumn(context)),
                 const SizedBox(width: 48),
                 Expanded(
                   flex: 5,
@@ -503,53 +582,11 @@ class _AuthScreenState extends State<AuthScreen> {
     );
   }
 
-  /// The background photos are logo-free, so the trip_io mark is
-  /// composited on top here instead.
-  Widget _buildLogoLockup({double iconSize = 40}) {
-    const navy = Color(0xFF0D2A4A);
-    const brandBlue = Color(0xFF1E88E5);
-    const shadows = [Shadow(blurRadius: 10, color: Colors.white70, offset: Offset(0, 1))];
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(999),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.55),
-            borderRadius: BorderRadius.circular(999),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.4)),
-          ),
-          child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: iconSize * 0.3, vertical: iconSize * 0.18),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Image.asset('assets/logo.png', height: iconSize),
-                const SizedBox(width: 10),
-                Text.rich(
-                  TextSpan(
-                    style: TextStyle(
-                      fontSize: iconSize * 0.6,
-                      fontWeight: FontWeight.w800,
-                      shadows: shadows,
-                    ),
-                    children: const [
-                      TextSpan(text: 'trip', style: TextStyle(color: navy)),
-                      TextSpan(text: '_io', style: TextStyle(color: brandBlue)),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
   Widget _buildTaglineColumn(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    const shadows = [Shadow(blurRadius: 16, color: Colors.black54, offset: Offset(0, 2))];
+    const shadows = [
+      Shadow(blurRadius: 16, color: Colors.black54, offset: Offset(0, 2)),
+    ];
     return ConstrainedBox(
       constraints: const BoxConstraints(maxWidth: 460),
       child: Column(
@@ -559,24 +596,33 @@ class _AuthScreenState extends State<AuthScreen> {
           Text(
             l10n.authTaglineTitle,
             style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w800,
-                  shadows: shadows,
-                ),
+              color: Colors.white,
+              fontWeight: FontWeight.w800,
+              shadows: shadows,
+            ),
           ),
           const SizedBox(height: 14),
           Text(
             l10n.authTaglineSubtitle,
-            style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.white, shadows: shadows),
+            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+              color: Colors.white,
+              shadows: shadows,
+            ),
           ),
           const SizedBox(height: 22),
           Wrap(
             spacing: 10,
             runSpacing: 10,
             children: [
-              FeaturePill(icon: Icons.phone_android, label: l10n.authFeatureMobile),
+              FeaturePill(
+                icon: Icons.phone_android,
+                label: l10n.authFeatureMobile,
+              ),
               FeaturePill(icon: Icons.web, label: l10n.authFeatureWeb),
-              FeaturePill(icon: Icons.desktop_windows, label: l10n.authFeatureDesktop),
+              FeaturePill(
+                icon: Icons.desktop_windows,
+                label: l10n.authFeatureDesktop,
+              ),
             ],
           ),
         ],
@@ -596,7 +642,9 @@ class _AuthScreenState extends State<AuthScreen> {
             fit: StackFit.expand,
             children: [
               Image.asset(
-                isCompact ? 'assets/backgrounds/mobile.png' : 'assets/backgrounds/pc.png',
+                isCompact
+                    ? 'assets/backgrounds/mobile.png'
+                    : 'assets/backgrounds/pc.png',
                 fit: BoxFit.cover,
                 alignment: Alignment.topCenter,
               ),
@@ -642,7 +690,7 @@ class _AuthScreenState extends State<AuthScreen> {
                     padding: const EdgeInsets.all(32),
                     child: Align(
                       alignment: Alignment.topLeft,
-                      child: _buildLogoLockup(iconSize: 46),
+                      child: BrandLogoLockup(iconSize: 46),
                     ),
                   ),
                 ),

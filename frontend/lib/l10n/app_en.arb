@@ -36,6 +36,7 @@
 
   "navDestinations": "Destinations",
   "navRecommendations": "Recommendations",
+  "navForYou": "For You",
   "navFavorites": "Favorites",
   "navItineraries": "Itineraries",
   "navProfile": "Profile",
@@ -84,6 +85,10 @@
   "destinationsFilterLabel": "Filter by interest",
   "destinationsFilterClear": "Clear",
   "destinationsFilterEmpty": "No destinations match the selected filters.",
+  "destinationCardSemanticLabel": "View {name}",
+  "@destinationCardSemanticLabel": {
+    "placeholders": { "name": { "type": "String" } }
+  },
   "suggestDestinationButton": "Suggest a destination",
   "submitDestinationTitle": "Suggest a destination",
   "submitDestinationSubtitle": "Know a real spot in Yaoundé that's missing? Suggest it here - an admin reviews every submission before it goes live.",
@@ -117,6 +122,10 @@
   },
   "recommendationsEmptyTitle": "No recommendations yet",
   "recommendationsEmptySubtitle": "Browse destinations and we'll start suggesting spots for you.",
+  "forYouTitle": "For You",
+  "forYouSubtitle": "A personalized mix of picks made for you and what's popular in Yaoundé.",
+  "forYouPersonalizedSectionTitle": "Picked for you",
+  "forYouTrendingSectionTitle": "Trending in Yaoundé",
 
   "favoritesTitle": "Your favorites",
   "favoritesSubtitle": "Destinations you've saved for later.",
@@ -127,10 +136,24 @@
   "favoritesEmptyTitle": "No favorites yet",
   "favoritesEmptySubtitle": "Tap the heart on any destination to save it here.",
 
+  "viewMySubmissionsButton": "My submissions",
+  "mySubmissionsTitle": "Your submissions",
+  "mySubmissionsSubtitle": "Destinations you've suggested, and their review status.",
+  "mySubmissionsErrorMessage": "Could not load your submissions.\n{error}",
+  "@mySubmissionsErrorMessage": {
+    "placeholders": { "error": { "type": "String" } }
+  },
+  "mySubmissionsEmptyTitle": "No submissions yet",
+  "mySubmissionsEmptySubtitle": "Suggest a destination and track its review status here.",
+  "submissionStatusPending": "Pending review",
+  "submissionStatusApproved": "Approved",
+  "submissionStatusRejected": "Not approved",
+
   "itinerariesFormMissing": "Add a title and pick at least one destination.",
   "itineraryCreatedSnackbar": "Itinerary created.",
   "itineraryDeletedSnackbar": "Itinerary deleted.",
 
+  "directionsButtonTooltip": "Directions",
   "addToItineraryTooltip": "Add to itinerary",
   "addToItinerarySheetTitle": "Add to itinerary",
   "addToItineraryCreateNew": "Create new itinerary",
@@ -175,10 +198,13 @@
   "mapProfileWalking": "Walk",
   "mapProfileCycling": "Bike",
   "mapRoutingNotConfigured": "Directions aren't set up yet. Please check back soon.",
+  "mapNoRouteFound": "We couldn't find a route between these points. One of them may be unreachable - check the destinations and your location.",
+  "mapLocationTooFar": "Your current location seems far from these destinations. Check that location services are giving an accurate fix, then try again.",
   "viewOnMapButton": "View on map",
   "mapLocationPermissionDenied": "Location access is needed to show your position on the map. Please allow it in your device settings.",
   "mapLocationServicesDisabled": "Turn on location services on your device to show your position on the map.",
   "mapLocateFailed": "Couldn't get your location. Please try again.",
+  "mapLocationApproximate": "Your location is approximate - without GPS (e.g. on a desktop browser), position is estimated from WiFi/network data instead.",
   "mapRetryButton": "Retry",
   "mapUseMyLocation": "Use my current location",
   "mapMyLocationLabel": "My current location",
@@ -189,12 +215,33 @@
     "placeholders": { "error": { "type": "String" } }
   },
   "deleteItineraryButton": "Delete",
+  "logoutConfirmTitle": "Log out?",
+  "logoutConfirmMessage": "You'll need to sign back in to see your itineraries and favorites.",
   "deleteItineraryConfirmTitle": "Delete this itinerary?",
   "deleteItineraryConfirmMessage": "\"{title}\" will be permanently deleted. This can't be undone.",
   "@deleteItineraryConfirmMessage": {
     "placeholders": { "title": { "type": "String" } }
   },
   "cancelButton": "Cancel",
+  "forgotPasswordLink": "Forgot password?",
+  "forgotPasswordTitle": "Reset your password",
+  "forgotPasswordStep1Subtitle": "Enter your username or email and we'll send you a reset code.",
+  "forgotPasswordIdentifierLabel": "Username or email",
+  "forgotPasswordIdentifierRequired": "Enter your username or email",
+  "forgotPasswordSendCodeButton": "Send code",
+  "forgotPasswordCodeSentMessage": "If an account exists for \"{identifier}\", a reset code has been sent.",
+  "@forgotPasswordCodeSentMessage": {
+    "placeholders": { "identifier": { "type": "String" } }
+  },
+  "forgotPasswordStep2Subtitle": "Enter the code we sent you, along with a new password.",
+  "forgotPasswordCodeLabel": "Reset code",
+  "forgotPasswordCodeHint": "6-digit code",
+  "forgotPasswordCodeRequired": "Enter the code from your email",
+  "forgotPasswordNewPasswordLabel": "New password",
+  "forgotPasswordResetButton": "Reset password",
+  "forgotPasswordSuccessMessage": "Password updated. You can now sign in.",
+  "forgotPasswordResendCodeButton": "Resend code",
+  "forgotPasswordChangeIdentifierButton": "Use a different account",
   "itinerariesPlanTitle": "Plan a new itinerary",
   "itineraryTitleLabel": "Itinerary title",
   "itineraryTitleHint": "My Yaoundé weekend",
@@ -220,6 +267,10 @@
   "itinerariesEmptyTitle": "No itineraries yet",
   "itinerariesEmptySubtitle": "Pick a few destinations above and create your first plan.",
   "yourItinerariesTitle": "Your itineraries",
+  "itineraryCardSemanticLabel": "Open itinerary {title}",
+  "@itineraryCardSemanticLabel": {
+    "placeholders": { "title": { "type": "String" } }
+  },
   "destinationsLoadError": "Could not load destinations.\n{error}",
   "@destinationsLoadError": {
     "placeholders": { "error": { "type": "String" } }
@@ -257,8 +308,8 @@
   },
   "basedInYaounde": "Based in Yaoundé, Cameroon",
   "itinerariesStatLabel": "Itineraries",
-  "regionStatLabel": "Region",
-  "featuredSpotsStatLabel": "Featured spots",
+  "favoritesStatLabel": "Favorites",
+  "placesPlannedStatLabel": "Places planned",
   "aboutMeTitle": "About me",
   "bioHint": "Tell fellow travellers a bit about yourself...",
   "saveButton": "Save",
@@ -270,6 +321,7 @@
   "unknownUser": "unknown",
   "logoutButton": "Logout",
   "travellerFallback": "Traveller",
+  "avatarSemanticLabel": "Tap to change your profile photo",
   "couldNotPickImage": "Could not pick image: {error}",
   "@couldNotPickImage": {
     "placeholders": { "error": { "type": "String" } }
@@ -277,6 +329,11 @@
   "languageLabel": "Language",
   "languageEnglish": "English",
   "languageFrench": "French",
+
+  "themeLabel": "Theme",
+  "themeSystem": "System",
+  "themeLight": "Light",
+  "themeDark": "Dark",
 
   "interestsLabel": "Areas of interest",
   "interestsHelper": "Pick a few things you enjoy - we'll use these to recommend Yaoundé spots for you.",
@@ -292,5 +349,66 @@
 
   "sessionExpiredTitle": "Your session has expired",
   "sessionExpiredSubtitle": "Please sign in again to continue.",
-  "signInAgainButton": "Sign in again"
+  "signInAgainButton": "Sign in again",
+
+  "shareItineraryTooltip": "Share this itinerary",
+  "shareItineraryDialogTitle": "Share \"{title}\"",
+  "@shareItineraryDialogTitle": {
+    "placeholders": { "title": { "type": "String" } }
+  },
+  "shareItineraryDialogMessage": "Anyone who opens this link gets their own copy of this itinerary added straight to their trip_io account - they'll be asked to create one first if they don't have one yet. The link keeps working for everyone you send it to until you turn sharing off.",
+  "shareItineraryCopyLinkButton": "Copy link",
+  "shareItineraryLinkCopiedSnackbar": "Link copied to clipboard.",
+  "shareItineraryTurnOffButton": "Turn off sharing",
+  "shareItineraryTurnedOffSnackbar": "Sharing turned off. The old link no longer works.",
+  "shareItineraryErrorSnackbar": "Couldn't create a share link right now.",
+  "closeButton": "Close",
+  "claimedItinerarySnackbar": "Added to your itineraries.",
+  "claimedItineraryErrorSnackbar": "Couldn't add that shared itinerary to your account.",
+
+  "onboardingSkip": "Skip",
+  "onboardingNext": "Next",
+  "onboardingGetStarted": "Get started",
+  "onboardingPage1Title": "Discover Yaoundé",
+  "onboardingPage1Body": "Browse real, hand-picked landmarks, culture, markets and nature across Yaoundé, Cameroon.",
+  "onboardingPage2Title": "Get picks made for you",
+  "onboardingPage2Body": "Tell us what you're into and we'll surface the spots you're most likely to enjoy.",
+  "onboardingPage3Title": "Plan your day",
+  "onboardingPage3Body": "Pick your stops and how much time you have - trip_io builds a timed schedule for you.",
+  "onboardingPage4Title": "Navigate as you go",
+  "onboardingPage4Body": "Follow turn-by-turn directions and see every stop, numbered in order, right on the map.",
+
+  "avatarCropTitle": "Adjust photo",
+  "avatarCropConfirmButton": "Done",
+  "avatarCropHint": "Drag to reposition, pinch or scroll to zoom.",
+
+  "notificationsTitle": "Notifications",
+  "notificationsSubtitle": "Trip reminders and updates on your submissions.",
+  "notificationsErrorMessage": "Could not load notifications.\n{error}",
+  "@notificationsErrorMessage": {
+    "placeholders": { "error": { "type": "String" } }
+  },
+  "notificationsEmptyTitle": "You're all caught up",
+  "notificationsEmptySubtitle": "Moderation notices and trip reminders will show up here.",
+  "notificationDestinationStatusTitle": "Submission update",
+  "notificationDestinationApprovedBody": "\"{name}\" was approved and is now live.",
+  "@notificationDestinationApprovedBody": {
+    "placeholders": { "name": { "type": "String" } }
+  },
+  "notificationDestinationRejectedBody": "\"{name}\" wasn't approved this time.",
+  "@notificationDestinationRejectedBody": {
+    "placeholders": { "name": { "type": "String" } }
+  },
+  "notificationTripReminderTitle": "Upcoming trip",
+  "notificationTripReminderBodyToday": "\"{title}\" starts today.",
+  "@notificationTripReminderBodyToday": {
+    "placeholders": { "title": { "type": "String" } }
+  },
+  "notificationTripReminderBodyInDays": "\"{title}\" starts in {days} days.",
+  "@notificationTripReminderBodyInDays": {
+    "placeholders": {
+      "title": { "type": "String" },
+      "days": { "type": "String" }
+    }
+  }
 }

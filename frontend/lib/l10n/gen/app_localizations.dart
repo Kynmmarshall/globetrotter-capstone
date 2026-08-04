@@ -290,6 +290,12 @@ abstract class AppLocalizations {
   /// **'Recommendations'**
   String get navRecommendations;
 
+  /// No description provided for @navForYou.
+  ///
+  /// In en, this message translates to:
+  /// **'For You'**
+  String get navForYou;
+
   /// No description provided for @navFavorites.
   ///
   /// In en, this message translates to:
@@ -524,6 +530,12 @@ abstract class AppLocalizations {
   /// **'No destinations match the selected filters.'**
   String get destinationsFilterEmpty;
 
+  /// No description provided for @destinationCardSemanticLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'View {name}'**
+  String destinationCardSemanticLabel(String name);
+
   /// No description provided for @suggestDestinationButton.
   ///
   /// In en, this message translates to:
@@ -662,6 +674,30 @@ abstract class AppLocalizations {
   /// **'Browse destinations and we\'ll start suggesting spots for you.'**
   String get recommendationsEmptySubtitle;
 
+  /// No description provided for @forYouTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'For You'**
+  String get forYouTitle;
+
+  /// No description provided for @forYouSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'A personalized mix of picks made for you and what\'s popular in Yaoundé.'**
+  String get forYouSubtitle;
+
+  /// No description provided for @forYouPersonalizedSectionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Picked for you'**
+  String get forYouPersonalizedSectionTitle;
+
+  /// No description provided for @forYouTrendingSectionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Trending in Yaoundé'**
+  String get forYouTrendingSectionTitle;
+
   /// No description provided for @favoritesTitle.
   ///
   /// In en, this message translates to:
@@ -692,6 +728,60 @@ abstract class AppLocalizations {
   /// **'Tap the heart on any destination to save it here.'**
   String get favoritesEmptySubtitle;
 
+  /// No description provided for @viewMySubmissionsButton.
+  ///
+  /// In en, this message translates to:
+  /// **'My submissions'**
+  String get viewMySubmissionsButton;
+
+  /// No description provided for @mySubmissionsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your submissions'**
+  String get mySubmissionsTitle;
+
+  /// No description provided for @mySubmissionsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Destinations you\'ve suggested, and their review status.'**
+  String get mySubmissionsSubtitle;
+
+  /// No description provided for @mySubmissionsErrorMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load your submissions.\n{error}'**
+  String mySubmissionsErrorMessage(String error);
+
+  /// No description provided for @mySubmissionsEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No submissions yet'**
+  String get mySubmissionsEmptyTitle;
+
+  /// No description provided for @mySubmissionsEmptySubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Suggest a destination and track its review status here.'**
+  String get mySubmissionsEmptySubtitle;
+
+  /// No description provided for @submissionStatusPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending review'**
+  String get submissionStatusPending;
+
+  /// No description provided for @submissionStatusApproved.
+  ///
+  /// In en, this message translates to:
+  /// **'Approved'**
+  String get submissionStatusApproved;
+
+  /// No description provided for @submissionStatusRejected.
+  ///
+  /// In en, this message translates to:
+  /// **'Not approved'**
+  String get submissionStatusRejected;
+
   /// No description provided for @itinerariesFormMissing.
   ///
   /// In en, this message translates to:
@@ -709,6 +799,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Itinerary deleted.'**
   String get itineraryDeletedSnackbar;
+
+  /// No description provided for @directionsButtonTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Directions'**
+  String get directionsButtonTooltip;
 
   /// No description provided for @addToItineraryTooltip.
   ///
@@ -884,6 +980,18 @@ abstract class AppLocalizations {
   /// **'Directions aren\'t set up yet. Please check back soon.'**
   String get mapRoutingNotConfigured;
 
+  /// No description provided for @mapNoRouteFound.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t find a route between these points. One of them may be unreachable - check the destinations and your location.'**
+  String get mapNoRouteFound;
+
+  /// No description provided for @mapLocationTooFar.
+  ///
+  /// In en, this message translates to:
+  /// **'Your current location seems far from these destinations. Check that location services are giving an accurate fix, then try again.'**
+  String get mapLocationTooFar;
+
   /// No description provided for @viewOnMapButton.
   ///
   /// In en, this message translates to:
@@ -907,6 +1015,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Couldn\'t get your location. Please try again.'**
   String get mapLocateFailed;
+
+  /// No description provided for @mapLocationApproximate.
+  ///
+  /// In en, this message translates to:
+  /// **'Your location is approximate - without GPS (e.g. on a desktop browser), position is estimated from WiFi/network data instead.'**
+  String get mapLocationApproximate;
 
   /// No description provided for @mapRetryButton.
   ///
@@ -950,6 +1064,18 @@ abstract class AppLocalizations {
   /// **'Delete'**
   String get deleteItineraryButton;
 
+  /// No description provided for @logoutConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Log out?'**
+  String get logoutConfirmTitle;
+
+  /// No description provided for @logoutConfirmMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'ll need to sign back in to see your itineraries and favorites.'**
+  String get logoutConfirmMessage;
+
   /// No description provided for @deleteItineraryConfirmTitle.
   ///
   /// In en, this message translates to:
@@ -967,6 +1093,102 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Cancel'**
   String get cancelButton;
+
+  /// No description provided for @forgotPasswordLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Forgot password?'**
+  String get forgotPasswordLink;
+
+  /// No description provided for @forgotPasswordTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset your password'**
+  String get forgotPasswordTitle;
+
+  /// No description provided for @forgotPasswordStep1Subtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your username or email and we\'ll send you a reset code.'**
+  String get forgotPasswordStep1Subtitle;
+
+  /// No description provided for @forgotPasswordIdentifierLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Username or email'**
+  String get forgotPasswordIdentifierLabel;
+
+  /// No description provided for @forgotPasswordIdentifierRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your username or email'**
+  String get forgotPasswordIdentifierRequired;
+
+  /// No description provided for @forgotPasswordSendCodeButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Send code'**
+  String get forgotPasswordSendCodeButton;
+
+  /// No description provided for @forgotPasswordCodeSentMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'If an account exists for \"{identifier}\", a reset code has been sent.'**
+  String forgotPasswordCodeSentMessage(String identifier);
+
+  /// No description provided for @forgotPasswordStep2Subtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the code we sent you, along with a new password.'**
+  String get forgotPasswordStep2Subtitle;
+
+  /// No description provided for @forgotPasswordCodeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset code'**
+  String get forgotPasswordCodeLabel;
+
+  /// No description provided for @forgotPasswordCodeHint.
+  ///
+  /// In en, this message translates to:
+  /// **'6-digit code'**
+  String get forgotPasswordCodeHint;
+
+  /// No description provided for @forgotPasswordCodeRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the code from your email'**
+  String get forgotPasswordCodeRequired;
+
+  /// No description provided for @forgotPasswordNewPasswordLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'New password'**
+  String get forgotPasswordNewPasswordLabel;
+
+  /// No description provided for @forgotPasswordResetButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset password'**
+  String get forgotPasswordResetButton;
+
+  /// No description provided for @forgotPasswordSuccessMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Password updated. You can now sign in.'**
+  String get forgotPasswordSuccessMessage;
+
+  /// No description provided for @forgotPasswordResendCodeButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Resend code'**
+  String get forgotPasswordResendCodeButton;
+
+  /// No description provided for @forgotPasswordChangeIdentifierButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Use a different account'**
+  String get forgotPasswordChangeIdentifierButton;
 
   /// No description provided for @itinerariesPlanTitle.
   ///
@@ -1064,6 +1286,12 @@ abstract class AppLocalizations {
   /// **'Your itineraries'**
   String get yourItinerariesTitle;
 
+  /// No description provided for @itineraryCardSemanticLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Open itinerary {title}'**
+  String itineraryCardSemanticLabel(String title);
+
   /// No description provided for @destinationsLoadError.
   ///
   /// In en, this message translates to:
@@ -1154,17 +1382,17 @@ abstract class AppLocalizations {
   /// **'Itineraries'**
   String get itinerariesStatLabel;
 
-  /// No description provided for @regionStatLabel.
+  /// No description provided for @favoritesStatLabel.
   ///
   /// In en, this message translates to:
-  /// **'Region'**
-  String get regionStatLabel;
+  /// **'Favorites'**
+  String get favoritesStatLabel;
 
-  /// No description provided for @featuredSpotsStatLabel.
+  /// No description provided for @placesPlannedStatLabel.
   ///
   /// In en, this message translates to:
-  /// **'Featured spots'**
-  String get featuredSpotsStatLabel;
+  /// **'Places planned'**
+  String get placesPlannedStatLabel;
 
   /// No description provided for @aboutMeTitle.
   ///
@@ -1214,6 +1442,12 @@ abstract class AppLocalizations {
   /// **'Traveller'**
   String get travellerFallback;
 
+  /// No description provided for @avatarSemanticLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap to change your profile photo'**
+  String get avatarSemanticLabel;
+
   /// No description provided for @couldNotPickImage.
   ///
   /// In en, this message translates to:
@@ -1237,6 +1471,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'French'**
   String get languageFrench;
+
+  /// No description provided for @themeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Theme'**
+  String get themeLabel;
+
+  /// No description provided for @themeSystem.
+  ///
+  /// In en, this message translates to:
+  /// **'System'**
+  String get themeSystem;
+
+  /// No description provided for @themeLight.
+  ///
+  /// In en, this message translates to:
+  /// **'Light'**
+  String get themeLight;
+
+  /// No description provided for @themeDark.
+  ///
+  /// In en, this message translates to:
+  /// **'Dark'**
+  String get themeDark;
 
   /// No description provided for @interestsLabel.
   ///
@@ -1309,6 +1567,222 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Sign in again'**
   String get signInAgainButton;
+
+  /// No description provided for @shareItineraryTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Share this itinerary'**
+  String get shareItineraryTooltip;
+
+  /// No description provided for @shareItineraryDialogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Share \"{title}\"'**
+  String shareItineraryDialogTitle(String title);
+
+  /// No description provided for @shareItineraryDialogMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Anyone who opens this link gets their own copy of this itinerary added straight to their trip_io account - they\'ll be asked to create one first if they don\'t have one yet. The link keeps working for everyone you send it to until you turn sharing off.'**
+  String get shareItineraryDialogMessage;
+
+  /// No description provided for @shareItineraryCopyLinkButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy link'**
+  String get shareItineraryCopyLinkButton;
+
+  /// No description provided for @shareItineraryLinkCopiedSnackbar.
+  ///
+  /// In en, this message translates to:
+  /// **'Link copied to clipboard.'**
+  String get shareItineraryLinkCopiedSnackbar;
+
+  /// No description provided for @shareItineraryTurnOffButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn off sharing'**
+  String get shareItineraryTurnOffButton;
+
+  /// No description provided for @shareItineraryTurnedOffSnackbar.
+  ///
+  /// In en, this message translates to:
+  /// **'Sharing turned off. The old link no longer works.'**
+  String get shareItineraryTurnedOffSnackbar;
+
+  /// No description provided for @shareItineraryErrorSnackbar.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t create a share link right now.'**
+  String get shareItineraryErrorSnackbar;
+
+  /// No description provided for @closeButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Close'**
+  String get closeButton;
+
+  /// No description provided for @claimedItinerarySnackbar.
+  ///
+  /// In en, this message translates to:
+  /// **'Added to your itineraries.'**
+  String get claimedItinerarySnackbar;
+
+  /// No description provided for @claimedItineraryErrorSnackbar.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t add that shared itinerary to your account.'**
+  String get claimedItineraryErrorSnackbar;
+
+  /// No description provided for @onboardingSkip.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip'**
+  String get onboardingSkip;
+
+  /// No description provided for @onboardingNext.
+  ///
+  /// In en, this message translates to:
+  /// **'Next'**
+  String get onboardingNext;
+
+  /// No description provided for @onboardingGetStarted.
+  ///
+  /// In en, this message translates to:
+  /// **'Get started'**
+  String get onboardingGetStarted;
+
+  /// No description provided for @onboardingPage1Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Discover Yaoundé'**
+  String get onboardingPage1Title;
+
+  /// No description provided for @onboardingPage1Body.
+  ///
+  /// In en, this message translates to:
+  /// **'Browse real, hand-picked landmarks, culture, markets and nature across Yaoundé, Cameroon.'**
+  String get onboardingPage1Body;
+
+  /// No description provided for @onboardingPage2Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Get picks made for you'**
+  String get onboardingPage2Title;
+
+  /// No description provided for @onboardingPage2Body.
+  ///
+  /// In en, this message translates to:
+  /// **'Tell us what you\'re into and we\'ll surface the spots you\'re most likely to enjoy.'**
+  String get onboardingPage2Body;
+
+  /// No description provided for @onboardingPage3Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Plan your day'**
+  String get onboardingPage3Title;
+
+  /// No description provided for @onboardingPage3Body.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick your stops and how much time you have - trip_io builds a timed schedule for you.'**
+  String get onboardingPage3Body;
+
+  /// No description provided for @onboardingPage4Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Navigate as you go'**
+  String get onboardingPage4Title;
+
+  /// No description provided for @onboardingPage4Body.
+  ///
+  /// In en, this message translates to:
+  /// **'Follow turn-by-turn directions and see every stop, numbered in order, right on the map.'**
+  String get onboardingPage4Body;
+
+  /// No description provided for @avatarCropTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Adjust photo'**
+  String get avatarCropTitle;
+
+  /// No description provided for @avatarCropConfirmButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get avatarCropConfirmButton;
+
+  /// No description provided for @avatarCropHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Drag to reposition, pinch or scroll to zoom.'**
+  String get avatarCropHint;
+
+  /// No description provided for @notificationsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications'**
+  String get notificationsTitle;
+
+  /// No description provided for @notificationsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Trip reminders and updates on your submissions.'**
+  String get notificationsSubtitle;
+
+  /// No description provided for @notificationsErrorMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load notifications.\n{error}'**
+  String notificationsErrorMessage(String error);
+
+  /// No description provided for @notificationsEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re all caught up'**
+  String get notificationsEmptyTitle;
+
+  /// No description provided for @notificationsEmptySubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Moderation notices and trip reminders will show up here.'**
+  String get notificationsEmptySubtitle;
+
+  /// No description provided for @notificationDestinationStatusTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Submission update'**
+  String get notificationDestinationStatusTitle;
+
+  /// No description provided for @notificationDestinationApprovedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'\"{name}\" was approved and is now live.'**
+  String notificationDestinationApprovedBody(String name);
+
+  /// No description provided for @notificationDestinationRejectedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'\"{name}\" wasn\'t approved this time.'**
+  String notificationDestinationRejectedBody(String name);
+
+  /// No description provided for @notificationTripReminderTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Upcoming trip'**
+  String get notificationTripReminderTitle;
+
+  /// No description provided for @notificationTripReminderBodyToday.
+  ///
+  /// In en, this message translates to:
+  /// **'\"{title}\" starts today.'**
+  String notificationTripReminderBodyToday(String title);
+
+  /// No description provided for @notificationTripReminderBodyInDays.
+  ///
+  /// In en, this message translates to:
+  /// **'\"{title}\" starts in {days} days.'**
+  String notificationTripReminderBodyInDays(String title, String days);
 }
 
 class _AppLocalizationsDelegate

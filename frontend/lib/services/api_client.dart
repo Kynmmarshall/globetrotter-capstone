@@ -52,6 +52,22 @@ class ApiClient {
     return '$normalizedBase$normalizedPath';
   }
 
+  /// Builds the shareable link for an itinerary - opens this same Flutter
+  /// web app (served at `/app/` by the Gateway) with a `claim` query param
+  /// the app reads on startup (see `app.dart`) to copy the shared
+  /// itinerary straight into whoever opens the link's own account,
+  /// prompting them to create one first if they don't have one yet.
+  /// Deliberately not a bare preview page - the point of the link is to
+  /// get the trip into the recipient's own account, not just show it to
+  /// them.
+  static String resolveShareUrl(String shareToken) {
+    final base = _defaultBaseUrl();
+    final normalizedBase = base.endsWith('/')
+        ? base.substring(0, base.length - 1)
+        : base;
+    return '$normalizedBase/app/?claim=$shareToken';
+  }
+
   Future<String> register(
     String username,
     String password, {
@@ -87,6 +103,32 @@ class ApiClient {
       body: jsonEncode({'id_token': idToken}),
     );
     return _extractToken(response);
+  }
+
+  Future<void> requestPasswordReset(String identifier) async {
+    final response = await _client.post(
+      _uri('/auth/request-password-reset'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'identifier': identifier}),
+    );
+    _throwIfNotOk(response);
+  }
+
+  Future<void> resetPassword(
+    String identifier,
+    String code,
+    String newPassword,
+  ) async {
+    final response = await _client.post(
+      _uri('/auth/reset-password'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'identifier': identifier,
+        'code': code,
+        'new_password': newPassword,
+      }),
+    );
+    _throwIfNotOk(response);
   }
 
   Future<UserProfile> getProfile(String token) async {
@@ -185,6 +227,26 @@ class ApiClient {
     return UserProfile.fromJson(
       jsonDecode(response.body) as Map<String, dynamic>,
     );
+  }
+
+  Future<List<AppNotification>> getNotifications(String token) async {
+    final response = await _client.get(
+      _uri('/me/notifications'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+    _throwIfNotOk(response);
+    final decoded = jsonDecode(response.body) as List<dynamic>;
+    return decoded
+        .map((e) => AppNotification.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  Future<void> markNotificationRead(String token, String notificationId) async {
+    final response = await _client.post(
+      _uri('/me/notifications/$notificationId/read'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+    _throwIfNotOk(response);
   }
 
   Future<List<Destination>> getDestinations({
@@ -394,6 +456,35 @@ class ApiClient {
       headers: {'Authorization': 'Bearer $token'},
     );
     _throwIfNotOk(response);
+  }
+
+  Future<String> shareItinerary(String token, String itineraryId) async {
+    final response = await _client.post(
+      _uri('/itineraries/$itineraryId/share'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+    _throwIfNotOk(response);
+    final decoded = jsonDecode(response.body) as Map<String, dynamic>;
+    return decoded['share_token'] as String;
+  }
+
+  Future<void> unshareItinerary(String token, String itineraryId) async {
+    final response = await _client.delete(
+      _uri('/itineraries/$itineraryId/share'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+    _throwIfNotOk(response);
+  }
+
+  Future<Itinerary> claimSharedItinerary(String token, String shareToken) async {
+    final response = await _client.post(
+      _uri('/itineraries/claim/$shareToken'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+    _throwIfNotOk(response);
+    return Itinerary.fromJson(
+      jsonDecode(response.body) as Map<String, dynamic>,
+    );
   }
 
   Future<RouteResult> getRoute(

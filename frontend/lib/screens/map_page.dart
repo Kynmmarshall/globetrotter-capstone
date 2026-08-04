@@ -9,6 +9,8 @@ import 'package:trip_io/screens/destination_detail_page.dart';
 import 'package:trip_io/screens/itineraries_page.dart' show formatDuration;
 import 'package:trip_io/services/analytics.dart';
 import 'package:trip_io/services/session_controller.dart';
+import 'package:trip_io/themes/trip_colors.dart';
+import 'package:trip_io/widgets/glass_panel.dart';
 import 'package:trip_io/widgets/order_destinations_sheet.dart';
 import 'package:trip_io/widgets/session_expired_card.dart';
 import 'package:trip_io/widgets/trip_map.dart';
@@ -25,6 +27,7 @@ class MapPage extends StatefulWidget {
     this.showAppBar = false,
     this.itineraryDestinationIds,
     this.itineraryTitle,
+    this.directionsFromMyLocation = false,
   });
 
   final SessionController session;
@@ -38,6 +41,13 @@ class MapPage extends StatefulWidget {
   /// embedded as a dashboard tab - it then needs its own back button, since
   /// there's no dashboard AppBar/Scaffold around it to provide one.
   final bool showAppBar;
+
+  /// When set together with [focusDestination] (opened via a "Directions"
+  /// button rather than a plain "View on map" one), the page resolves the
+  /// device's current location as the route's origin and computes the route
+  /// to that destination right away, instead of leaving the From field for
+  /// the user to fill in themselves.
+  final bool directionsFromMyLocation;
 
   /// When set (opened via an itinerary's "Start itinerary" button), the page
   /// switches into turn-by-turn mode: it resolves the device's current
@@ -115,11 +125,58 @@ class _MapPageState extends State<MapPage> {
     _panelExpanded = widget.focusDestination != null || _isItineraryMode;
     if (_isItineraryMode) {
       unawaited(_startItineraryTracking());
+    } else if (widget.directionsFromMyLocation &&
+        widget.focusDestination != null) {
+      unawaited(_resolveMyLocationForDirections());
     } else {
-      // Itinerary mode already asks (via _startItineraryTracking) - for
+      // Itinerary mode and the directions-button flow already ask (via
+      // _startItineraryTracking / _resolveMyLocationForDirections) - for
       // every other way of opening this screen, ask up front too instead of
       // waiting for the user to discover the locate button and tap it.
       unawaited(ensureLocationPermission());
+    }
+  }
+
+  /// One-shot version of [_startItineraryTracking]'s location resolution -
+  /// used by the "Directions" button flow, which only needs a single origin
+  /// fix to compute one route rather than a continuously updating position
+  /// for progress-tracking along several stops.
+  Future<void> _resolveMyLocationForDirections() async {
+    final granted = await ensureLocationPermission();
+    if (!mounted) return;
+    if (!granted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            AppLocalizations.of(context)!.mapLocationPermissionDenied,
+          ),
+        ),
+      );
+      return;
+    }
+    try {
+      final position = await Geolocator.getCurrentPosition(
+        locationSettings: buildLocationSettings(
+          timeLimit: const Duration(seconds: 12),
+        ),
+      );
+      if (!mounted) return;
+      setState(() {
+        _origin = Destination(
+          id: _myLocationDestinationId,
+          name: AppLocalizations.of(context)!.mapMyLocationLabel,
+          country: '',
+          tags: const [],
+          lat: position.latitude,
+          lon: position.longitude,
+        );
+      });
+      unawaited(_computeRoute());
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppLocalizations.of(context)!.mapLocateFailed)),
+      );
     }
   }
 
@@ -140,7 +197,11 @@ class _MapPageState extends State<MapPage> {
       return;
     }
     try {
-      final position = await Geolocator.getCurrentPosition();
+      final position = await Geolocator.getCurrentPosition(
+        locationSettings: buildLocationSettings(
+          timeLimit: const Duration(seconds: 12),
+        ),
+      );
       if (!mounted) return;
       _applyPosition(position);
       setState(() => _resolvingMyLocation = false);
@@ -158,10 +219,7 @@ class _MapPageState extends State<MapPage> {
     // close enough to a checkpoint to count it as visited.
     unawaited(_positionSub?.cancel());
     _positionSub = Geolocator.getPositionStream(
-      locationSettings: const LocationSettings(
-        accuracy: LocationAccuracy.high,
-        distanceFilter: 15,
-      ),
+      locationSettings: buildLocationSettings(distanceFilter: 15),
     ).listen(_applyPosition);
   }
 
@@ -307,32 +365,6 @@ class _MapPageState extends State<MapPage> {
     _searchController.dispose();
     unawaited(_positionSub?.cancel());
     super.dispose();
-  }
-
-  // Unlike the app's other glass panels, this one floats directly on top of
-  // TripMap - which on Android/Web renders as a native platform view
-  // (MapLibre), not ordinary Flutter pixels. BackdropFilter can't sample a
-  // platform view's own compositing layer, so its blur/tint silently no-ops
-  // there, leaving text with no readable background at all. A solid, mostly
-  // opaque fill works the same on every backend instead.
-  Widget _glassPanel({
-    required Widget child,
-    EdgeInsets? padding,
-    BorderRadius? borderRadius,
-  }) {
-    final radius = borderRadius ?? BorderRadius.circular(18);
-    return ClipRRect(
-      borderRadius: radius,
-      child: Container(
-        padding: padding ?? const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: const Color(0xFF0B1A24).withValues(alpha: 0.88),
-          borderRadius: radius,
-          border: Border.all(color: Colors.white.withValues(alpha: 0.18)),
-        ),
-        child: child,
-      ),
-    );
   }
 
   Future<Destination?> _pickDestination(
@@ -487,7 +519,14 @@ class _MapPageState extends State<MapPage> {
                                       }
                                       try {
                                         final position =
-                                            await Geolocator.getCurrentPosition();
+                                            await Geolocator.getCurrentPosition(
+                                              locationSettings:
+                                                  buildLocationSettings(
+                                                    timeLimit: const Duration(
+                                                      seconds: 12,
+                                                    ),
+                                                  ),
+                                            );
                                         if (!context.mounted) return;
                                         Navigator.of(context).pop(
                                           Destination(
@@ -732,6 +771,18 @@ class _MapPageState extends State<MapPage> {
     return [origin, destination];
   }
 
+  // Sentinel _routeError value (never something the server sends) marking
+  // the GPS-plausibility check below having tripped, so the error display
+  // can show a distinct, actionable message instead of a raw server string.
+  static const String _locationTooFarError = '__location_too_far__';
+
+  // A GPS fix this far from the destination(s) means the position is very
+  // likely wrong (stale cache, WiFi/IP-based geolocation guessing the wrong
+  // city or country, an emulator's default location, ...) rather than the
+  // user actually having travelled there - worth catching before spending a
+  // routing API call on two points that were never going to connect.
+  static const double _implausibleDistanceMeters = 300000;
+
   Future<void> _computeRoute() async {
     final stops = _routeStops;
     if (stops == null) {
@@ -740,6 +791,23 @@ class _MapPageState extends State<MapPage> {
         _routeError = null;
       });
       return;
+    }
+    final origin = stops.first;
+    if (origin.id == _myLocationDestinationId) {
+      final nearest = stops.skip(1).first;
+      final distance = Geolocator.distanceBetween(
+        origin.lat!,
+        origin.lon!,
+        nearest.lat!,
+        nearest.lon!,
+      );
+      if (distance > _implausibleDistanceMeters) {
+        setState(() {
+          _route = null;
+          _routeError = _locationTooFarError;
+        });
+        return;
+      }
     }
     setState(() {
       _routeLoading = true;
@@ -772,6 +840,26 @@ class _MapPageState extends State<MapPage> {
       _route = null;
       _routeError = null;
     });
+  }
+
+  String _routeErrorMessage(AppLocalizations l10n) {
+    final error = _routeError!;
+    if (error == _locationTooFarError) return l10n.mapLocationTooFar;
+    if (error.contains('not configured')) return l10n.mapRoutingNotConfigured;
+    if (error.contains('No route could be found')) return l10n.mapNoRouteFound;
+    return l10n.mapRouteError(error);
+  }
+
+  bool get _canRetryRoute {
+    final error = _routeError;
+    if (error == null) return false;
+    // Not offered for "not configured" (a server-side setup problem) or
+    // "no route found" (ORS's own final word on these exact points) -
+    // retrying can't change either. The too-far case keeps its retry: by
+    // the time it's tapped again, the live GPS stream may have delivered a
+    // better fix than the one that tripped the check.
+    return !error.contains('not configured') &&
+        !error.contains('No route could be found');
   }
 
   String _formatDistance(double meters) {
@@ -862,9 +950,7 @@ class _MapPageState extends State<MapPage> {
               alignment: Alignment.topCenter,
             ),
             DecoratedBox(
-              decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.58),
-              ),
+              decoration: BoxDecoration(color: context.tripColors.scrim),
             ),
             scaffold,
           ],
@@ -1007,7 +1093,8 @@ class _MapPageState extends State<MapPage> {
   }
 
   Widget _progressPill(AppLocalizations l10n, int visited, int total) {
-    return _glassPanel(
+    return GlassPanel(
+      style: GlassPanelStyle.solid,
       borderRadius: BorderRadius.circular(999),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       child: Row(
@@ -1033,8 +1120,10 @@ class _MapPageState extends State<MapPage> {
     List<Destination> withCoords,
     List<Destination> checkpoints,
   ) {
-    return _glassPanel(
+    return GlassPanel(
+      style: GlassPanelStyle.solid,
       borderRadius: BorderRadius.circular(20),
+      padding: const EdgeInsets.all(14),
       // Pinned on top+left+right but not bottom (see the Positioned above),
       // so its height constraint is unbounded - without `min` a Column
       // defaults to trying to be as tall as possible, which fails to lay
@@ -1228,15 +1317,14 @@ class _MapPageState extends State<MapPage> {
           if (_routeError != null) ...[
             const SizedBox(height: 8),
             Text(
-              _routeError!.contains('not configured')
-                  ? l10n.mapRoutingNotConfigured
-                  : l10n.mapRouteError(_routeError!),
+              _routeErrorMessage(l10n),
               style: TextStyle(color: Colors.red.shade100, fontSize: 12.5),
             ),
-            // Not shown for "not configured" - that's a server-side setup
-            // problem retrying can't fix, unlike the routing provider's own
-            // transient failures/rate limits.
-            if (!_routeError!.contains('not configured')) ...[
+            // Not shown for "not configured"/"no route found" - those are
+            // problems retrying the exact same request can't fix, unlike
+            // the routing provider's own transient failures/rate limits (or
+            // a since-refreshed GPS fix, for the too-far case).
+            if (_canRetryRoute) ...[
               const SizedBox(height: 4),
               Align(
                 alignment: Alignment.centerLeft,

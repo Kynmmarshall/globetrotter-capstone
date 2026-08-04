@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:trip_io/l10n/gen/app_localizations.dart';
 
 /// The AI chat entry point shown on every dashboard tab - a gentle,
 /// continuous pulse (subtle scale + glow) so it stays noticeable without
@@ -13,14 +14,17 @@ class AiFabButton extends StatefulWidget {
   State<AiFabButton> createState() => _AiFabButtonState();
 }
 
-class _AiFabButtonState extends State<AiFabButton> with SingleTickerProviderStateMixin {
+class _AiFabButtonState extends State<AiFabButton>
+    with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
 
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 1600))
-      ..repeat(reverse: true);
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1600),
+    )..repeat(reverse: true);
   }
 
   @override
@@ -31,6 +35,7 @@ class _AiFabButtonState extends State<AiFabButton> with SingleTickerProviderStat
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final primary = Theme.of(context).colorScheme.primary;
     final tertiary = Theme.of(context).colorScheme.tertiary;
     final reduceMotion = MediaQuery.of(context).disableAnimations;
@@ -49,7 +54,12 @@ class _AiFabButtonState extends State<AiFabButton> with SingleTickerProviderStat
             shape: BoxShape.circle,
             gradient: LinearGradient(colors: [primary, tertiary]),
           ),
-          child: const Icon(Icons.smart_toy, color: Colors.white, size: 26),
+          child: Icon(
+            Icons.smart_toy,
+            color: Colors.white,
+            size: 26,
+            semanticLabel: l10n.aiChatTitle,
+          ),
         ),
       ),
     );
