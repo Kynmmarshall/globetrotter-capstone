@@ -13,6 +13,39 @@ Planned for **Phase 3: Cloud Deployment** — see [README → Roadmap](README.md
 - Load balancing and auto-scaling across multiple instances of each service.
 - Cut the live deployment over from the Phase 1 monolith to the Phase 2 microservices stack.
 
+## [0.20.0] - 2026-08-03 — Maps, directions & smarter recommendations
+
+- Added retry-with-backoff to Recommendation Service's OpenRouteService calls: transient failures (timeouts, 5xx) get a couple of quick retries before giving up, while non-retryable errors (e.g. a bad request) fail immediately instead of burning through retry attempts pointlessly. Added matching error handling and tests for the routing service.
+- Added a "Directions" button and a comment-count button directly on destination cards, plus an "approximate location" message and clearer handling of denied/unavailable location settings on the map.
+- `GET /recommendations` now excludes destinations already in one of the user's itineraries (fetched via the existing Itinerary Service sync call), so recommendations don't keep re-suggesting places you've already planned to visit.
+- Destinations are now marked as "read" (clearing their new-comments badge) as soon as their card is tapped, not only after opening the comments sheet.
+
+## [0.19.0] - 2026-08-03 — Theming, onboarding & UI system refresh
+
+- Added light/dark/system theme selection, localized in English and French.
+- Introduced a `GlassPanel` widget and adopted it across screens for a consistent frosted-glass look, replacing ad hoc styling.
+- Added a one-time, swipeable onboarding walkthrough shown the first time a device reaches the dashboard, and a splash screen on launch.
+- Added an in-app avatar cropper (`frontend/lib/screens/avatar_cropper_page.dart`) to reposition/zoom a photo before upload — built by hand on `InteractiveViewer` rather than a crop plugin, since the app also targets Windows desktop and most Flutter cropping packages are mobile/web-only.
+
+## [0.18.0] - 2026-08-03 — Notifications
+
+- Added `GET /me/notifications` and `POST /me/notifications/{id}/read`, combining two sources: persisted moderation notifications and computed trip-start reminders (for itineraries starting within the next 3 days).
+- Moderation notifications are the event bus's first real consumer with a side effect (previously it only logged): when an admin approves/rejects a submitted destination, `recommendation_service` publishes `destination.approved`/`destination.rejected`, and `user_service`'s event consumer turns that into a persisted notification for the submitter.
+- Notification copy is never hard-coded server-side — each notification carries a Flutter ARB `title_key`/`body_key` plus `body_args`, rendered and localized entirely client-side, so English and French stay in sync automatically.
+- Added a notifications screen in the app.
+
+## [0.17.0] - 2026-08-03 — Password reset & itinerary sharing
+
+- **Forgot password**: `POST /auth/request-password-reset` + `POST /auth/reset-password`, a two-step, code-based reset flow. The reset code is emailed via SMTP (`user_service/app/email_util.py`) with a branded HTML email (falling back to logging the code if SMTP isn't configured, so the flow stays testable without real email infrastructure) and expires after 30 minutes. The request endpoint always returns the same response regardless of whether the identifier matched an account, to avoid leaking which usernames/emails are registered.
+- **Itinerary sharing**: `POST`/`DELETE /itineraries/{id}/share` mints/revokes a share token; `GET /shared/itineraries/{token}` is a public, unauthenticated endpoint returning a trimmed, viewer-safe representation of the itinerary (no ratings/favorites) for a shareable web page anyone can open, even without a trip_io account. `POST /itineraries/claim/{token}` lets a signed-in user copy a shared itinerary into their own account.
+- Added clipboard-based share links and a claim-shared-itinerary flow to the app, with web support for opening a shared link directly.
+- Added `SMTP_HOST`/`SMTP_PORT`/`SMTP_USER`/`SMTP_PASSWORD`/`SMTP_FROM_ADDRESS`/`PUBLIC_SITE_URL` to the microservices Docker Compose stack.
+
+## [0.16.0] - 2026-08-02 — Itinerary editing & comment moderation
+
+- Added `PATCH /itineraries/{id}` to edit an existing itinerary's title, destinations, schedule, or dates (ownership-checked), publishing an `itinerary.updated` event.
+- Added `PATCH`/`DELETE /comments/{id}` so users can edit or delete their own comments — both restricted to a 5-minute window after posting, and deletion is refused if the comment already has replies (to avoid orphaning a reply thread).
+
 ## [0.15.0] - 2026-08-02 — Phase 2: Microservices decomposition
 
 Decomposes the Phase 1 monolith into three independent services behind an API Gateway, satisfying every item that was previously listed under Unreleased for this phase. The monolith (`backend/app/`) is left untouched and still serves the live production deployment — this is a separate, parallel stack (`backend/docker-compose.microservices.yml`) that hasn't been cut over yet.

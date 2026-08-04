@@ -1,6 +1,6 @@
 # GlobeTrotter — Travel Recommendation & Itinerary Platform
 
-GlobeTrotter is a full-stack travel assistant that lets users search destinations, receive personalized recommendations, plan and delete itineraries, view destinations on an interactive map with turn-by-turn directions, and interact with an AI travel assistant (with read-aloud support) — plus social features like ratings, comments, favorites, and profile avatars, community-submitted destinations reviewed through an admin moderation panel, Google Sign-In, and public usage analytics. The repository contains two independently deployable projects:
+GlobeTrotter is a full-stack travel assistant that lets users search destinations, receive personalized recommendations that skip places they've already planned to visit, and plan, edit, delete, and share itineraries (including a public web link and a "claim this trip" flow). It has an interactive map with turn-by-turn directions and an AI travel assistant with read-aloud support, plus social features like ratings, editable/threaded comments, favorites, profile avatars (with in-app cropping), notifications (moderation decisions and trip reminders), community-submitted destinations reviewed through an admin moderation panel, Google Sign-In, forgot-password email recovery, light/dark theming, and public usage analytics. The repository contains two independently deployable projects:
 
 | Project | Description | Stack |
 |---|---|---|
@@ -195,12 +195,16 @@ Base URL: `https://trip-io.duckdns.org` (production) or `http://localhost:8000` 
 | `POST` | `/register` | — | Create a user account (optionally with `interests`), returns a JWT |
 | `POST` | `/login` | — | Authenticate, returns a JWT |
 | `POST` | `/auth/google` | — | Exchange a Google ID token for a JWT, creating the account on first sign-in |
+| `POST` | `/auth/request-password-reset` | — | Email a password reset code, if the username/email matches an account (response is identical either way) |
+| `POST` | `/auth/reset-password` | — | Complete a password reset with the emailed code |
 | `GET` | `/me` | Bearer token | Get the current user's profile (username, email, interests, avatar, favorites) |
 | `PUT` | `/me/interests` | Bearer token | Replace the current user's interest tags |
 | `POST` | `/me/avatar` | Bearer token | Upload a profile picture (JPEG/PNG/WEBP/GIF, max 5MB) |
 | `GET` | `/me/favorites` | Bearer token | List the current user's favorited destinations |
 | `POST` | `/me/favorites/{destination_id}` | Bearer token | Add a destination to favorites |
 | `DELETE` | `/me/favorites/{destination_id}` | Bearer token | Remove a destination from favorites |
+| `GET` | `/me/notifications` | Bearer token | List notifications (moderation decisions on your submissions + upcoming trip reminders) |
+| `POST` | `/me/notifications/{id}/read` | Bearer token | Mark a notification as read |
 | `GET` | `/destinations?q=` | Optional | Search/list approved destinations by name or tag; includes rating average/count, plus the viewer's own rating if signed in |
 | `GET` | `/destinations/{id}` | Optional | Get a single approved destination, with its rating summary |
 | `PUT` | `/destinations/{id}/rating` | Bearer token | Rate a destination 1-5 stars |
@@ -211,10 +215,16 @@ Base URL: `https://trip-io.duckdns.org` (production) or `http://localhost:8000` 
 | `GET` | `/destinations/{id}/comments` | Bearer token | Get threaded comments for a destination, with the viewer's own vote on each |
 | `POST` | `/destinations/{id}/comments` | Bearer token | Post a comment or reply (`parent_id`), max 2000 characters |
 | `POST` | `/comments/{id}/vote` | Bearer token | Upvote/downvote/clear your vote on a comment (`direction`: `up`/`down`/`none`) |
-| `GET` | `/recommendations` | Bearer token | Personalized destinations, ranked by overlap with the user's interest tags (falls back to popular picks if none are set) |
+| `PATCH` | `/comments/{id}` | Bearer token | Edit your own comment (within 5 minutes of posting) |
+| `DELETE` | `/comments/{id}` | Bearer token | Delete your own comment (within 5 minutes, and only if it has no replies) |
+| `GET` | `/recommendations` | Bearer token | Personalized destinations, ranked by interest-tag overlap and excluding destinations already in one of your itineraries |
 | `POST` | `/itineraries` | Bearer token | Create an itinerary (title, destinations, optional `schedule`, `start_date`/`end_date`) |
 | `GET` | `/itineraries` | Bearer token | List itineraries owned by the current user |
+| `PATCH` | `/itineraries/{id}` | Bearer token | Edit an itinerary you own |
 | `DELETE` | `/itineraries/{id}` | Bearer token | Delete an itinerary you own |
+| `POST`/`DELETE` | `/itineraries/{id}/share` | Bearer token | Create/revoke a public share link for an itinerary |
+| `GET` | `/shared/itineraries/{token}` | — | Public, unauthenticated view of a shared itinerary (trimmed, no viewer-specific data) |
+| `POST` | `/itineraries/claim/{token}` | Bearer token | Copy a shared itinerary into your own account |
 | `POST` | `/ai/chat` | Bearer token | Chat with the in-app AI travel assistant (Groq-backed, grounded in the real destination catalog) |
 | `POST` | `/ai/explain/{destination_id}` | Bearer token | Get (and cache) an AI-generated explanation of a destination |
 | `GET` | `/stats/public` | — | Aggregated, anonymized usage stats (total users, active today/this week, 14-day daily-active series, top sections) for the public stats page, sourced from Matomo server-side and cached for 60s |
@@ -261,6 +271,8 @@ Full request/response schemas are available live via the Swagger UI at `/docs`.
 | `GROQ_MODEL` | `llama-3.3-70b-versatile` | Groq model used for the AI assistant |
 | `GOOGLE_OAUTH_CLIENT_ID` | *(unset)* | Expected audience for Google Sign-In ID tokens verified by `/auth/google`; without it, that endpoint returns `401` |
 | `ORS_API_KEY` | *(unset)* | API key for OpenRouteService, powering `/route`; without it, the endpoint fails with a "not configured" error |
+| `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASSWORD` / `SMTP_FROM_ADDRESS` | *(unset)*, `587` | SMTP credentials for delivering password-reset emails; without them, the reset code is logged server-side instead of emailed, so the flow stays testable |
+| `PUBLIC_SITE_URL` | `https://trip-io.duckdns.org` | Used to build the logo image URL embedded in password-reset emails |
 
 **Phase 2 microservices stack only** (see [Phase 2: Microservices Stack](#phase-2-microservices-stack)):
 
