@@ -5,12 +5,12 @@ import 'package:flutter/foundation.dart' show kIsWeb, defaultTargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:trip_io/l10n/gen/app_localizations.dart';
-import 'package:trip_io/models/interest_tags.dart';
 import 'package:trip_io/screens/forgot_password_page.dart';
 import 'package:trip_io/services/session_controller.dart';
 import 'package:trip_io/widgets/brand_logo_lockup.dart';
 import 'package:trip_io/widgets/feature_pill.dart';
 import 'package:trip_io/widgets/google_signin_button.dart';
+import 'package:trip_io/widgets/interest_tag_picker.dart';
 
 // Set at build time with:
 //   --dart-define=GOOGLE_WEB_CLIENT_ID=your-client-id.apps.googleusercontent.com
@@ -192,34 +192,21 @@ class _AuthScreenState extends State<AuthScreen> {
           ).textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
         ),
         const SizedBox(height: 10),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: interestTags.map((tag) {
-            final selected = _selectedInterests.contains(tag);
-            return FilterChip(
-              label: Text(_capitalize(tag)),
-              selected: selected,
-              showCheckmark: false,
-              avatar: selected ? const Icon(Icons.check, size: 16) : null,
-              onSelected: (value) {
-                setState(() {
-                  if (value) {
-                    _selectedInterests.add(tag);
-                  } else {
-                    _selectedInterests.remove(tag);
-                  }
-                });
-              },
-            );
-          }).toList(),
+        InterestTagPicker(
+          selectedTags: _selectedInterests,
+          onToggle: (tag, value) {
+            setState(() {
+              if (value) {
+                _selectedInterests.add(tag);
+              } else {
+                _selectedInterests.remove(tag);
+              }
+            });
+          },
         ),
       ],
     );
   }
-
-  String _capitalize(String value) =>
-      value.isEmpty ? value : '${value[0].toUpperCase()}${value.substring(1)}';
 
   Widget _buildPasswordField({
     required BuildContext context,

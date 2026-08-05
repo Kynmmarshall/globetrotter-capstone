@@ -544,14 +544,22 @@ class SessionController extends ChangeNotifier {
 
   Future<String> aiChat(List<ChatMessage> messages) async {
     final token = _requireToken();
-    final reply = await ApiClient().aiChat(token, messages);
+    final reply = await ApiClient().aiChat(
+      token,
+      messages,
+      languageCode: _locale?.languageCode,
+    );
     Analytics.instance.trackEvent('ai', 'chat_message');
     return reply;
   }
 
   Future<String> aiExplain(String destinationId) async {
     final token = _requireToken();
-    final reply = await ApiClient().aiExplain(token, destinationId);
+    final reply = await ApiClient().aiExplain(
+      token,
+      destinationId,
+      languageCode: _locale?.languageCode,
+    );
     Analytics.instance.trackEvent(
       'ai',
       'explain_destination',

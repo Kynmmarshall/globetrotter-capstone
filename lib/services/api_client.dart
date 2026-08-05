@@ -431,18 +431,23 @@ class ApiClient {
     List<String>? destinations,
     List<ScheduleEntry>? schedule,
   }) async {
+    final body = <String, dynamic>{};
+    if (title != null) {
+      body['title'] = title;
+    }
+    if (destinations != null) {
+      body['destinations'] = destinations;
+    }
+    if (schedule != null) {
+      body['schedule'] = schedule.map((e) => e.toJson()).toList();
+    }
     final response = await _client.patch(
       _uri('/itineraries/$itineraryId'),
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',
       },
-      body: jsonEncode({
-        if (title != null) 'title': title,
-        if (destinations != null) 'destinations': destinations,
-        if (schedule != null)
-          'schedule': schedule.map((e) => e.toJson()).toList(),
-      }),
+      body: jsonEncode(body),
     );
     _throwIfNotOk(response);
     return Itinerary.fromJson(
@@ -582,23 +587,41 @@ class ApiClient {
     return Comment.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
   }
 
-  Future<String> aiChat(String token, List<ChatMessage> messages) async {
+  Future<String> aiChat(
+    String token,
+    List<ChatMessage> messages, {
+    String? languageCode,
+  }) async {
     final response = await _client.post(
       _uri('/ai/chat'),
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',
       },
-      body: jsonEncode({'messages': messages.map((m) => m.toJson()).toList()}),
+      body: jsonEncode({
+        'messages': messages.map((m) => m.toJson()).toList(),
+        if (languageCode != null && languageCode.isNotEmpty)
+          'language_code': languageCode,
+      }),
     );
     _throwIfNotOk(response);
     final decoded = jsonDecode(response.body) as Map<String, dynamic>;
     return (decoded['reply'] ?? '').toString();
   }
 
-  Future<String> aiExplain(String token, String destinationId) async {
+  Future<String> aiExplain(
+    String token,
+    String destinationId, {
+    String? languageCode,
+  }) async {
+    final uri = _uri(
+      '/ai/explain/$destinationId',
+      languageCode != null && languageCode.isNotEmpty
+          ? {'language_code': languageCode}
+          : null,
+    );
     final response = await _client.post(
-      _uri('/ai/explain/$destinationId'),
+      uri,
       headers: {'Authorization': 'Bearer $token'},
     );
     _throwIfNotOk(response);

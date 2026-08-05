@@ -3,11 +3,11 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:trip_io/l10n/gen/app_localizations.dart';
-import 'package:trip_io/models/interest_tags.dart';
 import 'package:trip_io/screens/location_picker_page.dart';
 import 'package:trip_io/services/session_controller.dart';
 import 'package:trip_io/themes/trip_colors.dart';
 import 'package:trip_io/widgets/glass_panel.dart';
+import 'package:trip_io/widgets/interest_tag_picker.dart';
 
 /// Lets any signed-in user propose a new destination. It never touches the
 /// live catalog directly - the backend stores it with status="pending" and
@@ -44,9 +44,6 @@ class _SubmitDestinationPageState extends State<SubmitDestinationPage> {
     _locationController.dispose();
     super.dispose();
   }
-
-  String _capitalize(String value) =>
-      value.isEmpty ? value : '${value[0].toUpperCase()}${value.substring(1)}';
 
   Future<void> _pickImage() async {
     setState(() => _pickingImage = true);
@@ -435,55 +432,17 @@ class _SubmitDestinationPageState extends State<SubmitDestinationPage> {
                                       ),
                                     ),
                                     const SizedBox(height: 8),
-                                    Wrap(
-                                      spacing: 8,
-                                      runSpacing: 8,
-                                      children: interestTags.map((tag) {
-                                        final selected = _selectedTags.contains(
-                                          tag,
-                                        );
-                                        return FilterChip(
-                                          label: Text(
-                                            _capitalize(tag),
-                                            style: TextStyle(
-                                              color: selected
-                                                  ? Colors.white
-                                                  : const Color(0xFF1A2530),
-                                              fontSize: 12.5,
-                                              fontWeight: FontWeight.w600,
-                                            ),
-                                          ),
-                                          selected: selected,
-                                          showCheckmark: false,
-                                          avatar: selected
-                                              ? const Icon(
-                                                  Icons.check,
-                                                  size: 16,
-                                                  color: Colors.white,
-                                                )
-                                              : null,
-                                          backgroundColor: Colors.white
-                                              .withValues(alpha: 0.88),
-                                          selectedColor: Theme.of(context)
-                                              .colorScheme
-                                              .primary
-                                              .withValues(alpha: 0.85),
-                                          side: BorderSide(
-                                            color: Colors.white.withValues(
-                                              alpha: 0.4,
-                                            ),
-                                          ),
-                                          onSelected: (value) {
-                                            setState(() {
-                                              if (value) {
-                                                _selectedTags.add(tag);
-                                              } else {
-                                                _selectedTags.remove(tag);
-                                              }
-                                            });
-                                          },
-                                        );
-                                      }).toList(),
+                                    InterestTagPicker(
+                                      selectedTags: _selectedTags,
+                                      onToggle: (tag, value) {
+                                        setState(() {
+                                          if (value) {
+                                            _selectedTags.add(tag);
+                                          } else {
+                                            _selectedTags.remove(tag);
+                                          }
+                                        });
+                                      },
                                     ),
                                     const SizedBox(height: 20),
                                     Text(
