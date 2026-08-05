@@ -1583,3 +1583,128 @@ footer .footer-brand img {
     height: 150px;
   }
 }
+
+/* ---------- QR / "scan to visit" page ---------- */
+
+.qr-page {
+  text-align: center;
+  max-width: 560px;
+  padding: 140px 24px 100px;
+}
+
+.qr-eyebrow {
+  display: inline-block;
+  color: var(--brand-teal-light);
+  font-weight: 700;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 10px;
+}
+
+.qr-page h1 {
+  font-size: clamp(1.8rem, 4.5vw, 2.6rem);
+  margin: 0 0 12px;
+  font-weight: 800;
+  text-wrap: balance;
+}
+
+.qr-sub {
+  color: var(--text-dim);
+  margin: 0 0 40px;
+}
+
+/* The actual printable card - deliberately styled with its own light
+   palette (not the page's dark theme) since this is meant to be printed
+   or screenshotted as a standalone flyer, not just viewed inline. */
+.qr-card {
+  position: relative;
+  width: 100%;
+  max-width: 360px;
+  margin: 0 auto;
+  padding: 40px 32px 32px;
+  background: #ffffff;
+  border-radius: 28px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+  overflow: hidden;
+}
+
+.qr-card-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 10px;
+  background: var(--brand-amber);
+  border-radius: 0 0 8px 8px;
+}
+
+.qr-card-brand {
+  color: var(--brand-navy);
+  font-weight: 800;
+  font-size: 1.7rem;
+  letter-spacing: -0.01em;
+}
+
+.qr-card-label {
+  color: var(--brand-amber-light);
+  background: var(--brand-navy);
+  display: inline-block;
+  font-weight: 700;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  margin: 10px 0 24px;
+}
+
+.qr-card-frame {
+  background: #f2f4f5;
+  border-radius: 20px;
+  padding: 20px;
+}
+
+.qr-card-frame img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.qr-card-url {
+  margin-top: 22px;
+  color: #4a555c;
+  font-family: "Courier New", Courier, monospace;
+  font-weight: 700;
+  font-size: 0.95rem;
+  letter-spacing: 0.02em;
+}
+
+.qr-actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 36px;
+}
+
+@media print {
+  .ambient-blobs,
+  .nav,
+  .qr-eyebrow,
+  .qr-page h1,
+  .qr-sub,
+  .qr-actions,
+  .qr-hide-on-print {
+    display: none !important;
+  }
+  body {
+    background: #ffffff !important;
+  }
+  .qr-page {
+    padding: 0;
+    max-width: none;
+  }
+  .qr-card {
+    box-shadow: none;
+    margin: 0 auto;
+  }
+}

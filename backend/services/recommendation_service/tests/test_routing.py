@@ -119,3 +119,50 @@ async def test_get_route_requires_two_waypoints(monkeypatch):
     monkeypatch.setattr(routing, "ORS_API_KEY", "test-key")
     with pytest.raises(routing.RoutingRequestError):
         await routing.get_route([(3.8, 11.5)])
+
+
+@pytest.mark.asyncio
+async def test_get_route_returns_per_leg_breakdown(monkeypatch):
+    monkeypatch.setattr(routing, "ORS_API_KEY", "test-key")
+
+    geojson_with_segments = {
+        "features": [
+            {
+                "geometry": {
+                    "coordinates": [[11.5, 3.8], [11.6, 3.9], [11.7, 4.0]]
+                },
+                "properties": {
+                    "summary": {"distance": 3000.0, "duration": 400.0},
+                    "segments": [
+                        {"distance": 1000.0, "duration": 150.0},
+                        {"distance": 2000.0, "duration": 250.0},
+                    ],
+                },
+            }
+        ]
+    }
+
+    async def fake_post(self, url, headers=None, json=None):
+        return _FakeResponse(200, geojson_with_segments)
+
+    monkeypatch.setattr(httpx.AsyncClient, "post", fake_post)
+
+    result = await routing.get_route([(3.8, 11.5), (3.9, 11.6), (4.0, 11.7)])
+    assert result["distance_meters"] == 3000.0
+    assert result["legs"] == [
+        {"distance_meters": 1000.0, "duration_seconds": 150.0},
+        {"distance_meters": 2000.0, "duration_seconds": 250.0},
+    ]
+
+
+@pytest.mark.asyncio
+async def test_get_route_legs_default_to_empty_when_ors_omits_segments(monkeypatch):
+    monkeypatch.setattr(routing, "ORS_API_KEY", "test-key")
+
+    async def fake_post(self, url, headers=None, json=None):
+        return _FakeResponse(200, _GEOJSON_OK)
+
+    monkeypatch.setattr(httpx.AsyncClient, "post", fake_post)
+
+    result = await routing.get_route([(3.8, 11.5), (3.9, 11.6)])
+    assert result["legs"] == []
