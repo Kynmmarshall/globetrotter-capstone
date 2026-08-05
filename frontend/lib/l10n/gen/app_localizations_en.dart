@@ -460,6 +460,17 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String mapNextStopSummary(String distance, String duration) {
+    return 'Next stop: $distance · $duration';
+  }
+
+  @override
+  String get mapRemainingLabel => 'Remaining';
+
+  @override
+  String get mapItineraryCompleteLabel => 'All stops visited';
+
+  @override
   String get navMap => 'Map';
 
   @override

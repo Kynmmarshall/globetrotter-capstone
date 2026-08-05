@@ -4,12 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:trip_io/l10n/gen/app_localizations.dart';
-import 'package:trip_io/models/interest_tags.dart';
 import 'package:trip_io/models/models.dart';
 import 'package:trip_io/screens/avatar_cropper_page.dart';
 import 'package:trip_io/services/api_client.dart';
 import 'package:trip_io/services/session_controller.dart';
 import 'package:trip_io/widgets/glass_panel.dart';
+import 'package:trip_io/widgets/interest_tag_picker.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key, required this.session});
@@ -163,9 +163,6 @@ class _ProfilePageState extends State<ProfilePage> {
     }
   }
 
-  String _capitalize(String value) =>
-      value.isEmpty ? value : '${value[0].toUpperCase()}${value.substring(1)}';
-
   Widget _buildAvatarImage() {
     final url = ApiClient.resolveAssetUrl(widget.session.avatarUrl);
     if (url == null || url.isEmpty) {
@@ -279,7 +276,6 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Widget _buildInterestsPanel(BuildContext context, AppLocalizations l10n) {
-    final colors = Theme.of(context).colorScheme;
     return GlassPanel(
       borderRadius: BorderRadius.circular(22),
       padding: const EdgeInsets.all(18),
@@ -300,41 +296,17 @@ class _ProfilePageState extends State<ProfilePage> {
             style: const TextStyle(color: Colors.white70, fontSize: 12.5),
           ),
           const SizedBox(height: 12),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: interestTags.map((tag) {
-              final selected = _selectedInterests.contains(tag);
-              return FilterChip(
-                label: Text(
-                  _capitalize(tag),
-                  style: TextStyle(
-                    color: selected ? Colors.white : const Color(0xFF1A2530),
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                selected: selected,
-                showCheckmark: false,
-                avatar: Icon(
-                  interestTagIcon(tag),
-                  size: 16,
-                  color: selected ? Colors.white : const Color(0xFF1A2530),
-                ),
-                backgroundColor: Colors.white.withValues(alpha: 0.88),
-                selectedColor: colors.primary.withValues(alpha: 0.85),
-                side: BorderSide(color: Colors.white.withValues(alpha: 0.4)),
-                onSelected: (value) {
-                  setState(() {
-                    if (value) {
-                      _selectedInterests.add(tag);
-                    } else {
-                      _selectedInterests.remove(tag);
-                    }
-                  });
-                },
-              );
-            }).toList(),
+          InterestTagPicker(
+            selectedTags: _selectedInterests,
+            onToggle: (tag, value) {
+              setState(() {
+                if (value) {
+                  _selectedInterests.add(tag);
+                } else {
+                  _selectedInterests.remove(tag);
+                }
+              });
+            },
           ),
           const SizedBox(height: 12),
           Align(

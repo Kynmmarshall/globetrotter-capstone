@@ -185,6 +185,15 @@
       "total": { "type": "int" }
     }
   },
+  "mapNextStopSummary": "Next stop: {distance} · {duration}",
+  "@mapNextStopSummary": {
+    "placeholders": {
+      "distance": { "type": "String" },
+      "duration": { "type": "String" }
+    }
+  },
+  "mapRemainingLabel": "Remaining",
+  "mapItineraryCompleteLabel": "All stops visited",
 
   "navMap": "Map",
   "mapTitle": "Get directions",

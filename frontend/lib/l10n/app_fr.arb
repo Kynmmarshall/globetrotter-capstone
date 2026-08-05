@@ -160,6 +160,9 @@
       "total": { "type": "int" }
     }
   },
+  "mapNextStopSummary": "Prochain arrêt : {distance} · {duration}",
+  "mapRemainingLabel": "Restant",
+  "mapItineraryCompleteLabel": "Tous les arrêts visités",
 
   "navMap": "Carte",
   "mapTitle": "Obtenir l'itinéraire",

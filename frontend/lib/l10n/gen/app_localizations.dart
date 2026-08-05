@@ -908,6 +908,24 @@ abstract class AppLocalizations {
   /// **'{visited} of {total} visited'**
   String mapItineraryProgress(int visited, int total);
 
+  /// No description provided for @mapNextStopSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Next stop: {distance} · {duration}'**
+  String mapNextStopSummary(String distance, String duration);
+
+  /// No description provided for @mapRemainingLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Remaining'**
+  String get mapRemainingLabel;
+
+  /// No description provided for @mapItineraryCompleteLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'All stops visited'**
+  String get mapItineraryCompleteLabel;
+
   /// No description provided for @navMap.
   ///
   /// In en, this message translates to:

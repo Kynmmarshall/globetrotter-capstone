@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:trip_io/l10n/gen/app_localizations.dart';
-import 'package:trip_io/models/interest_tags.dart';
 import 'package:trip_io/models/models.dart';
 import 'package:trip_io/screens/destination_detail_page.dart';
 import 'package:trip_io/screens/my_submissions_page.dart';
@@ -13,6 +12,7 @@ import 'package:trip_io/widgets/comment_count_button.dart';
 import 'package:trip_io/widgets/directions_button.dart';
 import 'package:trip_io/widgets/favorite_toggle_button.dart';
 import 'package:trip_io/widgets/glass_panel.dart';
+import 'package:trip_io/widgets/interest_tag_picker.dart';
 import 'package:trip_io/widgets/new_comments_badge.dart';
 import 'package:trip_io/widgets/session_expired_card.dart';
 import 'package:trip_io/widgets/skeleton_loaders.dart';
@@ -69,9 +69,6 @@ class _DestinationsPageState extends State<DestinationsPage> {
     return [...filtered]
       ..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
   }
-
-  String _capitalize(String s) =>
-      s.isEmpty ? s : '${s[0].toUpperCase()}${s.substring(1)}';
 
   Widget _sectionTitle(BuildContext context, String title, {String? subtitle}) {
     return Column(
@@ -401,33 +398,9 @@ class _DestinationsPageState extends State<DestinationsPage> {
             ],
           ),
           const SizedBox(height: 10),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: interestTags.map((tag) {
-              final selected = _selectedTags.contains(tag);
-              return FilterChip(
-                label: Text(
-                  _capitalize(tag),
-                  style: TextStyle(
-                    color: selected ? Colors.white : const Color(0xFF1A2530),
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                selected: selected,
-                showCheckmark: false,
-                avatar: selected
-                    ? const Icon(Icons.check, size: 16, color: Colors.white)
-                    : null,
-                backgroundColor: Colors.white.withValues(alpha: 0.88),
-                selectedColor: Theme.of(
-                  context,
-                ).colorScheme.primary.withValues(alpha: 0.85),
-                side: BorderSide(color: Colors.white.withValues(alpha: 0.4)),
-                onSelected: (_) => _toggleTag(tag),
-              );
-            }).toList(),
+          InterestTagPicker(
+            selectedTags: _selectedTags,
+            onToggle: (tag, _) => _toggleTag(tag),
           ),
         ],
       ),
