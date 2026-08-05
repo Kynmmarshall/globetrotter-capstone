@@ -82,10 +82,19 @@ class RouteRequest(BaseModel):
     profile: str = "driving-car"
 
 
+class RouteLeg(BaseModel):
+    distance_meters: float
+    duration_seconds: float
+
+
 class RouteResponse(BaseModel):
     geometry: List[RouteWaypoint]
     distance_meters: float
     duration_seconds: float
+    # One entry per leg between consecutive waypoints, in order - e.g. for
+    # an in-progress itinerary's [current position, stop A, stop B] route,
+    # legs[0] is current position -> stop A and legs[1] is stop A -> stop B.
+    legs: List[RouteLeg] = []
 
 
 class ChatMessage(BaseModel):

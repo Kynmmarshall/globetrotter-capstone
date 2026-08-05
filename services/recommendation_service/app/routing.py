@@ -60,10 +60,22 @@ async def get_route(waypoints: list[tuple[float, float]], profile: str = DEFAULT
         feature = payload["features"][0]
         coords = feature["geometry"]["coordinates"]
         summary = feature["properties"]["summary"]
+        # One entry per leg between consecutive waypoints (so len(legs) ==
+        # len(waypoints) - 1) - ORS already computes and returns this
+        # breakdown alongside the merged summary, so exposing it here costs
+        # nothing extra. Lets a caller routing through multiple stops (e.g.
+        # an itinerary in progress) show "distance to the next stop"
+        # specifically, not just the combined total across every leg.
+        segments = feature["properties"].get("segments", [])
+        legs = [
+            {"distance_meters": s["distance"], "duration_seconds": s["duration"]}
+            for s in segments
+        ]
         return {
             "geometry": [{"lat": lat, "lon": lon} for lon, lat in coords],
             "distance_meters": summary["distance"],
             "duration_seconds": summary["duration"],
+            "legs": legs,
         }
     except (KeyError, IndexError, TypeError) as exc:
         logger.warning("Unexpected ORS response shape: %s", payload)
