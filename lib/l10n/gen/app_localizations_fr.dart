@@ -472,6 +472,17 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
+  String mapNextStopSummary(String distance, String duration) {
+    return 'Prochain arrêt : $distance · $duration';
+  }
+
+  @override
+  String get mapRemainingLabel => 'Restant';
+
+  @override
+  String get mapItineraryCompleteLabel => 'Tous les arrêts visités';
+
+  @override
   String get navMap => 'Carte';
 
   @override

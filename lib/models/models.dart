@@ -415,18 +415,42 @@ class AppNotification {
   }
 }
 
-/// The result of a POST /route call: the full path geometry to draw, plus
-/// trip totals - mirrors the backend's RouteResponse schema.
+/// One leg of a multi-waypoint route - the distance/duration between one
+/// consecutive pair of waypoints, not the whole trip.
+class RouteLeg {
+  const RouteLeg({required this.distanceMeters, required this.durationSeconds});
+
+  final double distanceMeters;
+  final double durationSeconds;
+
+  factory RouteLeg.fromJson(Map<String, dynamic> json) {
+    return RouteLeg(
+      distanceMeters: (json['distance_meters'] as num).toDouble(),
+      durationSeconds: (json['duration_seconds'] as num).toDouble(),
+    );
+  }
+}
+
+/// The result of a POST /route call: the full path geometry to draw, trip
+/// totals, and a per-leg breakdown - mirrors the backend's RouteResponse
+/// schema.
 class RouteResult {
   const RouteResult({
     required this.geometry,
     required this.distanceMeters,
     required this.durationSeconds,
+    this.legs = const [],
   });
 
   final List<RouteWaypoint> geometry;
   final double distanceMeters;
   final double durationSeconds;
+
+  /// One entry per leg between consecutive waypoints, e.g. for a route
+  /// through [currentPosition, stopA, stopB], legs[0] is currentPosition ->
+  /// stopA and legs[1] is stopA -> stopB. Empty if the backend didn't
+  /// return a breakdown.
+  final List<RouteLeg> legs;
 
   factory RouteResult.fromJson(Map<String, dynamic> json) {
     return RouteResult(
@@ -435,6 +459,9 @@ class RouteResult {
           .toList(),
       distanceMeters: (json['distance_meters'] as num).toDouble(),
       durationSeconds: (json['duration_seconds'] as num).toDouble(),
+      legs: (json['legs'] as List<dynamic>? ?? <dynamic>[])
+          .map((e) => RouteLeg.fromJson(e as Map<String, dynamic>))
+          .toList(),
     );
   }
 }

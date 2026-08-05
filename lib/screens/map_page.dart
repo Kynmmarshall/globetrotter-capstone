@@ -88,12 +88,30 @@ class _MapPageState extends State<MapPage> {
   final Set<String> _visitedIds = {};
   StreamSubscription<Position>? _positionSub;
 
+  // Keeps the "next stop"/"remaining" distance-and-time figures from going
+  // stale as the user actually walks/drives, without re-requesting a route
+  // on every single GPS tick (the position stream can fire every few
+  // meters) - a real re-route only every so often, plus an immediate one
+  // the moment a stop is reached (see _updateVisitedProgress), when the
+  // remaining path actually changes shape.
+  static const Duration _routeRefreshInterval = Duration(seconds: 45);
+  Timer? _routeRefreshTimer;
+
   // The options panel starts collapsed so the map fills the whole screen -
   // "get directions"/"my location"/"select itinerary" live behind this
   // toggle instead of a permanently fixed panel.
   bool _panelExpanded = false;
 
   bool get _isItineraryMode => _itineraryIds != null;
+
+  /// The checkpoints still ahead - everything in [_itineraryCheckpoints]
+  /// not yet marked visited. This (not the full checkpoint list) is what
+  /// actually gets routed through: re-routing through a stop already
+  /// reached would both inflate the "remaining" distance/time and draw the
+  /// line looping back to somewhere the user has already been.
+  List<Destination> get _remainingCheckpoints => _itineraryCheckpoints
+      .where((c) => !_visitedIds.contains(c.id))
+      .toList();
 
   List<Destination> get _itineraryCheckpoints {
     final ids = _itineraryIds;
@@ -221,10 +239,16 @@ class _MapPageState extends State<MapPage> {
     _positionSub = Geolocator.getPositionStream(
       locationSettings: buildLocationSettings(distanceFilter: 15),
     ).listen(_applyPosition);
+    _routeRefreshTimer?.cancel();
+    _routeRefreshTimer = Timer.periodic(
+      _routeRefreshInterval,
+      (_) => unawaited(_computeRoute()),
+    );
   }
 
   void _applyPosition(Position position) {
     if (!mounted) return;
+    late bool reachedNewStop;
     setState(() {
       _origin = Destination(
         id: _myLocationDestinationId,
@@ -234,8 +258,13 @@ class _MapPageState extends State<MapPage> {
         lat: position.latitude,
         lon: position.longitude,
       );
-      _updateVisitedProgress(position);
+      reachedNewStop = _updateVisitedProgress(position);
     });
+    // Outside setState (not inside it) since this kicks off an async
+    // request of its own - the remaining path just changed shape (one
+    // fewer stop to route through), so the "next stop"/"remaining" figures
+    // would otherwise sit stale until the next periodic refresh.
+    if (reachedNewStop) unawaited(_computeRoute());
   }
 
   // A checkpoint counts as visited once the user has physically come within
@@ -243,7 +272,8 @@ class _MapPageState extends State<MapPage> {
   // just passing nearby on the way to somewhere else.
   static const double _visitRadiusMeters = 120;
 
-  void _updateVisitedProgress(Position position) {
+  bool _updateVisitedProgress(Position position) {
+    var reachedNewStop = false;
     for (final checkpoint in _itineraryCheckpoints) {
       if (_visitedIds.contains(checkpoint.id)) continue;
       final distance = Geolocator.distanceBetween(
@@ -252,8 +282,12 @@ class _MapPageState extends State<MapPage> {
         checkpoint.lat!,
         checkpoint.lon!,
       );
-      if (distance <= _visitRadiusMeters) _visitedIds.add(checkpoint.id);
+      if (distance <= _visitRadiusMeters) {
+        _visitedIds.add(checkpoint.id);
+        reachedNewStop = true;
+      }
     }
+    return reachedNewStop;
   }
 
   Future<void> _selectItinerary() async {
@@ -349,6 +383,7 @@ class _MapPageState extends State<MapPage> {
 
   void _leaveItineraryMode() {
     unawaited(_positionSub?.cancel());
+    _routeRefreshTimer?.cancel();
     setState(() {
       _itineraryIds = null;
       _itineraryTitle = null;
@@ -364,6 +399,7 @@ class _MapPageState extends State<MapPage> {
   void dispose() {
     _searchController.dispose();
     unawaited(_positionSub?.cancel());
+    _routeRefreshTimer?.cancel();
     super.dispose();
   }
 
@@ -762,7 +798,7 @@ class _MapPageState extends State<MapPage> {
     final origin = _origin;
     if (origin == null || !origin.hasCoordinates) return null;
     if (_isItineraryMode) {
-      final checkpoints = _itineraryCheckpoints;
+      final checkpoints = _remainingCheckpoints;
       if (checkpoints.isEmpty) return null;
       return [origin, ...checkpoints];
     }
@@ -1048,7 +1084,15 @@ class _MapPageState extends State<MapPage> {
                 Positioned(
                   top: topInset,
                   left: 16,
-                  child: _progressPill(l10n, visitedCount, checkpoints.length),
+                  right: 88,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _progressPill(l10n, visitedCount, checkpoints.length),
+                      const SizedBox(height: 8),
+                      _nextStopPill(l10n),
+                    ],
+                  ),
                 ),
               Positioned(
                 top: topInset,
@@ -1104,6 +1148,62 @@ class _MapPageState extends State<MapPage> {
           const SizedBox(width: 6),
           Text(
             l10n.mapItineraryProgress(visited, total),
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w700,
+              fontSize: 12.5,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // The always-visible "how far to my next stop" pill - the one figure
+  // worth surfacing without opening the details panel, since it's what
+  // actually answers "should I keep going this way" while mid-route. Sits
+  // right under the progress pill; shows nothing once there's no next leg
+  // to report (route still loading for the first time, or every stop has
+  // already been reached).
+  Widget _nextStopPill(AppLocalizations l10n) {
+    final nextLeg = _route?.legs.isNotEmpty == true ? _route!.legs.first : null;
+    if (_remainingCheckpoints.isEmpty && _visitedIds.isNotEmpty) {
+      return GlassPanel(
+        style: GlassPanelStyle.solid,
+        borderRadius: BorderRadius.circular(999),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.celebration, size: 16, color: Colors.white),
+            const SizedBox(width: 6),
+            Text(
+              l10n.mapItineraryCompleteLabel,
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w700,
+                fontSize: 12.5,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+    if (nextLeg == null) return const SizedBox.shrink();
+    return GlassPanel(
+      style: GlassPanelStyle.solid,
+      borderRadius: BorderRadius.circular(999),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.near_me, size: 16, color: Colors.white),
+          const SizedBox(width: 6),
+          Text(
+            l10n.mapNextStopSummary(
+              _formatDistance(nextLeg.distanceMeters),
+              formatDuration(Duration(seconds: nextLeg.durationSeconds.round())),
+            ),
             style: const TextStyle(
               color: Colors.white,
               fontWeight: FontWeight.w700,
@@ -1349,6 +1449,18 @@ class _MapPageState extends State<MapPage> {
           ],
           if (_route != null) ...[
             const SizedBox(height: 10),
+            if (_isItineraryMode) ...[
+              Text(
+                l10n.mapRemainingLabel,
+                style: const TextStyle(
+                  color: Colors.white54,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.4,
+                ),
+              ),
+              const SizedBox(height: 4),
+            ],
             Row(
               children: [
                 const Icon(Icons.straighten, size: 15, color: Colors.white70),
