@@ -10,6 +10,7 @@
       navExplore: 'Explore Yaoundé',
       navFeatures: 'Features',
       navStats: 'Stats',
+      navQr: 'QR Code',
       navApi: 'API',
       navCommunity: 'Community',
 
@@ -90,12 +91,19 @@
       sharedPlanYourOwn: 'Plan your own trip',
       sharedLoadError: "This shared itinerary doesn't exist or is no longer available.",
       sharedEmpty: 'This itinerary has no stops yet.',
+
+      qrEyebrow: 'Print & share',
+      qrTitle: 'Scan to visit trip_io',
+      qrSub: 'A ready-to-print card for flyers, posters, or a table tent - point a phone camera at it to land straight on the site.',
+      qrPrintButton: 'Print this card',
+      qrDownloadButton: 'Download QR image',
     },
     fr: {
       navGetApp: "Télécharger l'app",
       navExplore: 'Explorer Yaoundé',
       navFeatures: 'Fonctionnalités',
       navStats: 'Statistiques',
+      navQr: 'Code QR',
       navApi: 'API',
       navCommunity: 'Communauté',
 
@@ -176,6 +184,12 @@
       sharedPlanYourOwn: 'Planifiez votre propre voyage',
       sharedLoadError: "Cet itinéraire partagé n'existe pas ou n'est plus disponible.",
       sharedEmpty: "Cet itinéraire n'a pas encore d'arrêts.",
+
+      qrEyebrow: 'Imprimer et partager',
+      qrTitle: 'Scannez pour visiter trip_io',
+      qrSub: 'Une carte prête à imprimer pour des flyers, affiches ou chevalets de table - pointez un téléphone dessus pour arriver directement sur le site.',
+      qrPrintButton: 'Imprimer cette carte',
+      qrDownloadButton: 'Télécharger le code QR',
     },
   };
 

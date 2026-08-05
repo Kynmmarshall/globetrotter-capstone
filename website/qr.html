@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>trip_io — Scan to Visit</title>
+  <meta name="description" content="A printable QR code card linking straight to trip_io - scan to visit the site on your phone." />
+  <link rel="icon" href="assets/logo.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <div class="ambient-blobs" aria-hidden="true"><span></span><span></span><span></span></div>
+
+  <nav class="nav">
+    <a href="/" class="nav-brand">
+      <img src="assets/logo.png" alt="trip_io logo" />
+      <span><span class="trip">trip</span><span class="io">_io</span></span>
+    </a>
+    <div class="nav-right">
+      <div class="nav-links" id="nav-links">
+        <a href="/#downloads" data-i18n="navGetApp">Get the app</a>
+        <a href="/#explore" data-i18n="navExplore">Explore Yaoundé</a>
+        <a href="/#features" data-i18n="navFeatures">Features</a>
+        <a href="/stats.html" data-i18n="navStats">Stats</a>
+      </div>
+      <div class="lang-toggle" role="group" aria-label="Language">
+        <button type="button" class="lang-btn" data-lang="en">EN</button>
+        <button type="button" class="lang-btn" data-lang="fr">FR</button>
+      </div>
+      <button type="button" class="nav-toggle" id="nav-toggle" data-i18n-aria-label="menuLabel" aria-label="Menu" aria-expanded="false" aria-controls="nav-links">
+        <svg viewBox="0 0 24 24" width="22" height="22"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+      </button>
+    </div>
+  </nav>
+
+  <main>
+    <div class="container qr-page">
+      <p class="qr-eyebrow" data-i18n="qrEyebrow">Print &amp; share</p>
+      <h1 data-i18n="qrTitle">Scan to visit trip_io</h1>
+      <p class="qr-sub" data-i18n="qrSub">A ready-to-print card for flyers, posters, or a table tent - point a phone camera at it to land straight on the site.</p>
+
+      <div class="qr-card" id="qr-card">
+        <div class="qr-card-bar"></div>
+        <div class="qr-card-brand">trip-io</div>
+        <div class="qr-card-label">SCAN TO VISIT</div>
+        <div class="qr-card-frame">
+          <img src="assets/qr-trip-io.png" alt="QR code linking to trip-io.duckdns.org" width="480" height="480" />
+        </div>
+        <div class="qr-card-url">trip-io.duckdns.org</div>
+      </div>
+
+      <div class="qr-actions">
+        <button type="button" class="btn btn-primary" id="qr-print-btn">
+          <span data-i18n="qrPrintButton">Print this card</span>
+        </button>
+        <a class="btn btn-ghost" href="assets/qr-trip-io.png" download="trip-io-qr-code.png">
+          <span data-i18n="qrDownloadButton">Download QR image</span>
+        </a>
+      </div>
+    </div>
+  </main>
+
+  <footer class="qr-hide-on-print">
+    <div class="container">
+      <div class="footer-brand">
+        <img src="assets/logo.png" alt="trip_io" />
+        <span>trip_io</span>
+      </div>
+      <p><span data-i18n="footerBuilt">Built for Yaoundé, Cameroon.</span> &copy; <span id="year"></span> trip_io.</p>
+    </div>
+  </footer>
+
+  <script src="i18n.js"></script>
+  <script src="script.js"></script>
+  <script>
+    document.getElementById('qr-print-btn').addEventListener('click', () => window.print());
+  </script>
+</body>
+</html>
