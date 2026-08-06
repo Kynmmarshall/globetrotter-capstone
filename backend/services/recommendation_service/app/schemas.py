@@ -23,6 +23,12 @@ class Destination(BaseModel):
     nearby: Optional[List[NearbyPlace]] = None
     opening_hours: Optional[str] = None
     entry_fee: Optional[str] = None
+    # A compact "$" / "$$" / "$$$" affordability tier, shown as a small tag
+    # on destination cards - deliberately separate from entry_fee, which is
+    # free-text detail (e.g. "Mains 3,000-8,000 XAF") too long for a card
+    # badge and shown in the detail page's "Good to know" section instead.
+    # Null means unknown/not applicable (most free landmarks).
+    price_tier: Optional[str] = None
     tips: Optional[str] = None
     status: Optional[str] = "approved"
     submitted_by: Optional[str] = None
@@ -43,6 +49,7 @@ class DestinationSubmit(BaseModel):
     image_url: Optional[str] = None
     opening_hours: Optional[str] = None
     entry_fee: Optional[str] = None
+    price_tier: Optional[str] = None
     tips: Optional[str] = None
 
 
@@ -57,6 +64,7 @@ class DestinationUpdate(BaseModel):
     image_url: Optional[str] = None
     opening_hours: Optional[str] = None
     entry_fee: Optional[str] = None
+    price_tier: Optional[str] = None
     tips: Optional[str] = None
     status: Optional[str] = None
 
