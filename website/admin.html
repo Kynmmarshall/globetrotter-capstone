@@ -104,6 +104,14 @@
       </label>
       <label><span>Opening hours</span><input type="text" id="f-hours" /></label>
       <label><span>Entry fee</span><input type="text" id="f-fee" /></label>
+      <label><span>Price tier</span>
+        <select id="f-price-tier">
+          <option value="">Not set</option>
+          <option value="$">$ - budget</option>
+          <option value="$$">$$ - mid-range</option>
+          <option value="$$$">$$$ - upscale</option>
+        </select>
+      </label>
       <label><span>Tips</span><textarea id="f-tips" rows="2"></textarea></label>
       <p class="admin-error" id="edit-error" hidden></p>
       <div class="admin-dialog-actions">

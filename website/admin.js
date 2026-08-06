@@ -306,6 +306,7 @@
     setImagePreview(dest?.image_url || null);
     el('f-hours').value = dest?.opening_hours || '';
     el('f-fee').value = dest?.entry_fee || '';
+    el('f-price-tier').value = dest?.price_tier || '';
     el('f-tips').value = dest?.tips || '';
     showError(el('edit-error'), '');
     el('edit-dialog').showModal();
@@ -358,6 +359,7 @@
       tags: el('f-tags').value.split(',').map((t) => t.trim()).filter(Boolean),
       opening_hours: el('f-hours').value.trim() || null,
       entry_fee: el('f-fee').value.trim() || null,
+      price_tier: el('f-price-tier').value || null,
       tips: el('f-tips').value.trim() || null,
     };
     try {
