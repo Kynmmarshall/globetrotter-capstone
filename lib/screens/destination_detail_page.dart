@@ -13,6 +13,7 @@ import 'package:trip_io/widgets/add_to_itinerary_button.dart';
 import 'package:trip_io/widgets/directions_button.dart';
 import 'package:trip_io/widgets/favorite_toggle_button.dart';
 import 'package:trip_io/widgets/glass_panel.dart';
+import 'package:trip_io/widgets/price_tier_tag.dart';
 import 'package:trip_io/widgets/star_rating.dart';
 
 class DestinationDetailPage extends StatefulWidget {
@@ -730,6 +731,13 @@ class _DestinationDetailPageState extends State<DestinationDetailPage> {
                                           ),
                                         ),
                                       ),
+                                      if (destination.priceTier != null) ...[
+                                        const SizedBox(width: 8),
+                                        PriceTierTag(
+                                          priceTier: destination.priceTier!,
+                                          large: true,
+                                        ),
+                                      ],
                                     ],
                                   ),
                                   if (destination.tags.isNotEmpty) ...[
