@@ -12,6 +12,7 @@ import 'package:trip_io/widgets/favorite_toggle_button.dart';
 import 'package:trip_io/widgets/feature_pill.dart';
 import 'package:trip_io/widgets/glass_panel.dart';
 import 'package:trip_io/widgets/new_comments_badge.dart';
+import 'package:trip_io/widgets/price_tier_tag.dart';
 import 'package:trip_io/widgets/session_expired_card.dart';
 import 'package:trip_io/widgets/skeleton_loaders.dart';
 import 'package:trip_io/widgets/star_rating.dart';
@@ -188,6 +189,10 @@ class _FavoritesPageState extends State<FavoritesPage> {
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
+                        if (item.priceTier != null) ...[
+                          PriceTierTag(priceTier: item.priceTier!),
+                          const SizedBox(width: 6),
+                        ],
                         CommentCountButton(
                           session: widget.session,
                           destination: item,

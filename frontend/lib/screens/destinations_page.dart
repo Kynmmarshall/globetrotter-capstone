@@ -14,6 +14,7 @@ import 'package:trip_io/widgets/favorite_toggle_button.dart';
 import 'package:trip_io/widgets/glass_panel.dart';
 import 'package:trip_io/widgets/interest_tag_picker.dart';
 import 'package:trip_io/widgets/new_comments_badge.dart';
+import 'package:trip_io/widgets/price_tier_tag.dart';
 import 'package:trip_io/widgets/session_expired_card.dart';
 import 'package:trip_io/widgets/skeleton_loaders.dart';
 import 'package:trip_io/widgets/star_rating.dart';
@@ -253,15 +254,26 @@ class _DestinationsPageState extends State<DestinationsPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      d.name,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w800,
-                        fontSize: 16,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            d.name,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w800,
+                              fontSize: 16,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        if (d.priceTier != null) ...[
+                          const SizedBox(width: 6),
+                          PriceTierTag(priceTier: d.priceTier!),
+                        ],
+                      ],
                     ),
                     if (d.hasRatings) ...[
                       const SizedBox(height: 4),

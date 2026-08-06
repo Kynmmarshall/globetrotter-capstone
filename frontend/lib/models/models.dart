@@ -44,6 +44,7 @@ class Destination {
     this.nearby = const [],
     this.openingHours,
     this.entryFee,
+    this.priceTier,
     this.tips,
     this.status = 'approved',
     this.submittedBy,
@@ -65,6 +66,12 @@ class Destination {
   final List<NearbyPlace> nearby;
   final String? openingHours;
   final String? entryFee;
+
+  /// A compact "$" / "$$" / "$$$" affordability tag for cards - separate
+  /// from [entryFee], which is free-text detail (e.g. "Mains 3,000-8,000
+  /// XAF") too long for a small badge. Null means unknown/not applicable
+  /// (most free landmarks).
+  final String? priceTier;
   final String? tips;
   final String status; // "approved" | "pending" | "rejected"
   final String? submittedBy;
@@ -107,6 +114,7 @@ class Destination {
           .toList(),
       openingHours: optionalString('opening_hours'),
       entryFee: optionalString('entry_fee'),
+      priceTier: optionalString('price_tier'),
       tips: optionalString('tips'),
       status: (json['status'] ?? 'approved').toString(),
       submittedBy: optionalString('submitted_by'),
@@ -137,6 +145,7 @@ class Destination {
       nearby: nearby,
       openingHours: openingHours,
       entryFee: entryFee,
+      priceTier: priceTier,
       tips: tips,
       status: status,
       submittedBy: submittedBy,
