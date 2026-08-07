@@ -45,10 +45,14 @@ OVERPASS_URLS = (
     "https://overpass.kumi.systems/api/interpreter",
 )
 
-# south, west, north, east - identical to discover_destinations.py's
-# YAOUNDE_BBOX, so "nearby amenities" and "where the app's own curated
-# destinations are" are drawn from the same understanding of "Yaoundé."
-YAOUNDE_BBOX = (3.75, 11.40, 3.95, 11.62)
+# south, west, north, east - wide enough to cover the whole Yaoundé urban
+# area including outlying quartiers/towns like Olembé and Soa (destinations
+# d63 Stade Paul Biya at 3.9509 and d64 Kaela Café at 3.9675 both sit north
+# of the old 3.95 bound), not just the tighter historic-center box
+# discover_destinations.py uses for its own offline curation query.
+# Deliberately still excludes genuine remote outliers like Mefou National
+# Park (~45km south, lon 11.93) - that's not walkable/drivable "nearby."
+YAOUNDE_BBOX = (3.75, 11.40, 3.99, 11.65)
 
 _RETRYABLE_STATUSES = {429, 500, 502, 503, 504}
 _RETRY_DELAYS = (0.5, 1.5)
@@ -62,7 +66,9 @@ BACKGROUND_REFRESH_INTERVAL_SECONDS = 6 * 60 * 60
 # Generous but not unbounded - a bbox this size can genuinely have
 # hundreds of banks/hotels/pharmacies, and per-category legend filtering
 # (not a smaller result set) is how the UI keeps that from being clutter.
-_RESULT_CAP = 800
+# The expanded bbox (Soa/Olembé coverage) measured ~995 real elements, so
+# this leaves real headroom rather than sitting right at the true count.
+_RESULT_CAP = 1500
 
 # overpass-api.de (and mirrors) reject requests with no/generic Accept
 # header (406) - same headers discover_destinations.py already found
