@@ -6,8 +6,9 @@ from fastapi import FastAPI, File, HTTPException, Depends, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
-from . import ai, clients, crud, events, events_consumer, routing
+from . import ai, amenities, clients, crud, events, events_consumer, routing
 from .schemas import (
+    Amenity,
     Destination,
     DestinationSubmit,
     DestinationUpdate,
@@ -35,8 +36,9 @@ app.add_middleware(
 
 
 @app.on_event("startup")
-def _startup():
+async def _startup():
     events_consumer.start_background_consumer()
+    amenities.start_background_refresh()
 
 
 _static_dir = Path(__file__).resolve().parents[1] / "static"
@@ -360,6 +362,29 @@ async def get_route(payload: RouteRequest, user: str = Depends(get_current_user)
     except routing.RoutingRequestError:
         raise HTTPException(status_code=502, detail="Routing service is temporarily unavailable")
     return result
+
+
+# ---------- Amenities ----------
+
+
+@app.get("/amenities", response_model=list[Amenity])
+async def get_amenities(
+    categories: str | None = None,
+    user: str | None = Depends(get_optional_user),
+):
+    requested = set(categories.split(",")) if categories else amenities.ALLOWED_CATEGORIES
+    selected = sorted(requested & amenities.ALLOWED_CATEGORIES)
+    if not selected:
+        return []
+    try:
+        # get_amenities() is designed to never raise - it serves the last
+        # cached result (memory, then disk) and only returns [] if nothing
+        # has ever been successfully fetched. The try/except here is
+        # defense in depth, not the primary reliability mechanism - see
+        # amenities.py's module docstring for that story.
+        return await amenities.get_amenities(selected)
+    except amenities.AmenitiesRequestError:
+        return []
 
 
 # ---------- Internal (service-to-service only, never through the Gateway) ----------
