@@ -36,8 +36,9 @@ app.add_middleware(
 
 
 @app.on_event("startup")
-def _startup():
+async def _startup():
     events_consumer.start_background_consumer()
+    amenities.start_background_refresh()
 
 
 _static_dir = Path(__file__).resolve().parents[1] / "static"
@@ -376,11 +377,13 @@ async def get_amenities(
     if not selected:
         return []
     try:
+        # get_amenities() is designed to never raise - it serves the last
+        # cached result (memory, then disk) and only returns [] if nothing
+        # has ever been successfully fetched. The try/except here is
+        # defense in depth, not the primary reliability mechanism - see
+        # amenities.py's module docstring for that story.
         return await amenities.get_amenities(selected)
     except amenities.AmenitiesRequestError:
-        # Best-effort map overlay, not a blocking feature - the failure is
-        # already logged inside amenities.py, so the map just shows nothing
-        # rather than an error state.
         return []
 
 

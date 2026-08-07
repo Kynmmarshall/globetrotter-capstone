@@ -2,30 +2,35 @@
 hotels, banks/ATMs, police) via the public OpenStreetMap Overpass API -
 same data source already used offline by
 trip_io_backend/scripts/discover_destinations.py (including its exact
-YAOUNDE_BBOX), but this is the first time it's queried live inside a
-running request, and it always covers that whole urban area rather than a
-radius around one point - the point is to show what's reachable near any
-of the app's destinations, not just whichever one happens to be focused.
+YAOUNDE_BBOX), always covering that whole urban area rather than a radius
+around one point - the point is to show what's reachable near any of the
+app's destinations, not just whichever one happens to be focused.
 
-That live-vs-offline distinction matters: overpass-api.de is a shared,
-rate-limited public instance, fine for a one-shot curation script but not
-something a live user-facing feature can depend on being fast or even up -
-confirmed in practice (it 504'd during development while a public mirror
-answered the same query fine), which is why OVERPASS_URLS tries more than
-one host. This module treats every result as best-effort - callers should
-degrade to an empty list on failure (see main.py's /amenities endpoint)
-rather than surfacing an error - and an in-memory cache means the whole
-city is only ever actually queried once per TTL window, not once per
-request.
+Reliability is handled in two layers, because a live third-party API in a
+user-facing request path turned out to fail in practice (overpass-api.de
+504'd during development while a mirror answered the same query fine):
 
-The in-memory cache is only correct because this service runs a single
-uvicorn worker (see Dockerfile - no --workers flag); if that ever changes,
-each worker would keep its own copy and the cache would quietly get less
-effective, not incorrect.
+1. OVERPASS_URLS tries more than one host, in order, before giving up.
+2. The last successful full result is persisted to disk (see
+   _cache_file_path) and kept in memory - a background task refreshes it
+   periodically, and get_amenities() always serves whatever's cached rather
+   than making a live call in the request path. Hospitals/pharmacies/hotels
+   are static infrastructure; a few hours (or even days) old is
+   functionally identical to fresh, and it means an Overpass outage now
+   means "possibly slightly stale," never "empty," except on the very
+   first request the service has ever handled with no disk cache yet.
+
+The in-memory half of this is only correct because this service runs a
+single uvicorn worker (see Dockerfile - no --workers flag); if that ever
+changes, each worker would keep its own copy and refresh independently -
+still correct, just redundant work, not a bug.
 """
 import asyncio
+import json
 import logging
+import os
 import time
+from pathlib import Path
 
 import httpx
 
@@ -47,7 +52,13 @@ YAOUNDE_BBOX = (3.75, 11.40, 3.95, 11.62)
 
 _RETRYABLE_STATUSES = {429, 500, 502, 503, 504}
 _RETRY_DELAYS = (0.5, 1.5)
-_CACHE_TTL_SECONDS = 30 * 60
+
+# How often the background task tries to refresh the persisted result -
+# deliberately hours, not minutes: this data barely changes day to day, and
+# the whole point is to stop depending on Overpass being reachable at the
+# moment a user opens the map.
+BACKGROUND_REFRESH_INTERVAL_SECONDS = 6 * 60 * 60
+
 # Generous but not unbounded - a bbox this size can genuinely have
 # hundreds of banks/hotels/pharmacies, and per-category legend filtering
 # (not a smaller result set) is how the UI keeps that from being clutter.
@@ -88,21 +99,49 @@ _CATEGORY_FALLBACK_NAME = {
 
 class AmenitiesRequestError(Exception):
     """Every configured Overpass host is unreachable/erroring after
-    retries. Callers should degrade to an empty list rather than surface
-    this - see main.py."""
+    retries. Internal to this module - get_amenities() never raises this;
+    it degrades to whatever's cached (see module docstring)."""
 
 
-# cache key -> (expires_at_monotonic, results)
-_cache: dict[tuple, tuple[float, list[dict]]] = {}
+# The authoritative "last known good" result, all categories, in memory.
+# None means "never successfully fetched or loaded from disk this run."
+_all_amenities: list[dict] | None = None
+_background_task: asyncio.Task | None = None
 
 
-def _cache_key(categories: list[str]) -> tuple:
-    return tuple(sorted(categories))
+def _cache_file_path() -> Path:
+    env_path = os.getenv("AMENITIES_CACHE_PATH")
+    if env_path:
+        return Path(env_path)
+    return Path(__file__).resolve().parents[1] / "data" / "amenities_cache.json"
 
 
-def _build_query(categories: list[str]) -> str:
+def _read_disk_cache() -> list[dict] | None:
+    path = _cache_file_path()
+    if not path.exists():
+        return None
+    try:
+        with open(path, encoding="utf-8") as f:
+            payload = json.load(f)
+        return payload.get("results")
+    except (OSError, ValueError) as exc:
+        logger.warning("Could not read amenities disk cache at %s: %s", path, exc)
+        return None
+
+
+def _write_disk_cache(results: list[dict]) -> None:
+    path = _cache_file_path()
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump({"fetched_at": time.time(), "results": results}, f, indent=2, ensure_ascii=False)
+    except OSError as exc:
+        logger.warning("Could not write amenities disk cache at %s: %s", path, exc)
+
+
+def _build_query() -> str:
     bbox = ",".join(str(v) for v in YAOUNDE_BBOX)
-    clauses = "\n".join(f"  {CATEGORY_TAGS[c]}({bbox});" for c in categories)
+    clauses = "\n".join(f"  {tag}({bbox});" for tag in CATEGORY_TAGS.values())
     return f"[out:json][timeout:30];\n(\n{clauses}\n);\nout center {_RESULT_CAP};"
 
 
@@ -148,17 +187,53 @@ def _normalize(el: dict) -> dict | None:
     }
 
 
-async def get_amenities(categories: list[str]) -> list[dict]:
-    key = _cache_key(categories)
-    cached = _cache.get(key)
-    if cached and cached[0] > time.monotonic():
-        return cached[1]
+async def _refresh_all() -> bool:
+    """Fetches every category fresh from Overpass and, on success, updates
+    both the in-memory and disk caches. Never raises - a failure just
+    leaves whatever was cached before untouched. Returns whether it
+    succeeded, purely for logging/tests."""
+    global _all_amenities
+    try:
+        elements = await _request_with_retries(_build_query())
+    except AmenitiesRequestError as exc:
+        logger.warning("Amenities refresh failed, keeping last known data: %s", exc)
+        return False
+    _all_amenities = [n for n in (_normalize(el) for el in elements) if n is not None]
+    _write_disk_cache(_all_amenities)
+    return True
 
-    query = _build_query(categories)
-    elements = await _request_with_retries(query)
-    results = [n for n in (_normalize(el) for el in elements) if n is not None]
-    _cache[key] = (time.monotonic() + _CACHE_TTL_SECONDS, results)
-    return results
+
+async def get_amenities(categories: list[str]) -> list[dict]:
+    global _all_amenities
+    if _all_amenities is None:
+        _all_amenities = _read_disk_cache()
+    if _all_amenities is None:
+        # Cold start with no disk cache at all (e.g. first deploy ever, or
+        # the background task hasn't completed its first pass yet) - one
+        # inline attempt as a last resort so this doesn't just stay empty
+        # forever. _refresh_all() degrades silently, and _all_amenities
+        # simply stays None if this also fails.
+        await _refresh_all()
+    if _all_amenities is None:
+        return []
+    return [a for a in _all_amenities if a["category"] in categories]
+
+
+async def _refresh_loop() -> None:
+    while True:
+        await _refresh_all()
+        await asyncio.sleep(BACKGROUND_REFRESH_INTERVAL_SECONDS)
+
+
+def start_background_refresh() -> None:
+    """Called once from main.py's startup hook. Immediately attempts a
+    refresh (so a stale disk cache from a previous deploy gets updated
+    right away rather than waiting a full interval), then repeats on
+    BACKGROUND_REFRESH_INTERVAL_SECONDS."""
+    global _background_task
+    if _background_task is not None:
+        return
+    _background_task = asyncio.create_task(_refresh_loop())
 
 
 async def _request_with_retries(query: str) -> list[dict]:
