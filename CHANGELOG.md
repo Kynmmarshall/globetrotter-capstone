@@ -13,6 +13,26 @@ Planned for **Phase 3: Cloud Deployment** — see [README → Roadmap](README.md
 - Load balancing and auto-scaling across multiple instances of each service.
 - Cut the live deployment over from the Phase 1 monolith to the Phase 2 microservices stack.
 
+## [0.23.0] - 2026-08-07 — Live nearby amenities
+
+- Added `GET /amenities` (recommendation_service): live lookup of nearby hospitals, pharmacies, fuel stations, hotels, banks/ATMs, and police stations across the whole Yaoundé urban area, sourced from the public OpenStreetMap Overpass API (no API key needed).
+- Reliability is handled in two layers: multiple Overpass hosts are tried in order before giving up, and the last successful result is cached to disk and refreshed periodically in the background — requests are always served from cache rather than making a live call inline, so an Overpass outage degrades to "possibly slightly stale," never "empty."
+- Displayed on the map with localized category labels and icons.
+- Expanded the Yaoundé bounding box for wider coverage, raised the result cap, and optimized fetching to reduce redundant network calls.
+
+## [0.22.0] - 2026-08-05 to 2026-08-06 — Price tiers, per-leg directions & marketing QR page
+
+- Added a `price_tier` field to destinations (admin-editable), surfaced in the app via a `PriceTierTag` widget.
+- `/route` now returns a per-leg breakdown (`legs`), not just one combined total — e.g. current-position → stop A and stop A → stop B are reported separately, so the app can show distance/duration for each hop of a multi-stop trip.
+- Added `InterestTagPicker`, a shared, scrollable widget for consistent interest-tag selection across every screen that needed one, and added a `fitness` interest tag.
+- Added a printable/downloadable QR code page to the marketing website (`website/qr.html`) linking to the app, for offline promotion (flyers, posters).
+- Added several new restaurants, nightclubs, and hotels to the destination catalog.
+
+## [0.21.0] - 2026-08-04 — Language-aware AI & the monolith's retirement
+
+- The AI assistant (`/ai/chat`, `/ai/explain/{id}`) now takes an explicit `language_code`, answering strictly in English or French when the app's language is set, instead of only inferring the reply language from what the user typed.
+- **The Phase 1 monolith (`backend/app/`) has been fully removed.** The Phase 2 microservices stack — Gateway + User/Itinerary/Recommendation services + RabbitMQ — now runs the entire live deployment; the monolith's code, Dockerfile, and `docker-compose.yml` are deleted from the repo rather than kept as unused dead weight. See [README → Architecture](README.md#architecture) and [→ Roadmap](README.md#roadmap).
+
 ## [0.20.0] - 2026-08-03 — Maps, directions & smarter recommendations
 
 - Added retry-with-backoff to Recommendation Service's OpenRouteService calls: transient failures (timeouts, 5xx) get a couple of quick retries before giving up, while non-retryable errors (e.g. a bad request) fail immediately instead of burning through retry attempts pointlessly. Added matching error handling and tests for the routing service.

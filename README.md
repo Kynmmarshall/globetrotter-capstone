@@ -4,26 +4,23 @@ GlobeTrotter is a full-stack travel assistant that lets users search destination
 
 | Project | Description | Stack |
 |---|---|---|
-| [`backend/`](backend/) | Phase 1 monolith (`app/`, still the live deployment) **and** the Phase 2 microservices stack (`gateway/`, `services/`) | Python, FastAPI, JWT |
+| [`backend/`](backend/) | API Gateway + 3 microservices (User, Itinerary, Recommendation) behind RabbitMQ | Python, FastAPI, JWT |
 | [`frontend/`](frontend/) | Cross-platform client (mobile, web, desktop) | Flutter/Dart |
 
-> **Course context:** This is a semester-long capstone (CS 4122) that progresses through Monolith → Microservices → Cloud Deployment → Resilience. The repository now contains **both** the Phase 1 monolith and the Phase 2 microservices decomposition side by side: the monolith is still what's live in production, while the microservices stack (API Gateway + User/Itinerary/Recommendation services + RabbitMQ) is built, tested, and deployable via Docker, pending cutover. See [Phase 2: Microservices Stack](#phase-2-microservices-stack) below.
+> **Course context:** This is a semester-long capstone (CS 4122) that progresses through Monolith → Microservices → Cloud Deployment → Resilience. Phase 1 (a single FastAPI monolith) shipped first and ran the live deployment; Phase 2 decomposed it into an API Gateway and three independent services communicating over REST and RabbitMQ, running the exact same feature set. Once Phase 2 had proven itself in production, the Phase 1 monolith's code was retired from the repository rather than kept around unused — see [CHANGELOG.md](CHANGELOG.md) for that history.
 
 ## Live Deployment
 
-The Phase 1 monolith is deployed on a VPS and reachable at **[https://trip-io.duckdns.org](https://trip-io.duckdns.org)**. Client builds default to this URL, so `flutter run`/release builds work against the real API out of the box with no configuration required.
+The Phase 2 microservices stack is deployed on a VPS and reachable at **[https://trip-io.duckdns.org](https://trip-io.duckdns.org)**, running behind the API Gateway. Client builds default to this URL, so `flutter run`/release builds work against the real API out of the box with no configuration required.
 
 | Surface | URL | Notes |
 |---|---|---|
 | Marketing site + downloads | https://trip-io.duckdns.org | Landing page with Windows/Android download links |
 | Public stats | https://trip-io.duckdns.org/stats.html | Live visitor/usage stats (bilingual EN/FR), backed by `GET /stats/public` |
 | Web app | https://trip-io.duckdns.org/app/ | The Flutter app running directly in the browser |
-| API | https://trip-io.duckdns.org | Same host, serves `/register`, `/login`, `/destinations`, etc. |
-| API docs (Swagger UI) | https://trip-io.duckdns.org/docs | Interactive request/response reference |
+| API | https://trip-io.duckdns.org | Same host, serves `/register`, `/login`, `/destinations`, etc., proxied by the Gateway to whichever service owns each path |
 | Windows download | https://trip-io.duckdns.org/downloads/trip_io_windows.exe | Packaged desktop build |
 | Android download | https://trip-io.duckdns.org/downloads/trip_io.apk | Installable APK |
-
-This is currently served by the **Phase 1 monolith** via systemd + Nginx. The Phase 2 microservices stack (see below) is complete and Docker-deployable but has not yet been cut over to production — the two stacks run from the same `backend/` repo but are deployed independently, so switching is a deliberate decision, not an automatic side effect of pushing code.
 
 ---
 
@@ -40,7 +37,6 @@ This is currently served by the **Phase 1 monolith** via systemd + Nginx. The Ph
 - [Configuration](#configuration)
 - [Testing](#testing)
 - [Containers & CI/CD](#containers--cicd)
-- [Phase 2: Microservices Stack](#phase-2-microservices-stack)
 - [Data Storage](#data-storage)
 - [Roadmap](#roadmap)
 - [Contributing](#contributing)
@@ -50,69 +46,73 @@ This is currently served by the **Phase 1 monolith** via systemd + Nginx. The Ph
 
 ## Architecture
 
-The live production architecture (Phase 1 monolith):
+Four services behind a single public entry point — the Phase 2 microservices decomposition, now the only backend (the Phase 1 monolith it replaced was retired from the repo once this stack had proven itself in production; see [CHANGELOG.md](CHANGELOG.md)):
 
 ```
-                 ┌────────────────────────┐
-                 │   Flutter Client        │
-                 │  (Web / Android / iOS /  │
-                 │   Windows / macOS /Linux)│
-                 └───────────┬─────────────┘
-                             │ HTTPS (JSON, JWT bearer)
-                             ▼
-                 ┌────────────────────────┐
-                 │   FastAPI Monolith      │
-                 │  (backend/app)          │
-                 │  - Auth (JWT + bcrypt)  │
-                 │  - Destinations         │
-                 │  - Recommendations      │
-                 │  - Itineraries          │
-                 └───────────┬─────────────┘
-                             ▼
-                 ┌────────────────────────┐
-                 │  JSON file data store   │
-                 │  (backend/data/data.json)│
-                 └────────────────────────┘
+                        ┌────────────────────────┐
+                        │   Flutter Client /      │
+                        │   Website               │
+                        └───────────┬─────────────┘
+                                    │ HTTPS
+                                    ▼
+                        ┌────────────────────────┐
+                        │   API Gateway :8000     │  ← only public port
+                        │  (reverse proxy + site) │
+                        └──┬──────────┬─────────┬─┘
+                    ┌──────┘          │         └──────┐
+                    ▼                 ▼                ▼
+          ┌──────────────┐  ┌──────────────────┐  ┌────────────────────────┐
+          │ User Service │  │Itinerary Service  │  │ Recommendation Service │
+          │    :8001     │  │      :8002        │  │         :8003          │
+          │ auth/profile/│  │ itineraries,      │  │ destinations/ratings/  │
+          │ favorites,   │  │ sharing/claiming  │  │ comments/AI/routing/   │
+          │ notifications│  │                   │  │ admin/amenities        │
+          └──────┬───────┘  └─────────┬─────────┘  └───────────┬────────────┘
+                 │                     │                        │
+                 │   sync REST, X-Internal-Token   ◄─────────────┘
+                 │                     │
+                 └──────────┬──────────┴──────────────────────────┐
+                             ▼                                     ▼
+                   ┌──────────────────┐                 own JSON data file each
+                   │ RabbitMQ (async)  │◄── user.registered, itinerary.created,
+                   │ trip_io.events    │    destination.rated/approved/rejected
+                   └──────────────────┘
 ```
 
-The backend also serves a static marketing site and a compiled Flutter web build directly from FastAPI (`website/`, `website/app`, `website/downloads`), so the whole product can be hosted from a single process during Phase 1. See [Phase 2: Microservices Stack](#phase-2-microservices-stack) for the decomposed alternative that now also lives in this repo.
+- **Gateway** (`backend/gateway/`): the only port published to the host/internet (`8000`). Forwards requests to the owning service based on path (`gateway/app/proxy.py`'s routing table) — every external URL is unchanged from the old monolith's, so the Flutter app and website never had to change beyond repointing `API_BASE_URL`. Also serves the marketing site, `/downloads`, `/app`, and `/stats/public` directly, since none of those cleanly belong to one service.
+- **User Service** (`services/user_service/`): accounts, JWT + Google Sign-In auth, password reset (email), profile/avatar, favorites, notifications.
+- **Itinerary Service** (`services/itinerary_service/`): itinerary CRUD, sharing/claiming.
+- **Recommendation Service** (`services/recommendation_service/`): destination catalog + moderation, ratings, comments, interest-based recommendations, the AI assistant, routing, nearby amenities.
+- **Synchronous inter-service calls**: e.g. Recommendation Service reads from User Service and Itinerary Service over internal-only REST endpoints (`/internal/...`), authenticated with a shared `X-Internal-Token` header — never a user's JWT. The Gateway explicitly refuses to proxy anything under `/internal`.
+- **Asynchronous inter-service calls**: a RabbitMQ topic exchange (`trip_io.events`) carries domain events (`user.registered`, `itinerary.created`/`.updated`, `destination.rated`/`.approved`/`.rejected`). User Service's consumer turns moderation events into persisted notifications; publishing is fire-and-forget, so a RabbitMQ outage never fails the request that triggered the event.
+- **Per-service data**: each service owns its own JSON file (`users.json`, `itineraries.json`, `destinations.json`) — still JSON, not a real database, but no shared mutable state between services.
 
 ## Repository Structure
 
 ```
 globetrotter-capstone/
 ├── backend/
-│   ├── app/                  # Phase 1 monolith - still the live deployment
-│   │   ├── main.py           # Route definitions & app wiring
-│   │   ├── auth.py           # JWT issuing/validation, password hashing
-│   │   ├── crud.py           # Data access / business logic
-│   │   ├── data.py           # JSON-file read/write with a thread lock
-│   │   └── schemas.py        # Pydantic request/response models
-│   ├── gateway/               # Phase 2 - API Gateway (single public entry point)
+│   ├── gateway/               # API Gateway (single public entry point)
 │   │   └── app/
 │   │       ├── main.py        # Routing table wiring + website/static hosting
 │   │       ├── proxy.py       # Path-based reverse proxy to the 3 services
 │   │       └── stats.py       # /stats/public (Matomo + User Service user count)
-│   ├── services/              # Phase 2 - the 3 decomposed services
-│   │   ├── user_service/          # Auth, profile, interests, avatar, favorites
-│   │   ├── itinerary_service/     # Itinerary create/list/delete
-│   │   └── recommendation_service/  # Destinations, ratings, comments, AI, routing, admin
-│   ├── data/                 # Monolith's runtime JSON data store (gitignored)
-│   ├── scripts/               # migrate_data.py (monolith -> per-service data) + destination-discovery tooling
-│   ├── static/                # Monolith's uploaded/served assets (e.g. destination images)
-│   ├── website/               # Static marketing site + hosted web/app builds (shared by monolith & gateway)
-│   ├── tests/                 # Pytest + httpx API tests (each service also has its own tests/)
-│   ├── Dockerfile / docker-compose.yml                # Phase 1 monolith container
-│   ├── docker-compose.microservices.yml / update_microservices.sh  # Phase 2 stack
-│   └── requirements.txt
+│   ├── services/
+│   │   ├── user_service/          # Auth, profile, interests, avatar, favorites, notifications
+│   │   ├── itinerary_service/     # Itinerary CRUD, sharing/claiming
+│   │   └── recommendation_service/  # Destinations, ratings, comments, AI, routing, amenities, admin
+│   ├── scripts/               # migrate_data.py (historical) + destination-discovery tooling
+│   ├── website/               # Static marketing site + admin dashboard + hosted web/app builds
+│   ├── docker-compose.microservices.yml / update_microservices.sh
+│   └── README.md              # Backend-specific architecture/setup detail
 │
 └── frontend/                 # Flutter client ("trip_io")
     ├── lib/
     │   ├── main.dart / app.dart
-    │   ├── screens/           # Auth, dashboard, destinations, itineraries, profile
+    │   ├── screens/           # Auth, dashboard, destinations, itineraries, profile, notifications...
     │   ├── services/          # ApiClient, session controller, itinerary scheduler
     │   ├── models/            # Data models (incl. shared interest-tag vocabulary)
-    │   ├── themes/             # App theming
+    │   ├── themes/             # App theming (incl. light/dark)
     │   └── l10n/                # Localization (English, French)
     ├── assets/
     ├── Dockerfile / nginx.conf   # Web-release container image
@@ -124,10 +124,9 @@ globetrotter-capstone/
 
 | Tool | Version | Used for |
 |---|---|---|
-| [Python](https://www.python.org/) | 3.10+ | Backend API |
-| [pip](https://pip.pypa.io/) | latest | Backend dependencies |
+| [Docker](https://docs.docker.com/get-docker/) + Compose plugin | latest | Running the full backend stack (Gateway + 3 services + RabbitMQ) |
+| [Python](https://www.python.org/) | 3.10+ | Running/testing an individual backend service outside Docker |
 | [Flutter SDK](https://docs.flutter.dev/get-started/install) | 3.12+ (Dart ^3.12.1) | Frontend client |
-| A JSON-capable editor | — | Editing seed data |
 
 ## Getting Started
 
@@ -135,25 +134,27 @@ Clone the repository, then set up each project as described below. This is only 
 
 ### Backend Setup
 
+The whole backend is Docker Compose-based — there's no single process to `uvicorn --reload` anymore, since it's 4 services:
+
 ```powershell
 cd backend
-
-# Create and activate a virtual environment
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Run the API with hot reload
-uvicorn app.main:app --reload --port 8000
+docker compose -f docker-compose.microservices.yml up --build
 ```
 
-Once running:
+- Gateway (single public entry point, website, API): http://localhost:8000
+- Third-party API keys (Groq, ORS, Google OAuth, SMTP, Matomo) are all optional — each feature just reports "not configured" until set, rather than crashing its service. Set them via a `.env` file in `backend/` (gitignored); see [Configuration](#configuration).
 
-- Interactive API docs (Swagger UI): http://localhost:8000/docs
-- Alternative docs (ReDoc): http://localhost:8000/redoc
-- Static marketing site: http://localhost:8000/
+To iterate on a single service without Docker (faster reload loop), run it directly:
+
+```powershell
+cd backend/services/user_service   # or itinerary_service / recommendation_service / ../../gateway
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+uvicorn app.main:app --reload --port 8001   # match the service's port; see docker-compose.microservices.yml
+```
+
+Each service also exposes its own interactive API docs at `/docs` when run this way (e.g. http://localhost:8001/docs) — the production Gateway does **not** proxy `/docs`, so this is a local-dev-only convenience.
 
 ### Frontend Setup
 
@@ -187,7 +188,7 @@ The backend URL can also be changed at runtime from the app's login screen, so `
 
 ## API Reference
 
-Base URL: `https://trip-io.duckdns.org` (production) or `http://localhost:8000` (local dev). Every endpoint below is identical whether it's served by the Phase 1 monolith or the [Phase 2 Gateway](#phase-2-microservices-stack) — the decomposition preserves the exact same external API.
+Base URL: `https://trip-io.duckdns.org` (production) or `http://localhost:8000` (local dev, via the [Gateway](#architecture)).
 
 | Method | Path | Auth | Description |
 |---|---|---|---|
@@ -225,13 +226,14 @@ Base URL: `https://trip-io.duckdns.org` (production) or `http://localhost:8000` 
 | `POST`/`DELETE` | `/itineraries/{id}/share` | Bearer token | Create/revoke a public share link for an itinerary |
 | `GET` | `/shared/itineraries/{token}` | — | Public, unauthenticated view of a shared itinerary (trimmed, no viewer-specific data) |
 | `POST` | `/itineraries/claim/{token}` | Bearer token | Copy a shared itinerary into your own account |
-| `POST` | `/ai/chat` | Bearer token | Chat with the in-app AI travel assistant (Groq-backed, grounded in the real destination catalog) |
-| `POST` | `/ai/explain/{destination_id}` | Bearer token | Get (and cache) an AI-generated explanation of a destination |
+| `POST` | `/ai/chat` | Bearer token | Chat with the in-app AI travel assistant (Groq-backed, grounded in the real destination catalog); optional `language_code` (`en`/`fr`) forces the reply language |
+| `POST` | `/ai/explain/{destination_id}` | Bearer token | Get (and cache per language) an AI-generated explanation of a destination |
+| `GET` | `/amenities?categories=` | Bearer token | Nearby hospitals/pharmacies/fuel/hotels/banks/police across Yaoundé, live from OpenStreetMap (Overpass), disk-cached and refreshed in the background |
 | `GET` | `/stats/public` | — | Aggregated, anonymized usage stats (total users, active today/this week, 14-day daily-active series, top sections) for the public stats page, sourced from Matomo server-side and cached for 60s |
 | `GET`/`PATCH`/`POST`/`DELETE` | `/admin/destinations[/{id}]` | Bearer token (admin) | Review/approve/reject/edit, directly create, or delete destinations — restricted to accounts with `role: "admin"` in the data store |
-| `POST` | `/route` | Bearer token | Turn-by-turn directions between 2+ waypoints (`driving-car`/`foot-walking`/`cycling-regular`), proxied server-side to OpenRouteService |
+| `POST` | `/route` | Bearer token | Turn-by-turn directions through 2+ waypoints (`driving-car`/`foot-walking`/`cycling-regular`), with a per-leg distance/duration breakdown, proxied server-side to OpenRouteService (retried on transient failures) |
 
-Destinations also carry richer detail fields — `nearby` (nearby hotels/restaurants), `opening_hours`, `entry_fee`, `tips`, `lat`/`lon` coordinates, and a `comment_count` (used client-side to show a "new comments" indicator) — returned by both `/destinations` and `/recommendations`. The interest-tag vocabulary used for filtering/recommendations is kept in sync between backend seed data and [`frontend/lib/models/interest_tags.dart`](frontend/lib/models/interest_tags.dart). A destination's `status` (`approved`/`pending`/`rejected`) governs whether it's publicly visible; only `approved` destinations are returned by the public-facing endpoints. There's a lightweight, browser-based admin panel at `/admin.html` on the deployed site for moderating submissions — access is gated by JWT + the account's `role`, not a separate login.
+Destinations also carry richer detail fields — `nearby` (nearby hotels/restaurants), `opening_hours`, `entry_fee`, `tips`, `price_tier`, `lat`/`lon` coordinates, and a `comment_count` (used client-side to show a "new comments" indicator) — returned by both `/destinations` and `/recommendations`. The interest-tag vocabulary used for filtering/recommendations is kept in sync between backend seed data and [`frontend/lib/models/interest_tags.dart`](frontend/lib/models/interest_tags.dart). A destination's `status` (`approved`/`pending`/`rejected`) governs whether it's publicly visible; only `approved` destinations are returned by the public-facing endpoints. There's a lightweight, browser-based admin panel at `/admin.html` on the deployed site for moderating submissions — access is gated by JWT + the account's `role`, not a separate login.
 
 Authenticated requests must include:
 
@@ -254,39 +256,36 @@ curl -X POST http://localhost:8000/itineraries `
   -d '{"title":"Yaounde Weekend","destinations":["d1","d2"]}'
 ```
 
-Full request/response schemas are available live via the Swagger UI at `/docs`.
+Full request/response schemas are available live via each service's own Swagger UI when run locally (see [Backend Setup](#backend-setup)) — the production Gateway doesn't proxy `/docs`.
 
 ## Configuration
 
 ### Backend environment variables
 
-| Variable | Default | Purpose |
-|---|---|---|
-| `JWT_SECRET` | `dev-secret-change-me` | Secret used to sign/verify JWTs — **must** be overridden in any non-local environment |
-| `GLOBETROTTER_DATA_PATH` | `backend/data/data.json` | Path to the JSON data store (also used to isolate test runs) |
-| `MATOMO_URL` | `https://trip-io-analytics.duckdns.org` | Base URL of the Matomo instance queried for `/stats/public` |
-| `MATOMO_API_TOKEN` | *(unset)* | Matomo API token used server-side to fetch stats; without it, `/stats/public` degrades to zeros instead of failing |
-| `MATOMO_SITE_ID` | `1` | Matomo site ID to report on |
-| `GROQ_API_KEY` | *(unset)* | API key for Groq's chat completions API, powering `/ai/chat` and `/ai/explain`; without it, both endpoints return `503` |
-| `GROQ_MODEL` | `llama-3.3-70b-versatile` | Groq model used for the AI assistant |
-| `GOOGLE_OAUTH_CLIENT_ID` | *(unset)* | Expected audience for Google Sign-In ID tokens verified by `/auth/google`; without it, that endpoint returns `401` |
-| `ORS_API_KEY` | *(unset)* | API key for OpenRouteService, powering `/route`; without it, the endpoint fails with a "not configured" error |
-| `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASSWORD` / `SMTP_FROM_ADDRESS` | *(unset)*, `587` | SMTP credentials for delivering password-reset emails; without them, the reset code is logged server-side instead of emailed, so the flow stays testable |
-| `PUBLIC_SITE_URL` | `https://trip-io.duckdns.org` | Used to build the logo image URL embedded in password-reset emails |
+Every third-party integration below is optional — the feature it powers just reports "not configured" instead of crashing its service. Amenities (OpenStreetMap Overpass) needs no key at all.
 
-**Phase 2 microservices stack only** (see [Phase 2: Microservices Stack](#phase-2-microservices-stack)):
+| Variable | Default | Purpose | Service |
+|---|---|---|---|
+| `JWT_SECRET` | `dev-secret-change-me` | Signs/verifies JWTs — **must** be overridden in any non-local environment | shared |
+| `INTERNAL_SERVICE_TOKEN` | `dev-internal-token-change-me` | Shared secret authenticating service-to-service `/internal/*` calls — **must** be overridden in any non-local environment | shared |
+| `RABBITMQ_URL` | `amqp://guest:guest@localhost:5672/` | RabbitMQ connection string used to publish/consume domain events | shared |
+| `MATOMO_URL` | `https://trip-io-analytics.duckdns.org` | Base URL of the Matomo instance queried for `/stats/public` | gateway |
+| `MATOMO_API_TOKEN` | *(unset)* | Matomo API token; without it, `/stats/public` degrades to zeros instead of failing | gateway |
+| `MATOMO_SITE_ID` | `1` | Matomo site ID to report on | gateway |
+| `GOOGLE_OAUTH_CLIENT_ID` | *(unset)* | Expected audience for Google Sign-In ID tokens; without it, `/auth/google` returns `401` | user_service |
+| `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASSWORD` / `SMTP_FROM_ADDRESS` | *(unset)*, `587` | SMTP credentials for password-reset emails; without them, the reset code is logged server-side instead of emailed | user_service |
+| `PUBLIC_SITE_URL` | `https://trip-io.duckdns.org` | Builds the logo image URL embedded in password-reset emails | user_service |
+| `GROQ_API_KEY` | *(unset)* | Powers `/ai/chat` and `/ai/explain`; without it, both return `503` | recommendation_service |
+| `GROQ_MODEL` | `llama-3.3-70b-versatile` | Groq model used for the AI assistant | recommendation_service |
+| `ORS_API_KEY` | *(unset)* | Powers `/route`; without it, the endpoint fails with a "not configured" error | recommendation_service |
+| `USER_SERVICE_URL` / `ITINERARY_SERVICE_URL` / `RECOMMENDATION_SERVICE_URL` | `http://localhost:800{1,2,3}` | Where the Gateway and sibling services reach each other; already wired to Docker Compose service names in `docker-compose.microservices.yml` | gateway + services |
+| `*_SERVICE_DATA_PATH` | per-service default under `data/` | Override a service's own JSON data file location (also used to isolate test runs) | per-service, optional |
 
-| Variable | Default | Purpose |
-|---|---|---|
-| `INTERNAL_SERVICE_TOKEN` | `dev-internal-token-change-me` | Shared secret authenticating service-to-service `/internal/*` calls — **must** be overridden in any non-local environment |
-| `RABBITMQ_URL` | `amqp://guest:guest@localhost:5672/` | RabbitMQ connection string used to publish/consume domain events |
-| `USER_SERVICE_URL` / `ITINERARY_SERVICE_URL` / `RECOMMENDATION_SERVICE_URL` | `http://localhost:800{1,2,3}` | Where the Gateway and sibling services reach each other; set to the Docker Compose service names in `docker-compose.microservices.yml` |
-
-Set them before starting the server, e.g.:
+Set them via a `.env` file in `backend/` before `docker compose up`, or directly when running a service locally:
 
 ```powershell
 $env:JWT_SECRET = "a-long-random-production-secret"
-uvicorn app.main:app --port 8000
+uvicorn app.main:app --port 8001
 ```
 
 ### Frontend configuration
@@ -298,18 +297,10 @@ uvicorn app.main:app --port 8000
 
 ## Testing
 
-**Backend monolith** (pytest + httpx, isolated against a temp data file):
+Each backend service has its own `requirements.txt`/`tests/` and is tested independently (44 tests total, covering auth, password reset, destinations/moderation, favorites, ratings, comments, itineraries incl. sharing/claiming, notifications, AI endpoints (mocked), routing (mocked), and Gateway request routing):
 
 ```powershell
-cd backend
-.\.venv\Scripts\Activate.ps1
-pytest
-```
-
-**Phase 2 services** — each has its own `requirements.txt`/`tests/` and is tested independently, e.g.:
-
-```powershell
-cd backend/services/user_service
+cd backend/services/user_service   # or itinerary_service / recommendation_service / ../../gateway
 pip install -r requirements.txt
 pytest
 ```
@@ -324,87 +315,23 @@ flutter test
 
 ## Containers & CI/CD
 
-Both services can also run in Docker, as an alternative to local `venv`/`flutter run` development:
+The entire backend is Docker Compose-based — see [Backend Setup](#backend-setup) for `docker compose -f docker-compose.microservices.yml up --build`. On the VPS, `backend/update_microservices.sh` pulls the latest code and redeploys the same way (`docker compose up -d --build`), with real secrets supplied via a `.env` file at the repo root (never committed).
 
-```powershell
-cd backend
-docker compose up --build
-# Backend:  http://localhost:8000  (website, API, /docs)
-# Frontend: http://localhost:8081  (Flutter web build via Nginx)
-```
-
-`backend/docker-compose.yml` builds the backend from `backend/Dockerfile` and the frontend web build from `../frontend` (`frontend/Dockerfile`, served via `nginx.conf`), assuming the two project folders are siblings on disk. The frontend's `API_BASE_URL` build arg must point somewhere the *browser* can reach — override it for anything other than local dev (see comments in the compose file).
-
-The live deployment at `trip-io.duckdns.org` is **not** container-based — it runs directly on the VPS via systemd + Nginx, kept up to date by a Jenkins pipeline (`frontend/jenkinsfile`) that triggers on every push to `main` and:
+The frontend has its own Jenkins pipeline (`frontend/jenkinsfile`) triggered on every push to `main`:
 
 1. Builds and deploys the Windows installer from a Windows build agent (via SCP).
-2. Runs `flutter analyze`/`flutter test`, then builds and deploys the Android APK and the Flutter web release directly onto the VPS's `website/downloads/` and `website/webapp/` (the same directories served by the backend, see [Architecture](#architecture)).
-
-## Phase 2: Microservices Stack
-
-A parallel, Docker-only stack that decomposes the monolith into an API Gateway and three independent services, communicating both synchronously (REST) and asynchronously (RabbitMQ). It lives alongside the monolith in the same `backend/` folder and does not affect it — nothing here is wired into the live deployment yet.
-
-```
-                        ┌────────────────────────┐
-                        │   Flutter Client /      │
-                        │   Website (unchanged)   │
-                        └───────────┬─────────────┘
-                                    │ HTTPS
-                                    ▼
-                        ┌────────────────────────┐
-                        │   API Gateway :8000     │  ← only public port
-                        │  (reverse proxy + site) │
-                        └──┬──────────┬─────────┬─┘
-                    ┌──────┘          │         └──────┐
-                    ▼                 ▼                ▼
-          ┌──────────────┐  ┌──────────────────┐  ┌────────────────────────┐
-          │ User Service │  │Itinerary Service  │  │ Recommendation Service │
-          │    :8001     │  │      :8002        │  │         :8003          │
-          │ auth/profile/│  │ itineraries       │  │ destinations/ratings/  │
-          │ favorites    │  │                   │  │ comments/AI/routing/   │
-          └──────┬───────┘  └─────────┬─────────┘  │        admin           │
-                 │                     │            └───────────┬────────────┘
-                 │   sync REST, X-Internal-Token     ◄───────────┘
-                 │                     │
-                 └──────────┬──────────┴──────────────────────────┐
-                             ▼                                     ▼
-                   ┌──────────────────┐                 own JSON data file each
-                   │ RabbitMQ (async)  │◄── user.registered, itinerary.created,
-                   │ trip_io.events    │    destination.rated
-                   └──────────────────┘
-```
-
-- **Gateway**: the only port published to the host/internet (`8000`). Forwards requests to the owning service based on path (`backend/gateway/app/proxy.py`'s routing table) — external URLs are unchanged from the monolith, so the Flutter app only needs `API_BASE_URL` repointed at the Gateway instead of the monolith. Also serves the website, `/downloads`, `/app`, and `/stats/public` directly.
-- **Synchronous inter-service calls**: Recommendation Service reads from User Service and Itinerary Service over internal-only REST endpoints (`/internal/...`), authenticated with a shared `X-Internal-Token` header — never a user's JWT. The Gateway explicitly refuses to proxy anything under `/internal`.
-- **Asynchronous inter-service calls**: a RabbitMQ topic exchange (`trip_io.events`) carries `user.registered`, `itinerary.created`, and `destination.rated` events. Recommendation Service consumes them in a background thread (currently just logging — there's no recommendation cache to invalidate yet, so this is honest scaffolding, not a fabricated side effect). Publishing is fire-and-forget: a RabbitMQ outage never fails the request that triggered the event.
-- **Per-service data**: each service owns its own JSON file (`users.json`, `itineraries.json`, `destinations.json`) instead of one shared file — still JSON, not a real database, but no longer shared mutable state between services.
-
-### Running it locally
-
-```powershell
-cd backend
-
-# One-time: split the monolith's data/data.json into the 3 services' own data files
-python scripts/migrate_data.py
-
-docker compose -f docker-compose.microservices.yml up --build
-# Gateway (single public entry point): http://localhost:8000
-```
-
-Set `JWT_SECRET` and `INTERNAL_SERVICE_TOKEN` (plus whichever of `GROQ_API_KEY`/`GOOGLE_OAUTH_CLIENT_ID`/`ORS_API_KEY`/`MATOMO_API_TOKEN` you use) via a local `.env` file in `backend/` — without it, every service falls back to insecure dev-only defaults. User/Itinerary/Recommendation Service ports (8001-8003) and RabbitMQ's management UI are intentionally **not** published to the host; only the Gateway is.
-
-On the VPS, `backend/update_microservices.sh` pulls latest and redeploys this stack independently of the monolith's own systemd-based deploy — it's opt-in and doesn't touch the live monolith.
+2. Runs `flutter analyze`/`flutter test`, then builds and deploys the Android APK and the Flutter web release directly into the Gateway's `website/downloads/` and `website/webapp/` (see [Architecture](#architecture)).
 
 ## Data Storage
 
-Phase 1 intentionally uses a single JSON file (`backend/data/data.json`) as the datastore, guarded by a Python `threading.Lock` for basic write safety. This keeps the monolith dependency-free and easy to run locally, at the cost of concurrency and durability guarantees suitable only for development/demo use. The file is excluded from version control (`backend/.gitignore`); seed it manually with `users`, `destinations`, and `itineraries` arrays before first run, or let `/register` create the first user.
+Each backend service owns its own flat JSON file (`users.json`, `itineraries.json`, `destinations.json`, guarded by a `threading.Lock` for basic write safety) — no database server to provision, and no service reaches directly into another's data file. This keeps every service dependency-free and easy to run locally, at the cost of concurrency and durability guarantees suitable only for development/demo use at this scale. Cross-service reads go through small internal-only HTTP endpoints (`/internal/...`) or, for side effects, RabbitMQ events — never a shared file. `backend/scripts/migrate_data.py` is kept for historical reference (it performed the one-time split from the now-retired monolith's single `data.json`) but isn't part of the normal setup flow anymore.
 
 ## Roadmap
 
 | Phase | Focus | Status |
 |---|---|---|
-| 1. Monolith | Single FastAPI service, JSON storage, working REST API | ✅ Live in production |
-| 2. Microservices | Service decomposition, inter-service communication, API gateway | ✅ Built, Docker-deployable — not yet cut over to production |
+| 1. Monolith | Single FastAPI service, JSON storage, working REST API | ✅ Done — retired once Phase 2 proved itself in production; code removed from the repo |
+| 2. Microservices | Service decomposition, inter-service communication, API gateway | ✅ Live in production |
 | 3. Cloud Deployment | Containerization, load balancing, auto-scaling | Planned |
 | 4. Resilience | Caching, message queues, circuit breakers, fault tolerance | Planned |
 
