@@ -298,6 +298,17 @@ class TripMapLibreViewState extends State<TripMapLibreView> {
       );
     }
 
+    // Built up here and sent via addCircles()/addSymbols() (one platform
+    // channel call each) rather than calling addCircle()/addSymbol() once
+    // per marker in a loop - the amenities layer alone can mean hundreds
+    // of markers, and awaiting that many individual native round-trips
+    // sequentially is exactly what made the map visibly freeze for a
+    // couple of seconds every time the layer or a category got toggled.
+    final circleOptions = <CircleOptions>[];
+    final circleMarkerIds = <String>[];
+    final symbolOptions = <SymbolOptions>[];
+    final symbolMarkerIds = <String>[];
+
     for (final marker in widget.markers) {
       final label = marker.label;
       if (label != null) {
@@ -310,16 +321,16 @@ class TripMapLibreViewState extends State<TripMapLibreView> {
           imageName,
           () => _renderNumberBadge(label, color: _selectedMarkerColor),
         );
-        final symbol = await controller.addSymbol(
+        symbolOptions.add(
           SymbolOptions(
             geometry: LatLng(marker.lat, marker.lon),
             iconImage: imageName,
             iconSize: 0.38,
           ),
         );
-        _symbolIdToMarkerId[symbol.id] = marker.id;
+        symbolMarkerIds.add(marker.id);
       } else {
-        final circle = await controller.addCircle(
+        circleOptions.add(
           CircleOptions(
             geometry: LatLng(marker.lat, marker.lon),
             circleRadius: marker.radius ?? (marker.selected ? 10 : 7),
@@ -330,7 +341,20 @@ class TripMapLibreViewState extends State<TripMapLibreView> {
             circleStrokeWidth: 2,
           ),
         );
-        _circleIdToMarkerId[circle.id] = marker.id;
+        circleMarkerIds.add(marker.id);
+      }
+    }
+
+    if (circleOptions.isNotEmpty) {
+      final circles = await controller.addCircles(circleOptions);
+      for (var i = 0; i < circles.length; i++) {
+        _circleIdToMarkerId[circles[i].id] = circleMarkerIds[i];
+      }
+    }
+    if (symbolOptions.isNotEmpty) {
+      final symbols = await controller.addSymbols(symbolOptions);
+      for (var i = 0; i < symbols.length; i++) {
+        _symbolIdToMarkerId[symbols[i].id] = symbolMarkerIds[i];
       }
     }
 

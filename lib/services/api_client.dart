@@ -515,20 +515,16 @@ class ApiClient {
   }
 
   Future<List<MapAmenity>> getAmenities({
-    required double lat,
-    required double lon,
-    double radius = 1500,
     List<String>? categories,
     String? token,
   }) async {
     final response = await _client.get(
-      _uri('/amenities', {
-        'lat': '$lat',
-        'lon': '$lon',
-        'radius': '$radius',
-        if (categories != null && categories.isNotEmpty)
-          'categories': categories.join(','),
-      }),
+      _uri(
+        '/amenities',
+        categories != null && categories.isNotEmpty
+            ? {'categories': categories.join(',')}
+            : null,
+      ),
       // Optional, like /destinations - amenities are public map data, but a
       // token is sent when available since every other map call already has
       // one handy.

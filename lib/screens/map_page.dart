@@ -102,17 +102,14 @@ class _MapPageState extends State<MapPage> {
   // Nearby-amenities layer (hospitals, pharmacies, fuel stations, hotels,
   // banks/ATMs, police) - opt-in and off by default, same "don't clutter
   // the map uninvited" philosophy as the options panel starting collapsed.
+  // Covers the whole Yaoundé area (see the backend's YAOUNDE_BBOX), not
+  // just wherever the map happens to be focused, so it's fetched once per
+  // session rather than re-queried as the user moves around.
   List<MapAmenity> _amenities = [];
   bool _amenitiesEnabled = false;
   bool _amenitiesLegendExpanded = false;
   bool _amenitiesFetchedOnce = false;
   final Set<String> _enabledAmenityCategories = amenityCategories.toSet();
-  ({double lat, double lon})? _lastAmenityFetchAnchor;
-
-  // Half the backend's 1500m query radius - re-fetching only once the
-  // anchor has moved this far keeps a slow walk/drive from re-querying
-  // Overpass on every step while still keeping the layer relevant.
-  static const double _amenityRefetchMinMoveMeters = 250;
 
   // The options panel starts collapsed so the map fills the whole screen -
   // "get directions"/"my location"/"select itinerary" live behind this
@@ -141,44 +138,17 @@ class _MapPageState extends State<MapPage> {
         .toList();
   }
 
-  /// Where "nearby" means "nearby to" - reuses the exact same precedence
-  /// already used to pick the map's initial camera position (see
-  /// _buildScaffold's `firstCheckpoint?.lat ?? focus?.lat ?? ...`), rather
-  /// than a separate "true visible map center" concept the map backends
-  /// don't currently expose a way to track live anyway.
-  ({double lat, double lon})? get _amenityAnchor {
-    final checkpoint = _remainingCheckpoints.isNotEmpty
-        ? _remainingCheckpoints.first
-        : null;
-    final focus = widget.focusDestination;
-    final lat = checkpoint?.lat ?? focus?.lat ?? _destination?.lat ?? _origin?.lat;
-    final lon = checkpoint?.lon ?? focus?.lon ?? _destination?.lon ?? _origin?.lon;
-    if (lat == null || lon == null) return null;
-    return (lat: lat, lon: lon);
-  }
-
-  /// Fetches amenities around [_amenityAnchor], throttled so a slow walk or
-  /// a stream of GPS ticks doesn't hammer the backend - only re-fetches once
-  /// the anchor has actually moved past [_amenityRefetchMinMoveMeters], or
-  /// when [force] is set (the layer was just switched on, or the anchor
-  /// changed in a way worth an immediate refresh rather than waiting).
+  /// Fetches every enabled-category amenity across the whole Yaoundé area
+  /// (see the backend's YAOUNDE_BBOX) - a one-time load per session rather
+  /// than per-location, since the layer isn't anchored to wherever the map
+  /// happens to be focused. Safe to call repeatedly: skips the network
+  /// call once already fetched unless [force] is set (used when the layer
+  /// is first switched on).
   Future<void> _refreshAmenities({bool force = false}) async {
     if (!_amenitiesEnabled) return;
-    final anchor = _amenityAnchor;
-    if (anchor == null) return;
-    final last = _lastAmenityFetchAnchor;
-    if (!force &&
-        last != null &&
-        Geolocator.distanceBetween(last.lat, last.lon, anchor.lat, anchor.lon) <
-            _amenityRefetchMinMoveMeters) {
-      return;
-    }
-    _lastAmenityFetchAnchor = anchor;
+    if (_amenitiesFetchedOnce && !force) return;
     try {
-      final result = await widget.session.amenities(
-        lat: anchor.lat,
-        lon: anchor.lon,
-      );
+      final result = await widget.session.amenities();
       if (!mounted) return;
       setState(() {
         _amenities = result;
@@ -257,7 +227,6 @@ class _MapPageState extends State<MapPage> {
         );
       });
       unawaited(_computeRoute());
-      unawaited(_refreshAmenities(force: true));
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -292,7 +261,6 @@ class _MapPageState extends State<MapPage> {
       _applyPosition(position);
       setState(() => _resolvingMyLocation = false);
       unawaited(_computeRoute());
-      unawaited(_refreshAmenities(force: true));
     } catch (e) {
       if (!mounted) return;
       setState(() {
@@ -332,14 +300,8 @@ class _MapPageState extends State<MapPage> {
     // Outside setState (not inside it) since this kicks off an async
     // request of its own - the remaining path just changed shape (one
     // fewer stop to route through), so the "next stop"/"remaining" figures
-    // would otherwise sit stale until the next periodic refresh. The
-    // amenity anchor is the next checkpoint's own fixed coordinates (see
-    // _amenityAnchor), not the live position, so it only actually moves
-    // when a stop is reached - no point re-checking on every GPS tick.
-    if (reachedNewStop) {
-      unawaited(_computeRoute());
-      unawaited(_refreshAmenities(force: true));
-    }
+    // would otherwise sit stale until the next periodic refresh.
+    if (reachedNewStop) unawaited(_computeRoute());
   }
 
   // A checkpoint counts as visited once the user has physically come within
@@ -467,10 +429,9 @@ class _MapPageState extends State<MapPage> {
       _destination = null;
       _route = null;
       _routeError = null;
-      // The checkpoint anchor is gone now - clear stale dots rather than
-      // leaving them parked over wherever the itinerary last pointed.
-      _amenities = [];
-      _lastAmenityFetchAnchor = null;
+      // The amenities layer (if on) is left untouched - it covers the
+      // whole Yaoundé area, not just wherever the itinerary pointed, so
+      // leaving itinerary mode has nothing to do with it.
     });
   }
 
@@ -733,7 +694,6 @@ class _MapPageState extends State<MapPage> {
         if (picked != null) {
           onPicked(picked);
           _computeRoute();
-          unawaited(_refreshAmenities(force: true));
         }
       },
       child: Container(
