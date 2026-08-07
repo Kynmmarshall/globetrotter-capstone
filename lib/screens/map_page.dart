@@ -10,6 +10,8 @@ import 'package:trip_io/screens/itineraries_page.dart' show formatDuration;
 import 'package:trip_io/services/analytics.dart';
 import 'package:trip_io/services/session_controller.dart';
 import 'package:trip_io/themes/trip_colors.dart';
+import 'package:trip_io/widgets/amenities_legend.dart';
+import 'package:trip_io/widgets/amenity_categories.dart';
 import 'package:trip_io/widgets/glass_panel.dart';
 import 'package:trip_io/widgets/order_destinations_sheet.dart';
 import 'package:trip_io/widgets/session_expired_card.dart';
@@ -97,6 +99,21 @@ class _MapPageState extends State<MapPage> {
   static const Duration _routeRefreshInterval = Duration(seconds: 45);
   Timer? _routeRefreshTimer;
 
+  // Nearby-amenities layer (hospitals, pharmacies, fuel stations, hotels,
+  // banks/ATMs, police) - opt-in and off by default, same "don't clutter
+  // the map uninvited" philosophy as the options panel starting collapsed.
+  List<MapAmenity> _amenities = [];
+  bool _amenitiesEnabled = false;
+  bool _amenitiesLegendExpanded = false;
+  bool _amenitiesFetchedOnce = false;
+  final Set<String> _enabledAmenityCategories = amenityCategories.toSet();
+  ({double lat, double lon})? _lastAmenityFetchAnchor;
+
+  // Half the backend's 1500m query radius - re-fetching only once the
+  // anchor has moved this far keeps a slow walk/drive from re-querying
+  // Overpass on every step while still keeping the layer relevant.
+  static const double _amenityRefetchMinMoveMeters = 250;
+
   // The options panel starts collapsed so the map fills the whole screen -
   // "get directions"/"my location"/"select itinerary" live behind this
   // toggle instead of a permanently fixed panel.
@@ -122,6 +139,56 @@ class _MapPageState extends State<MapPage> {
         .whereType<Destination>()
         .where((d) => d.hasCoordinates)
         .toList();
+  }
+
+  /// Where "nearby" means "nearby to" - reuses the exact same precedence
+  /// already used to pick the map's initial camera position (see
+  /// _buildScaffold's `firstCheckpoint?.lat ?? focus?.lat ?? ...`), rather
+  /// than a separate "true visible map center" concept the map backends
+  /// don't currently expose a way to track live anyway.
+  ({double lat, double lon})? get _amenityAnchor {
+    final checkpoint = _remainingCheckpoints.isNotEmpty
+        ? _remainingCheckpoints.first
+        : null;
+    final focus = widget.focusDestination;
+    final lat = checkpoint?.lat ?? focus?.lat ?? _destination?.lat ?? _origin?.lat;
+    final lon = checkpoint?.lon ?? focus?.lon ?? _destination?.lon ?? _origin?.lon;
+    if (lat == null || lon == null) return null;
+    return (lat: lat, lon: lon);
+  }
+
+  /// Fetches amenities around [_amenityAnchor], throttled so a slow walk or
+  /// a stream of GPS ticks doesn't hammer the backend - only re-fetches once
+  /// the anchor has actually moved past [_amenityRefetchMinMoveMeters], or
+  /// when [force] is set (the layer was just switched on, or the anchor
+  /// changed in a way worth an immediate refresh rather than waiting).
+  Future<void> _refreshAmenities({bool force = false}) async {
+    if (!_amenitiesEnabled) return;
+    final anchor = _amenityAnchor;
+    if (anchor == null) return;
+    final last = _lastAmenityFetchAnchor;
+    if (!force &&
+        last != null &&
+        Geolocator.distanceBetween(last.lat, last.lon, anchor.lat, anchor.lon) <
+            _amenityRefetchMinMoveMeters) {
+      return;
+    }
+    _lastAmenityFetchAnchor = anchor;
+    try {
+      final result = await widget.session.amenities(
+        lat: anchor.lat,
+        lon: anchor.lon,
+      );
+      if (!mounted) return;
+      setState(() {
+        _amenities = result;
+        _amenitiesFetchedOnce = true;
+      });
+    } catch (_) {
+      // Best-effort overlay - a failed lookup just means no dots show up,
+      // never an error state on top of the rest of the map.
+      if (mounted) setState(() => _amenitiesFetchedOnce = true);
+    }
   }
 
   @override
@@ -190,6 +257,7 @@ class _MapPageState extends State<MapPage> {
         );
       });
       unawaited(_computeRoute());
+      unawaited(_refreshAmenities(force: true));
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -224,6 +292,7 @@ class _MapPageState extends State<MapPage> {
       _applyPosition(position);
       setState(() => _resolvingMyLocation = false);
       unawaited(_computeRoute());
+      unawaited(_refreshAmenities(force: true));
     } catch (e) {
       if (!mounted) return;
       setState(() {
@@ -263,8 +332,14 @@ class _MapPageState extends State<MapPage> {
     // Outside setState (not inside it) since this kicks off an async
     // request of its own - the remaining path just changed shape (one
     // fewer stop to route through), so the "next stop"/"remaining" figures
-    // would otherwise sit stale until the next periodic refresh.
-    if (reachedNewStop) unawaited(_computeRoute());
+    // would otherwise sit stale until the next periodic refresh. The
+    // amenity anchor is the next checkpoint's own fixed coordinates (see
+    // _amenityAnchor), not the live position, so it only actually moves
+    // when a stop is reached - no point re-checking on every GPS tick.
+    if (reachedNewStop) {
+      unawaited(_computeRoute());
+      unawaited(_refreshAmenities(force: true));
+    }
   }
 
   // A checkpoint counts as visited once the user has physically come within
@@ -392,6 +467,10 @@ class _MapPageState extends State<MapPage> {
       _destination = null;
       _route = null;
       _routeError = null;
+      // The checkpoint anchor is gone now - clear stale dots rather than
+      // leaving them parked over wherever the itinerary last pointed.
+      _amenities = [];
+      _lastAmenityFetchAnchor = null;
     });
   }
 
@@ -654,6 +733,7 @@ class _MapPageState extends State<MapPage> {
         if (picked != null) {
           onPicked(picked);
           _computeRoute();
+          unawaited(_refreshAmenities(force: true));
         }
       },
       child: Container(
@@ -945,6 +1025,13 @@ class _MapPageState extends State<MapPage> {
   }
 
   void _onMarkerTap(String markerId, List<Destination> destinations) {
+    if (markerId.startsWith('amenity:')) {
+      final amenity = _amenities
+          .where((a) => 'amenity:${a.id}' == markerId)
+          .firstOrNull;
+      if (amenity != null) _showAmenitySheet(amenity);
+      return;
+    }
     final destination = destinations.where((d) => d.id == markerId).firstOrNull;
     if (destination == null) return;
     Analytics.instance.trackEvent('destination', 'view', name: destination.id);
@@ -954,6 +1041,91 @@ class _MapPageState extends State<MapPage> {
           destination: destination,
           heroTag: 'destination-${destination.id}',
           session: widget.session,
+        ),
+      ),
+    );
+  }
+
+  // Amenities aren't curated Destinations (no detail page, no ratings) - a
+  // lightweight sheet with the one action that actually matters ("get me
+  // there") is what turns the layer from decorative into useful, per the
+  // feature's own point: showing "locations they can access."
+  void _showAmenitySheet(MapAmenity amenity) {
+    final l10n = AppLocalizations.of(context)!;
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: const Color(0xFF13253A),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (sheetContext) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 14,
+                    height: 14,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: amenityCategoryColor(amenity.category),
+                      border: Border.all(color: Colors.white, width: 1.5),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Icon(
+                    amenityCategoryIcon(amenity.category),
+                    size: 16,
+                    color: Colors.white70,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    amenityCategoryLabel(amenity.category, l10n),
+                    style: const TextStyle(
+                      color: Colors.white70,
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              Text(
+                amenity.name,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 17,
+                ),
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton.icon(
+                  onPressed: () {
+                    Navigator.of(sheetContext).pop();
+                    setState(() {
+                      _destination = Destination(
+                        id: 'osm:${amenity.id}',
+                        name: amenity.name,
+                        country: '',
+                        tags: const [],
+                        lat: amenity.lat,
+                        lon: amenity.lon,
+                      );
+                    });
+                    _computeRoute();
+                  },
+                  icon: const Icon(Icons.directions),
+                  label: Text(l10n.mapAmenityDirectionsButton),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -1052,6 +1224,22 @@ class _MapPageState extends State<MapPage> {
                       selected: d.id == _origin?.id || d.id == _destination?.id,
                     ),
                 ];
+          if (_amenitiesEnabled) {
+            for (final a in _amenities.where(
+              (a) => _enabledAmenityCategories.contains(a.category),
+            )) {
+              markers.add(
+                TripMapMarker(
+                  id: 'amenity:${a.id}',
+                  name: a.name,
+                  lat: a.lat,
+                  lon: a.lon,
+                  color: amenityCategoryColor(a.category),
+                  radius: 5,
+                ),
+              );
+            }
+          }
           final focus = widget.focusDestination;
           final firstCheckpoint = checkpoints.isNotEmpty
               ? checkpoints.first
@@ -1093,6 +1281,18 @@ class _MapPageState extends State<MapPage> {
                       _nextStopPill(l10n),
                     ],
                   ),
+                )
+              else if (!_isItineraryMode && _route != null)
+                // Browsing mode's equivalent of the itinerary pills above -
+                // a computed route's headline distance/time used to be
+                // visible only inside the collapsed options panel, so
+                // closing the panel to look at the map lost the result
+                // entirely. Mirrors _nextStopPill's own reasoning.
+                Positioned(
+                  top: topInset,
+                  left: 16,
+                  right: 88,
+                  child: _routeSummaryPill(l10n),
                 ),
               Positioned(
                 top: topInset,
@@ -1106,6 +1306,52 @@ class _MapPageState extends State<MapPage> {
                   right: 16,
                   child: _optionsPanel(l10n, withCoords, checkpoints),
                 ),
+              // Stacked above the locate-me button (which TripMap itself
+              // pins at left:12, bottom:12) - same collapsed-button/
+              // expanding-panel language as the top-right route toggle, so
+              // both "hides a panel behind a circular button" controls on
+              // this screen read as one consistent pattern.
+              Positioned(
+                left: 12,
+                bottom: 78,
+                child: AmenitiesToggleButton(
+                  active: _amenitiesEnabled,
+                  onTap: () {
+                    setState(
+                      () => _amenitiesLegendExpanded = !_amenitiesLegendExpanded,
+                    );
+                  },
+                ),
+              ),
+              if (_amenitiesLegendExpanded)
+                Positioned(
+                  left: 12,
+                  bottom: 132,
+                  child: SizedBox(
+                    width: 230,
+                    child: AmenitiesLegendPanel(
+                      enabled: _amenitiesEnabled,
+                      onEnabledChanged: (value) {
+                        setState(() => _amenitiesEnabled = value);
+                        if (value) unawaited(_refreshAmenities(force: true));
+                      },
+                      enabledCategories: _enabledAmenityCategories,
+                      onCategoryToggle: (category) {
+                        setState(() {
+                          if (_enabledAmenityCategories.contains(category)) {
+                            _enabledAmenityCategories.remove(category);
+                          } else {
+                            _enabledAmenityCategories.add(category);
+                          }
+                        });
+                      },
+                      showEmptyHint:
+                          _amenitiesEnabled &&
+                          _amenitiesFetchedOnce &&
+                          _amenities.isEmpty,
+                    ),
+                  ),
+                ),
             ],
           );
         },
@@ -1114,7 +1360,7 @@ class _MapPageState extends State<MapPage> {
   }
 
   Widget _panelToggleButton(AppLocalizations l10n) {
-    return Material(
+    final button = Material(
       color: _panelExpanded
           ? Theme.of(context).colorScheme.primary
           : const Color(0xFF0B1A24),
@@ -1133,6 +1379,29 @@ class _MapPageState extends State<MapPage> {
           ),
         ),
       ),
+    );
+    // A quiet cue that a route result is parked behind this tap, since
+    // closing the panel to look at the map otherwise gives no hint that
+    // there's something worth reopening it for.
+    if (_panelExpanded || _route == null) return button;
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        button,
+        Positioned(
+          top: -2,
+          right: -2,
+          child: Container(
+            width: 12,
+            height: 12,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Theme.of(context).colorScheme.primary,
+              border: Border.all(color: const Color(0xFF0B1A24), width: 2),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -1208,6 +1477,45 @@ class _MapPageState extends State<MapPage> {
               color: Colors.white,
               fontWeight: FontWeight.w700,
               fontSize: 12.5,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Browsing-mode counterpart of _nextStopPill - the computed route's
+  // headline distance/time, always visible even with the options panel
+  // collapsed.
+  Widget _routeSummaryPill(AppLocalizations l10n) {
+    final route = _route;
+    if (route == null) return const SizedBox.shrink();
+    return GlassPanel(
+      style: GlassPanelStyle.solid,
+      borderRadius: BorderRadius.circular(999),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.straighten, size: 15, color: Colors.white70),
+          const SizedBox(width: 6),
+          Text(
+            _formatDistance(route.distanceMeters),
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 12.5,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(width: 12),
+          const Icon(Icons.schedule, size: 15, color: Colors.white70),
+          const SizedBox(width: 6),
+          Text(
+            formatDuration(Duration(seconds: route.durationSeconds.round())),
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 12.5,
+              fontWeight: FontWeight.w600,
             ),
           ),
         ],
@@ -1404,6 +1712,13 @@ class _MapPageState extends State<MapPage> {
               ),
             ],
           ),
+          // Separates "what you're choosing" (inputs above) from "what you
+          // got" (results below) - only drawn when there's actually a
+          // result/status to separate from, not as permanent clutter.
+          if (_routeLoading || _routeError != null || _route != null) ...[
+            const SizedBox(height: 10),
+            Divider(color: context.tripColors.glassBorder, height: 1),
+          ],
           if (_routeLoading) ...[
             const SizedBox(height: 10),
             const Center(

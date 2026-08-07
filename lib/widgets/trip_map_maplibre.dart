@@ -11,6 +11,13 @@ import 'package:trip_io/widgets/trip_map.dart' show TripMapMarker;
 const Color _selectedMarkerColor = Color(0xFFF2A93B);
 const Color _myLocationColorValue = Color(0xFF2ECC71);
 
+/// MapLibre's CircleOptions takes color as a CSS-style hex string, not a
+/// Flutter Color.
+String _colorToHex(Color color) {
+  final argb = color.toARGB32();
+  return '#${(argb & 0xFFFFFF).toRadixString(16).padLeft(6, '0')}';
+}
+
 /// Renders a small filled-circle "number badge" bitmap for a numbered
 /// itinerary stop, used as a MapLibre icon image instead of a text symbol.
 ///
@@ -315,8 +322,10 @@ class TripMapLibreViewState extends State<TripMapLibreView> {
         final circle = await controller.addCircle(
           CircleOptions(
             geometry: LatLng(marker.lat, marker.lon),
-            circleRadius: marker.selected ? 10 : 7,
-            circleColor: marker.selected ? '#F2A93B' : '#0A7E8C',
+            circleRadius: marker.radius ?? (marker.selected ? 10 : 7),
+            circleColor: marker.color != null
+                ? _colorToHex(marker.color!)
+                : (marker.selected ? '#F2A93B' : '#0A7E8C'),
             circleStrokeColor: '#FFFFFF',
             circleStrokeWidth: 2,
           ),

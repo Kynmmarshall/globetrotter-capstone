@@ -926,6 +926,72 @@ abstract class AppLocalizations {
   /// **'All stops visited'**
   String get mapItineraryCompleteLabel;
 
+  /// No description provided for @mapAmenitiesToggleTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Nearby amenities'**
+  String get mapAmenitiesToggleTooltip;
+
+  /// No description provided for @mapAmenitiesLegendTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Nearby amenities'**
+  String get mapAmenitiesLegendTitle;
+
+  /// No description provided for @mapAmenitiesShowToggle.
+  ///
+  /// In en, this message translates to:
+  /// **'Show on map'**
+  String get mapAmenitiesShowToggle;
+
+  /// No description provided for @mapAmenitiesEmptyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'No amenities found nearby.'**
+  String get mapAmenitiesEmptyHint;
+
+  /// No description provided for @mapAmenityCategoryHospital.
+  ///
+  /// In en, this message translates to:
+  /// **'Hospitals'**
+  String get mapAmenityCategoryHospital;
+
+  /// No description provided for @mapAmenityCategoryPharmacy.
+  ///
+  /// In en, this message translates to:
+  /// **'Pharmacies'**
+  String get mapAmenityCategoryPharmacy;
+
+  /// No description provided for @mapAmenityCategoryFuel.
+  ///
+  /// In en, this message translates to:
+  /// **'Fuel stations'**
+  String get mapAmenityCategoryFuel;
+
+  /// No description provided for @mapAmenityCategoryHotel.
+  ///
+  /// In en, this message translates to:
+  /// **'Hotels'**
+  String get mapAmenityCategoryHotel;
+
+  /// No description provided for @mapAmenityCategoryBankAtm.
+  ///
+  /// In en, this message translates to:
+  /// **'Banks & ATMs'**
+  String get mapAmenityCategoryBankAtm;
+
+  /// No description provided for @mapAmenityCategoryPolice.
+  ///
+  /// In en, this message translates to:
+  /// **'Police stations'**
+  String get mapAmenityCategoryPolice;
+
+  /// No description provided for @mapAmenityDirectionsButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Directions to here'**
+  String get mapAmenityDirectionsButton;
+
   /// No description provided for @navMap.
   ///
   /// In en, this message translates to:

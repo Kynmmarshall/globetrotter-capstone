@@ -18,6 +18,8 @@ class TripMapMarker {
     required this.lon,
     this.selected = false,
     this.label,
+    this.color,
+    this.radius,
   });
 
   final String id;
@@ -30,6 +32,15 @@ class TripMapMarker {
   /// itinerary's visiting order. Null for markers with no assigned order
   /// (browsing mode, or the "my location" origin pin).
   final String? label;
+
+  /// Overrides the default selected/unselected teal-or-amber color - used
+  /// for nearby-amenity dots, which need an arbitrary per-category color
+  /// rather than the two-state destination-pin palette. Null keeps today's
+  /// existing look exactly as-is.
+  final Color? color;
+
+  /// Overrides the default pin size. Null keeps today's existing look.
+  final double? radius;
 }
 
 /// Yaoundé city-center default, used whenever there's nothing more specific

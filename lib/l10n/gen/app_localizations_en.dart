@@ -471,6 +471,39 @@ class AppLocalizationsEn extends AppLocalizations {
   String get mapItineraryCompleteLabel => 'All stops visited';
 
   @override
+  String get mapAmenitiesToggleTooltip => 'Nearby amenities';
+
+  @override
+  String get mapAmenitiesLegendTitle => 'Nearby amenities';
+
+  @override
+  String get mapAmenitiesShowToggle => 'Show on map';
+
+  @override
+  String get mapAmenitiesEmptyHint => 'No amenities found nearby.';
+
+  @override
+  String get mapAmenityCategoryHospital => 'Hospitals';
+
+  @override
+  String get mapAmenityCategoryPharmacy => 'Pharmacies';
+
+  @override
+  String get mapAmenityCategoryFuel => 'Fuel stations';
+
+  @override
+  String get mapAmenityCategoryHotel => 'Hotels';
+
+  @override
+  String get mapAmenityCategoryBankAtm => 'Banks & ATMs';
+
+  @override
+  String get mapAmenityCategoryPolice => 'Police stations';
+
+  @override
+  String get mapAmenityDirectionsButton => 'Directions to here';
+
+  @override
   String get navMap => 'Map';
 
   @override

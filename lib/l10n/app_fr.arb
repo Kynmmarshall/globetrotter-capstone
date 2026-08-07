@@ -164,6 +164,18 @@
   "mapRemainingLabel": "Restant",
   "mapItineraryCompleteLabel": "Tous les arrêts visités",
 
+  "mapAmenitiesToggleTooltip": "Commodités à proximité",
+  "mapAmenitiesLegendTitle": "Commodités à proximité",
+  "mapAmenitiesShowToggle": "Afficher sur la carte",
+  "mapAmenitiesEmptyHint": "Aucune commodité trouvée à proximité.",
+  "mapAmenityCategoryHospital": "Hôpitaux",
+  "mapAmenityCategoryPharmacy": "Pharmacies",
+  "mapAmenityCategoryFuel": "Stations-service",
+  "mapAmenityCategoryHotel": "Hôtels",
+  "mapAmenityCategoryBankAtm": "Banques et distributeurs",
+  "mapAmenityCategoryPolice": "Postes de police",
+  "mapAmenityDirectionsButton": "Itinéraire jusqu'ici",
+
   "navMap": "Carte",
   "mapTitle": "Obtenir l'itinéraire",
   "mapFromLabel": "Départ",
