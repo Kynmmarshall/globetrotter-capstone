@@ -1,16 +1,22 @@
 """Live nearby-amenities lookup (hospitals, pharmacies, fuel stations,
 hotels, banks/ATMs, police) via the public OpenStreetMap Overpass API -
-same data source and `around:radius,lat,lon` query shape already used
-offline by trip_io_backend/scripts/discover_destinations.py, but this is
-the first time it's queried live inside a running request.
+same data source already used offline by
+trip_io_backend/scripts/discover_destinations.py (including its exact
+YAOUNDE_BBOX), but this is the first time it's queried live inside a
+running request, and it always covers that whole urban area rather than a
+radius around one point - the point is to show what's reachable near any
+of the app's destinations, not just whichever one happens to be focused.
 
-That distinction matters: overpass-api.de is a shared, rate-limited public
-instance, fine for a one-shot curation script but not something a live
-user-facing feature can depend on being fast or even up. This module treats
-every result as best-effort - callers should degrade to an empty list on
-failure (see main.py's /amenities endpoint) rather than surfacing an error,
-and a short in-memory cache keeps repeat lookups near the same spot from
-hitting Overpass at all.
+That live-vs-offline distinction matters: overpass-api.de is a shared,
+rate-limited public instance, fine for a one-shot curation script but not
+something a live user-facing feature can depend on being fast or even up -
+confirmed in practice (it 504'd during development while a public mirror
+answered the same query fine), which is why OVERPASS_URLS tries more than
+one host. This module treats every result as best-effort - callers should
+degrade to an empty list on failure (see main.py's /amenities endpoint)
+rather than surfacing an error - and an in-memory cache means the whole
+city is only ever actually queried once per TTL window, not once per
+request.
 
 The in-memory cache is only correct because this service runs a single
 uvicorn worker (see Dockerfile - no --workers flag); if that ever changes,
@@ -25,16 +31,31 @@ import httpx
 
 logger = logging.getLogger("trip_io.recommendation_service.amenities")
 
-OVERPASS_URL = "https://overpass-api.de/api/interpreter"
-DEFAULT_RADIUS_METERS = 1500.0
-MAX_RADIUS_METERS = 3000.0
+# Tried in order - overpass-api.de first (the "main" public instance), then
+# a mirror if it's down/timing out. Both are free, public, no-key-needed
+# instances of the same Overpass software, so a query built once works
+# against either.
+OVERPASS_URLS = (
+    "https://overpass-api.de/api/interpreter",
+    "https://overpass.kumi.systems/api/interpreter",
+)
+
+# south, west, north, east - identical to discover_destinations.py's
+# YAOUNDE_BBOX, so "nearby amenities" and "where the app's own curated
+# destinations are" are drawn from the same understanding of "Yaoundé."
+YAOUNDE_BBOX = (3.75, 11.40, 3.95, 11.62)
 
 _RETRYABLE_STATUSES = {429, 500, 502, 503, 504}
 _RETRY_DELAYS = (0.5, 1.5)
-_CACHE_TTL_SECONDS = 15 * 60
+_CACHE_TTL_SECONDS = 30 * 60
+# Generous but not unbounded - a bbox this size can genuinely have
+# hundreds of banks/hotels/pharmacies, and per-category legend filtering
+# (not a smaller result set) is how the UI keeps that from being clutter.
+_RESULT_CAP = 800
 
-# overpass-api.de rejects requests with no/generic Accept header (406) -
-# same headers discover_destinations.py already found necessary.
+# overpass-api.de (and mirrors) reject requests with no/generic Accept
+# header (406) - same headers discover_destinations.py already found
+# necessary.
 _HEADERS = {
     "User-Agent": "trip_io-amenities/1.0",
     "Accept": "*/*",
@@ -66,26 +87,23 @@ _CATEGORY_FALLBACK_NAME = {
 
 
 class AmenitiesRequestError(Exception):
-    """Overpass unreachable/erroring after retries. Callers should degrade
-    to an empty list rather than surface this - see main.py."""
+    """Every configured Overpass host is unreachable/erroring after
+    retries. Callers should degrade to an empty list rather than surface
+    this - see main.py."""
 
 
 # cache key -> (expires_at_monotonic, results)
 _cache: dict[tuple, tuple[float, list[dict]]] = {}
 
 
-def _cache_key(lat: float, lon: float, radius: float, categories: list[str]) -> tuple:
-    # Rounding to 3 decimals (~111m) deliberately collapses nearby requests
-    # (someone panning slightly, or two different users near the same spot)
-    # into one shared cache entry - without this, the TTL below would barely
-    # cut any real Overpass traffic.
-    return (round(lat, 3), round(lon, 3), round(radius), tuple(sorted(categories)))
+def _cache_key(categories: list[str]) -> tuple:
+    return tuple(sorted(categories))
 
 
-def _build_query(lat: float, lon: float, radius: float, categories: list[str]) -> str:
-    around = f"(around:{radius},{lat},{lon})"
-    clauses = "\n".join(f"  {CATEGORY_TAGS[c]}{around};" for c in categories)
-    return f"[out:json][timeout:25];\n(\n{clauses}\n);\nout center 200;"
+def _build_query(categories: list[str]) -> str:
+    bbox = ",".join(str(v) for v in YAOUNDE_BBOX)
+    clauses = "\n".join(f"  {CATEGORY_TAGS[c]}({bbox});" for c in categories)
+    return f"[out:json][timeout:30];\n(\n{clauses}\n);\nout center {_RESULT_CAP};"
 
 
 def _coords(el: dict) -> tuple[float, float] | None:
@@ -130,13 +148,13 @@ def _normalize(el: dict) -> dict | None:
     }
 
 
-async def get_amenities(lat: float, lon: float, radius: float, categories: list[str]) -> list[dict]:
-    key = _cache_key(lat, lon, radius, categories)
+async def get_amenities(categories: list[str]) -> list[dict]:
+    key = _cache_key(categories)
     cached = _cache.get(key)
     if cached and cached[0] > time.monotonic():
         return cached[1]
 
-    query = _build_query(lat, lon, radius, categories)
+    query = _build_query(categories)
     elements = await _request_with_retries(query)
     results = [n for n in (_normalize(el) for el in elements) if n is not None]
     _cache[key] = (time.monotonic() + _CACHE_TTL_SECONDS, results)
@@ -145,26 +163,28 @@ async def get_amenities(lat: float, lon: float, radius: float, categories: list[
 
 async def _request_with_retries(query: str) -> list[dict]:
     last_error: Exception | None = None
-    for delay in (*_RETRY_DELAYS, None):
-        try:
-            async with httpx.AsyncClient(timeout=15) as client:
-                resp = await client.post(OVERPASS_URL, data={"data": query}, headers=_HEADERS)
-        except httpx.HTTPError as exc:
-            last_error = exc
-            if delay is None:
+    for url in OVERPASS_URLS:
+        for delay in (*_RETRY_DELAYS, None):
+            try:
+                async with httpx.AsyncClient(timeout=25) as client:
+                    resp = await client.post(url, data={"data": query}, headers=_HEADERS)
+            except httpx.HTTPError as exc:
+                last_error = exc
+                if delay is None:
+                    break
+                logger.warning("Overpass request to %s failed (%s), retrying in %.1fs", url, exc, delay)
+                await asyncio.sleep(delay)
+                continue
+
+            if resp.status_code < 400:
+                return resp.json().get("elements", [])
+
+            last_error = AmenitiesRequestError(f"{url} returned status {resp.status_code}")
+            if resp.status_code not in _RETRYABLE_STATUSES or delay is None:
                 break
-            logger.warning("Overpass request failed (%s), retrying in %.1fs", exc, delay)
+            logger.warning("Overpass at %s returned %s, retrying in %.1fs", url, resp.status_code, delay)
             await asyncio.sleep(delay)
-            continue
+        logger.warning("Overpass host %s exhausted, trying next host if any", url)
 
-        if resp.status_code < 400:
-            return resp.json().get("elements", [])
-
-        last_error = AmenitiesRequestError(f"Overpass returned status {resp.status_code}")
-        if resp.status_code not in _RETRYABLE_STATUSES or delay is None:
-            break
-        logger.warning("Overpass returned %s, retrying in %.1fs", resp.status_code, delay)
-        await asyncio.sleep(delay)
-
-    logger.warning("Amenities lookup failed after retries: %s", last_error)
+    logger.warning("Amenities lookup failed on every Overpass host: %s", last_error)
     raise AmenitiesRequestError(str(last_error) if last_error else "Overpass request failed")

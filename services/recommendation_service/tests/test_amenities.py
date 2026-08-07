@@ -46,7 +46,7 @@ async def test_get_amenities_normalizes_direct_and_center_coordinates(monkeypatc
 
     monkeypatch.setattr(httpx.AsyncClient, "post", fake_post)
 
-    results = await amenities.get_amenities(3.87, 11.52, 1500, ["hospital", "pharmacy"])
+    results = await amenities.get_amenities(["hospital", "pharmacy"])
     assert len(results) == 2
     hospital = next(r for r in results if r["category"] == "hospital")
     assert hospital["name"] == "Test Hospital"
@@ -71,17 +71,33 @@ async def test_get_amenities_retries_on_rate_limit_then_succeeds(monkeypatch):
 
     monkeypatch.setattr(httpx.AsyncClient, "post", fake_post)
 
-    # The fake response isn't filtered by the requested category (a real
-    # Overpass query does that server-side) - it always returns both
-    # elements in _OVERPASS_OK regardless of what was asked for, since this
-    # test is about retry behavior, not category filtering.
-    results = await amenities.get_amenities(3.87, 11.52, 1500, ["hospital"])
+    results = await amenities.get_amenities(["hospital"])
     assert calls["count"] == 2
     assert len(results) == 2
 
 
 @pytest.mark.asyncio
-async def test_get_amenities_raises_after_retries_exhausted(monkeypatch):
+async def test_get_amenities_falls_back_to_second_host_when_first_is_down(monkeypatch):
+    monkeypatch.setattr(amenities, "_RETRY_DELAYS", (0, 0))
+    calls = []
+
+    async def fake_post(self, url, data=None, headers=None):
+        calls.append(url)
+        if url == amenities.OVERPASS_URLS[0]:
+            return _FakeResponse(504)
+        return _FakeResponse(200, _OVERPASS_OK)
+
+    monkeypatch.setattr(httpx.AsyncClient, "post", fake_post)
+
+    results = await amenities.get_amenities(["hospital"])
+    assert len(results) == 2
+    # Exhausted every retry against the first host before trying the second.
+    assert calls.count(amenities.OVERPASS_URLS[0]) == len(amenities._RETRY_DELAYS) + 1
+    assert calls[-1] == amenities.OVERPASS_URLS[1]
+
+
+@pytest.mark.asyncio
+async def test_get_amenities_raises_after_every_host_exhausted(monkeypatch):
     monkeypatch.setattr(amenities, "_RETRY_DELAYS", (0, 0))
 
     async def fake_post(self, url, data=None, headers=None):
@@ -90,7 +106,7 @@ async def test_get_amenities_raises_after_retries_exhausted(monkeypatch):
     monkeypatch.setattr(httpx.AsyncClient, "post", fake_post)
 
     with pytest.raises(amenities.AmenitiesRequestError):
-        await amenities.get_amenities(3.87, 11.52, 1500, ["hospital"])
+        await amenities.get_amenities(["hospital"])
 
 
 @pytest.mark.asyncio
@@ -103,10 +119,8 @@ async def test_get_amenities_uses_cache_on_second_call_within_ttl(monkeypatch):
 
     monkeypatch.setattr(httpx.AsyncClient, "post", fake_post)
 
-    await amenities.get_amenities(3.87001, 11.52001, 1500, ["hospital"])
-    # Rounds to the same cache key (3 decimals ~ 111m) - should not hit
-    # Overpass again.
-    await amenities.get_amenities(3.87002, 11.52002, 1500, ["hospital"])
+    await amenities.get_amenities(["hospital"])
+    await amenities.get_amenities(["hospital"])
     assert calls["count"] == 1
 
 
@@ -120,9 +134,16 @@ async def test_get_amenities_cache_key_varies_by_categories(monkeypatch):
 
     monkeypatch.setattr(httpx.AsyncClient, "post", fake_post)
 
-    await amenities.get_amenities(3.87, 11.52, 1500, ["hospital"])
-    await amenities.get_amenities(3.87, 11.52, 1500, ["pharmacy"])
+    await amenities.get_amenities(["hospital"])
+    await amenities.get_amenities(["pharmacy"])
     assert calls["count"] == 2
+
+
+def test_build_query_covers_the_full_yaounde_bbox():
+    query = amenities._build_query(["hospital"])
+    bbox = ",".join(str(v) for v in amenities.YAOUNDE_BBOX)
+    assert bbox in query
+    assert "around:" not in query
 
 
 def test_normalize_skips_elements_with_no_recognized_category():

@@ -388,13 +388,13 @@ async def test_internal_destinations_endpoint(tmp_path):
 async def test_amenities_endpoint_returns_empty_list_on_upstream_failure(tmp_path, monkeypatch):
     _use_temp_data(tmp_path)
 
-    async def fake_get_amenities(lat, lon, radius, categories):
+    async def fake_get_amenities(categories):
         raise amenities.AmenitiesRequestError("overpass down")
 
     monkeypatch.setattr(amenities, "get_amenities", fake_get_amenities)
 
     async with AsyncClient(app=app, base_url="http://test") as ac:
-        r = await ac.get("/amenities", params={"lat": 3.87, "lon": 11.52})
+        r = await ac.get("/amenities")
         assert r.status_code == 200
         assert r.json() == []
 
@@ -403,13 +403,13 @@ async def test_amenities_endpoint_returns_empty_list_on_upstream_failure(tmp_pat
 async def test_amenities_endpoint_is_public_no_auth_required(tmp_path, monkeypatch):
     _use_temp_data(tmp_path)
 
-    async def fake_get_amenities(lat, lon, radius, categories):
-        return [{"id": "node/1", "name": "Test", "category": "hospital", "lat": lat, "lon": lon}]
+    async def fake_get_amenities(categories):
+        return [{"id": "node/1", "name": "Test", "category": "hospital", "lat": 3.87, "lon": 11.52}]
 
     monkeypatch.setattr(amenities, "get_amenities", fake_get_amenities)
 
     async with AsyncClient(app=app, base_url="http://test") as ac:
-        r = await ac.get("/amenities", params={"lat": 3.87, "lon": 11.52})
+        r = await ac.get("/amenities")
         assert r.status_code == 200
         assert r.json()[0]["category"] == "hospital"
 
@@ -419,7 +419,7 @@ async def test_amenities_endpoint_filters_unknown_categories(tmp_path, monkeypat
     _use_temp_data(tmp_path)
     captured = {}
 
-    async def fake_get_amenities(lat, lon, radius, categories):
+    async def fake_get_amenities(categories):
         captured["categories"] = categories
         return []
 
@@ -428,7 +428,7 @@ async def test_amenities_endpoint_filters_unknown_categories(tmp_path, monkeypat
     async with AsyncClient(app=app, base_url="http://test") as ac:
         r = await ac.get(
             "/amenities",
-            params={"lat": 3.87, "lon": 11.52, "categories": "hospital,not_a_real_category"},
+            params={"categories": "hospital,not_a_real_category"},
         )
         assert r.status_code == 200
         assert captured["categories"] == ["hospital"]
@@ -440,24 +440,24 @@ async def test_amenities_endpoint_returns_empty_when_no_valid_categories(tmp_pat
     async with AsyncClient(app=app, base_url="http://test") as ac:
         r = await ac.get(
             "/amenities",
-            params={"lat": 3.87, "lon": 11.52, "categories": "not_a_real_category"},
+            params={"categories": "not_a_real_category"},
         )
         assert r.status_code == 200
         assert r.json() == []
 
 
 @pytest.mark.asyncio
-async def test_amenities_endpoint_caps_radius(tmp_path, monkeypatch):
+async def test_amenities_endpoint_defaults_to_every_category(tmp_path, monkeypatch):
     _use_temp_data(tmp_path)
     captured = {}
 
-    async def fake_get_amenities(lat, lon, radius, categories):
-        captured["radius"] = radius
+    async def fake_get_amenities(categories):
+        captured["categories"] = categories
         return []
 
     monkeypatch.setattr(amenities, "get_amenities", fake_get_amenities)
 
     async with AsyncClient(app=app, base_url="http://test") as ac:
-        r = await ac.get("/amenities", params={"lat": 3.87, "lon": 11.52, "radius": 999999})
+        r = await ac.get("/amenities")
         assert r.status_code == 200
-        assert captured["radius"] == amenities.MAX_RADIUS_METERS
+        assert set(captured["categories"]) == amenities.ALLOWED_CATEGORIES

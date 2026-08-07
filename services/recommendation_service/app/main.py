@@ -368,19 +368,15 @@ async def get_route(payload: RouteRequest, user: str = Depends(get_current_user)
 
 @app.get("/amenities", response_model=list[Amenity])
 async def get_amenities(
-    lat: float,
-    lon: float,
-    radius: float = amenities.DEFAULT_RADIUS_METERS,
     categories: str | None = None,
     user: str | None = Depends(get_optional_user),
 ):
-    radius = min(max(radius, 100.0), amenities.MAX_RADIUS_METERS)
     requested = set(categories.split(",")) if categories else amenities.ALLOWED_CATEGORIES
     selected = sorted(requested & amenities.ALLOWED_CATEGORIES)
     if not selected:
         return []
     try:
-        return await amenities.get_amenities(lat, lon, radius, selected)
+        return await amenities.get_amenities(selected)
     except amenities.AmenitiesRequestError:
         # Best-effort map overlay, not a blocking feature - the failure is
         # already logged inside amenities.py, so the map just shows nothing
