@@ -195,6 +195,18 @@
   "mapRemainingLabel": "Remaining",
   "mapItineraryCompleteLabel": "All stops visited",
 
+  "mapAmenitiesToggleTooltip": "Nearby amenities",
+  "mapAmenitiesLegendTitle": "Nearby amenities",
+  "mapAmenitiesShowToggle": "Show on map",
+  "mapAmenitiesEmptyHint": "No amenities found nearby.",
+  "mapAmenityCategoryHospital": "Hospitals",
+  "mapAmenityCategoryPharmacy": "Pharmacies",
+  "mapAmenityCategoryFuel": "Fuel stations",
+  "mapAmenityCategoryHotel": "Hotels",
+  "mapAmenityCategoryBankAtm": "Banks & ATMs",
+  "mapAmenityCategoryPolice": "Police stations",
+  "mapAmenityDirectionsButton": "Directions to here",
+
   "navMap": "Map",
   "mapTitle": "Get directions",
   "mapFromLabel": "From",

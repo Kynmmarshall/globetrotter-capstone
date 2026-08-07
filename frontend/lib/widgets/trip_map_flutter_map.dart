@@ -88,12 +88,12 @@ class TripMapFlutterMapViewState extends State<TripMapFlutterMapView> {
     );
   }
 
-  Widget _pin({required bool selected, String? label}) {
+  Widget _pin({required bool selected, String? label, Color? color}) {
     return Container(
       alignment: Alignment.center,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: selected ? const Color(0xFFF2A93B) : const Color(0xFF0A7E8C),
+        color: color ?? (selected ? const Color(0xFFF2A93B) : const Color(0xFF0A7E8C)),
         border: Border.all(color: Colors.white, width: 2),
         boxShadow: const [BoxShadow(color: Colors.black38, blurRadius: 4)],
       ),
@@ -143,9 +143,11 @@ class TripMapFlutterMapViewState extends State<TripMapFlutterMapView> {
           ),
         MarkerLayer(
           markers: widget.markers.map((marker) {
-            final size = marker.label != null
-                ? 24.0
-                : (marker.selected ? 22.0 : 16.0);
+            final size = marker.radius != null
+                ? marker.radius! * 2
+                : (marker.label != null
+                      ? 24.0
+                      : (marker.selected ? 22.0 : 16.0));
             return Marker(
               point: ll.LatLng(marker.lat, marker.lon),
               width: size,
@@ -158,7 +160,11 @@ class TripMapFlutterMapViewState extends State<TripMapFlutterMapView> {
                   onTap: widget.onMarkerTap == null
                       ? null
                       : () => widget.onMarkerTap!(marker.id),
-                  child: _pin(selected: marker.selected, label: marker.label),
+                  child: _pin(
+                    selected: marker.selected,
+                    label: marker.label,
+                    color: marker.color,
+                  ),
                 ),
               ),
             );

@@ -514,6 +514,29 @@ class ApiClient {
     );
   }
 
+  Future<List<MapAmenity>> getAmenities({
+    List<String>? categories,
+    String? token,
+  }) async {
+    final response = await _client.get(
+      _uri(
+        '/amenities',
+        categories != null && categories.isNotEmpty
+            ? {'categories': categories.join(',')}
+            : null,
+      ),
+      // Optional, like /destinations - amenities are public map data, but a
+      // token is sent when available since every other map call already has
+      // one handy.
+      headers: token != null ? {'Authorization': 'Bearer $token'} : null,
+    );
+    _throwIfNotOk(response);
+    final decoded = jsonDecode(response.body) as List<dynamic>;
+    return decoded
+        .map((e) => MapAmenity.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
   Future<List<Comment>> getComments(String token, String destinationId) async {
     final response = await _client.get(
       _uri('/destinations/$destinationId/comments'),

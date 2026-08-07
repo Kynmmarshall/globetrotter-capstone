@@ -431,195 +431,197 @@ class _ProfilePageState extends State<ProfilePage> {
     final l10n = AppLocalizations.of(context)!;
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 640),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            GlassPanel(
-              borderRadius: BorderRadius.circular(22),
-              padding: const EdgeInsets.all(18),
-              child: Column(
-                children: [
-                  _buildAvatar(context),
-                  const SizedBox(height: 14),
-                  Text(
-                    widget.session.username ?? l10n.travellerFallback,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w800,
-                      fontSize: 20,
-                    ),
-                  ),
-                  if ((widget.session.email ?? '').isNotEmpty) ...[
-                    const SizedBox(height: 4),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 640),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              GlassPanel(
+                borderRadius: BorderRadius.circular(22),
+                padding: const EdgeInsets.all(18),
+                child: Column(
+                  children: [
+                    _buildAvatar(context),
+                    const SizedBox(height: 14),
                     Text(
-                      widget.session.email!,
+                      widget.session.username ?? l10n.travellerFallback,
                       style: const TextStyle(
-                        color: Colors.white70,
-                        fontSize: 13,
+                        color: Colors.white,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 20,
+                      ),
+                    ),
+                    if ((widget.session.email ?? '').isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        widget.session.email!,
+                        style: const TextStyle(
+                          color: Colors.white70,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 10),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      alignment: WrapAlignment.center,
+                      children: [
+                        _buildInfoPill(
+                          Icons.calendar_today,
+                          _formatMemberSince(context, l10n),
+                        ),
+                        _buildInfoPill(Icons.location_on, l10n.basedInYaounde),
+                      ],
+                    ),
+                    const SizedBox(height: 18),
+                    const Divider(color: Colors.white24, height: 1),
+                    const SizedBox(height: 14),
+                    Row(
+                      children: [
+                        FutureBuilder<List<Itinerary>>(
+                          future: _itinerariesFuture,
+                          builder: (context, snapshot) {
+                            final count = snapshot.data?.length;
+                            return _buildStatTile(
+                              icon: Icons.map,
+                              label: l10n.itinerariesStatLabel,
+                              value: count?.toString() ?? '—',
+                            );
+                          },
+                        ),
+                        FutureBuilder<List<Destination>>(
+                          future: _favoritesFuture,
+                          builder: (context, snapshot) {
+                            final count = snapshot.data?.length;
+                            return _buildStatTile(
+                              icon: Icons.favorite,
+                              label: l10n.favoritesStatLabel,
+                              value: count?.toString() ?? '—',
+                            );
+                          },
+                        ),
+                        FutureBuilder<List<Itinerary>>(
+                          future: _itinerariesFuture,
+                          builder: (context, snapshot) {
+                            final places = snapshot.data
+                                ?.expand((i) => i.destinations)
+                                .toSet()
+                                .length;
+                            return _buildStatTile(
+                              icon: Icons.explore,
+                              label: l10n.placesPlannedStatLabel,
+                              value: places?.toString() ?? '—',
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              GlassPanel(
+                borderRadius: BorderRadius.circular(22),
+                padding: const EdgeInsets.all(18),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      l10n.aboutMeTitle,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 15,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    TextField(
+                      controller: _bioController,
+                      maxLines: 3,
+                      style: const TextStyle(color: Colors.white),
+                      cursorColor: Colors.white,
+                      decoration: InputDecoration(
+                        hintText: l10n.bioHint,
+                        hintStyle: const TextStyle(color: Colors.white54),
+                        filled: true,
+                        fillColor: Colors.white.withValues(alpha: 0.08),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(
+                            color: Colors.white.withValues(alpha: 0.2),
+                          ),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(
+                            color: Colors.white.withValues(alpha: 0.2),
+                          ),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: Colors.white),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: FilledButton.icon(
+                        onPressed: _savingBio ? null : _saveBio,
+                        icon: _savingBio
+                            ? const SizedBox(
+                                width: 14,
+                                height: 14,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : const Icon(Icons.check, size: 18),
+                        label: Text(l10n.saveButton),
                       ),
                     ),
                   ],
-                  const SizedBox(height: 10),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    alignment: WrapAlignment.center,
-                    children: [
-                      _buildInfoPill(
-                        Icons.calendar_today,
-                        _formatMemberSince(context, l10n),
-                      ),
-                      _buildInfoPill(Icons.location_on, l10n.basedInYaounde),
-                    ],
-                  ),
-                  const SizedBox(height: 18),
-                  const Divider(color: Colors.white24, height: 1),
-                  const SizedBox(height: 14),
-                  Row(
-                    children: [
-                      FutureBuilder<List<Itinerary>>(
-                        future: _itinerariesFuture,
-                        builder: (context, snapshot) {
-                          final count = snapshot.data?.length;
-                          return _buildStatTile(
-                            icon: Icons.map,
-                            label: l10n.itinerariesStatLabel,
-                            value: count?.toString() ?? '—',
-                          );
-                        },
-                      ),
-                      FutureBuilder<List<Destination>>(
-                        future: _favoritesFuture,
-                        builder: (context, snapshot) {
-                          final count = snapshot.data?.length;
-                          return _buildStatTile(
-                            icon: Icons.favorite,
-                            label: l10n.favoritesStatLabel,
-                            value: count?.toString() ?? '—',
-                          );
-                        },
-                      ),
-                      FutureBuilder<List<Itinerary>>(
-                        future: _itinerariesFuture,
-                        builder: (context, snapshot) {
-                          final places = snapshot.data
-                              ?.expand((i) => i.destinations)
-                              .toSet()
-                              .length;
-                          return _buildStatTile(
-                            icon: Icons.explore,
-                            label: l10n.placesPlannedStatLabel,
-                            value: places?.toString() ?? '—',
-                          );
-                        },
-                      ),
-                    ],
-                  ),
-                ],
+                ),
               ),
-            ),
-            const SizedBox(height: 16),
-            GlassPanel(
-              borderRadius: BorderRadius.circular(22),
-              padding: const EdgeInsets.all(18),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    l10n.aboutMeTitle,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w800,
-                      fontSize: 15,
+              const SizedBox(height: 16),
+              _buildInterestsPanel(context, l10n),
+              const SizedBox(height: 16),
+              _buildLanguageSwitcher(context, l10n),
+              const SizedBox(height: 16),
+              _buildThemeSwitcher(context, l10n),
+              const SizedBox(height: 16),
+              GlassPanel(
+                borderRadius: BorderRadius.circular(22),
+                padding: const EdgeInsets.all(18),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        l10n.signedInAs(
+                          widget.session.username ?? l10n.unknownUser,
+                        ),
+                        style: const TextStyle(color: Colors.white70),
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 10),
-                  TextField(
-                    controller: _bioController,
-                    maxLines: 3,
-                    style: const TextStyle(color: Colors.white),
-                    cursorColor: Colors.white,
-                    decoration: InputDecoration(
-                      hintText: l10n.bioHint,
-                      hintStyle: const TextStyle(color: Colors.white54),
-                      filled: true,
-                      fillColor: Colors.white.withValues(alpha: 0.08),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(
-                          color: Colors.white.withValues(alpha: 0.2),
+                    OutlinedButton.icon(
+                      onPressed: _confirmLogout,
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.white,
+                        side: BorderSide(
+                          color: Colors.white.withValues(alpha: 0.4),
                         ),
                       ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(
-                          color: Colors.white.withValues(alpha: 0.2),
-                        ),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: Colors.white),
-                      ),
+                      icon: const Icon(Icons.logout, size: 18),
+                      label: Text(l10n.logoutButton),
                     ),
-                  ),
-                  const SizedBox(height: 10),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: FilledButton.icon(
-                      onPressed: _savingBio ? null : _saveBio,
-                      icon: _savingBio
-                          ? const SizedBox(
-                              width: 14,
-                              height: 14,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Colors.white,
-                              ),
-                            )
-                          : const Icon(Icons.check, size: 18),
-                      label: Text(l10n.saveButton),
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-            const SizedBox(height: 16),
-            _buildInterestsPanel(context, l10n),
-            const SizedBox(height: 16),
-            _buildLanguageSwitcher(context, l10n),
-            const SizedBox(height: 16),
-            _buildThemeSwitcher(context, l10n),
-            const SizedBox(height: 16),
-            GlassPanel(
-              borderRadius: BorderRadius.circular(22),
-              padding: const EdgeInsets.all(18),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      l10n.signedInAs(
-                        widget.session.username ?? l10n.unknownUser,
-                      ),
-                      style: const TextStyle(color: Colors.white70),
-                    ),
-                  ),
-                  OutlinedButton.icon(
-                    onPressed: _confirmLogout,
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.white,
-                      side: BorderSide(
-                        color: Colors.white.withValues(alpha: 0.4),
-                      ),
-                    ),
-                    icon: const Icon(Icons.logout, size: 18),
-                    label: Text(l10n.logoutButton),
-                  ),
-                ],
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

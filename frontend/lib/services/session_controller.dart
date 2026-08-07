@@ -542,6 +542,13 @@ class SessionController extends ChangeNotifier {
     return result;
   }
 
+  Future<List<MapAmenity>> amenities({List<String>? categories}) {
+    // Not gated behind _requireToken(), same reasoning as destinations():
+    // amenities are public map data, usable logged out too.
+    final token = (_token != null && !_isTokenExpired(_token!)) ? _token : null;
+    return ApiClient().getAmenities(categories: categories, token: token);
+  }
+
   Future<String> aiChat(List<ChatMessage> messages) async {
     final token = _requireToken();
     final reply = await ApiClient().aiChat(

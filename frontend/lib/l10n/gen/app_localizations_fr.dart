@@ -483,6 +483,39 @@ class AppLocalizationsFr extends AppLocalizations {
   String get mapItineraryCompleteLabel => 'Tous les arrêts visités';
 
   @override
+  String get mapAmenitiesToggleTooltip => 'Commodités à proximité';
+
+  @override
+  String get mapAmenitiesLegendTitle => 'Commodités à proximité';
+
+  @override
+  String get mapAmenitiesShowToggle => 'Afficher sur la carte';
+
+  @override
+  String get mapAmenitiesEmptyHint => 'Aucune commodité trouvée à proximité.';
+
+  @override
+  String get mapAmenityCategoryHospital => 'Hôpitaux';
+
+  @override
+  String get mapAmenityCategoryPharmacy => 'Pharmacies';
+
+  @override
+  String get mapAmenityCategoryFuel => 'Stations-service';
+
+  @override
+  String get mapAmenityCategoryHotel => 'Hôtels';
+
+  @override
+  String get mapAmenityCategoryBankAtm => 'Banques et distributeurs';
+
+  @override
+  String get mapAmenityCategoryPolice => 'Postes de police';
+
+  @override
+  String get mapAmenityDirectionsButton => 'Itinéraire jusqu\'ici';
+
+  @override
   String get navMap => 'Carte';
 
   @override

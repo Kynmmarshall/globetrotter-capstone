@@ -357,6 +357,37 @@ class Comment {
   }
 }
 
+/// A nearby amenity (hospital, pharmacy, fuel station, hotel, bank/ATM,
+/// police) sourced live from OpenStreetMap via GET /amenities - not a
+/// curated [Destination] (no detail page, no ratings/comments), just a
+/// small colored dot on the map. See lib/widgets/amenity_categories.dart
+/// for the category -> color/icon/label mapping.
+class MapAmenity {
+  const MapAmenity({
+    required this.id,
+    required this.name,
+    required this.category,
+    required this.lat,
+    required this.lon,
+  });
+
+  final String id;
+  final String name;
+  final String category;
+  final double lat;
+  final double lon;
+
+  factory MapAmenity.fromJson(Map<String, dynamic> json) {
+    return MapAmenity(
+      id: (json['id'] ?? '').toString(),
+      name: (json['name'] ?? '').toString(),
+      category: (json['category'] ?? '').toString(),
+      lat: (json['lat'] as num).toDouble(),
+      lon: (json['lon'] as num).toDouble(),
+    );
+  }
+}
+
 /// A single point along a route's geometry - mirrors the backend's
 /// RouteWaypoint schema, also used for the origin/destination waypoints
 /// sent to POST /route.
