@@ -105,6 +105,14 @@ class RouteResponse(BaseModel):
     legs: List[RouteLeg] = []
 
 
+class Amenity(BaseModel):
+    id: str
+    name: str
+    category: str
+    lat: float
+    lon: float
+
+
 class ChatMessage(BaseModel):
     role: str
     content: str

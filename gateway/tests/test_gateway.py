@@ -24,6 +24,7 @@ def test_routing_table_covers_every_service():
     assert resolve_target("/admin/destinations") == RECOMMENDATION_SERVICE_URL
     assert resolve_target("/ai/chat") == RECOMMENDATION_SERVICE_URL
     assert resolve_target("/route") == RECOMMENDATION_SERVICE_URL
+    assert resolve_target("/amenities") == RECOMMENDATION_SERVICE_URL
 
 
 def test_unknown_path_has_no_target():

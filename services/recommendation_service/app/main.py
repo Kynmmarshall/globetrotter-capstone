@@ -6,8 +6,9 @@ from fastapi import FastAPI, File, HTTPException, Depends, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
-from . import ai, clients, crud, events, events_consumer, routing
+from . import ai, amenities, clients, crud, events, events_consumer, routing
 from .schemas import (
+    Amenity,
     Destination,
     DestinationSubmit,
     DestinationUpdate,
@@ -360,6 +361,31 @@ async def get_route(payload: RouteRequest, user: str = Depends(get_current_user)
     except routing.RoutingRequestError:
         raise HTTPException(status_code=502, detail="Routing service is temporarily unavailable")
     return result
+
+
+# ---------- Amenities ----------
+
+
+@app.get("/amenities", response_model=list[Amenity])
+async def get_amenities(
+    lat: float,
+    lon: float,
+    radius: float = amenities.DEFAULT_RADIUS_METERS,
+    categories: str | None = None,
+    user: str | None = Depends(get_optional_user),
+):
+    radius = min(max(radius, 100.0), amenities.MAX_RADIUS_METERS)
+    requested = set(categories.split(",")) if categories else amenities.ALLOWED_CATEGORIES
+    selected = sorted(requested & amenities.ALLOWED_CATEGORIES)
+    if not selected:
+        return []
+    try:
+        return await amenities.get_amenities(lat, lon, radius, selected)
+    except amenities.AmenitiesRequestError:
+        # Best-effort map overlay, not a blocking feature - the failure is
+        # already logged inside amenities.py, so the map just shows nothing
+        # rather than an error state.
+        return []
 
 
 # ---------- Internal (service-to-service only, never through the Gateway) ----------

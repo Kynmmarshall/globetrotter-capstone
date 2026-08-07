@@ -38,6 +38,7 @@ ROUTES: list[tuple[str, str]] = [
     ("/recommendations", RECOMMENDATION_SERVICE_URL),
     ("/ai", RECOMMENDATION_SERVICE_URL),
     ("/route", RECOMMENDATION_SERVICE_URL),
+    ("/amenities", RECOMMENDATION_SERVICE_URL),
     ("/static/destinations", RECOMMENDATION_SERVICE_URL),
 ]
 
