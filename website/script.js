@@ -8,7 +8,9 @@ if (window.AOS) {
 // (rather than one static hero image forever), picking both the next image
 // and its entrance animation at random each time so the rotation doesn't
 // just repeat the same fade - see the .anim-* keyframes in style.css.
-(function initHeroSlideshow() {
+// Called once loadDestinationMedia() below has injected the actual slide
+// elements - there's nothing to cycle through before that fetch resolves.
+function initHeroSlideshow() {
   const slides = document.querySelectorAll('.hero-bg-slide');
   if (slides.length < 2) return;
   if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
@@ -40,7 +42,7 @@ if (window.AOS) {
   }
 
   setInterval(() => showSlide(pickNextIndex()), 3200);
-})();
+}
 
 // Counts a stat value up from 0 to its target once it scrolls into view,
 // rather than just appearing - reads the target from data-count-to so the
@@ -80,25 +82,100 @@ if ('IntersectionObserver' in window && countTargets.length) {
   countTargets.forEach((el) => countObserver.observe(el));
 }
 
-// Live destination count, pulled straight from the API so the number
-// never goes stale relative to what's actually in the app. Animated once
-// the real value is known, rather than racing the generic observer above
-// with a placeholder target.
+// Fisher-Yates - used to vary which destinations show up in the hero
+// slideshow/gallery between page loads, same "at random" spirit as the
+// slideshow's own animation picking above, rather than freezing on
+// whichever destinations happen to sort first.
+function shuffled(items) {
+  const arr = items.slice();
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+// Builds the hero background slideshow and the "Explore" gallery straight
+// from live destination data instead of a hand-typed, hardcoded image list
+// that silently drifts out of sync as destinations get added/edited/removed
+// through the admin dashboard. Uses DOM APIs (not innerHTML) since
+// destination names can originate from user submissions (see the
+// admin-approval flow) and shouldn't be trusted as markup.
+function loadDestinationMedia(destinations) {
+  const withImages = destinations.filter((d) => d && d.image_url && d.name);
+  const pool = shuffled(withImages);
+
+  const heroEl = document.getElementById('hero-slideshow');
+  if (heroEl) {
+    const heroPicks = pool.slice(0, 9);
+    heroPicks.forEach((dest, i) => {
+      const slide = document.createElement('div');
+      slide.className = i === 0 ? 'hero-bg-slide is-active' : 'hero-bg-slide';
+      slide.style.backgroundImage = `url('${dest.image_url}')`;
+      heroEl.appendChild(slide);
+    });
+    initHeroSlideshow();
+  }
+
+  const galleryEl = document.getElementById('destination-gallery');
+  if (galleryEl) {
+    const galleryPicks = pool.slice(9, 9 + 16);
+    galleryPicks.forEach((dest, i) => {
+      const item = document.createElement('div');
+      // Every 5th card runs tall, the last one runs wide - keeps the same
+      // masonry-style variety the old hardcoded gallery had without
+      // depending on a fixed-length, hand-picked list.
+      let variant = '';
+      if (i === galleryPicks.length - 1) variant = ' wide';
+      else if (i % 5 === 0) variant = ' tall';
+      item.className = `gallery-item${variant}`;
+      item.dataset.aos = 'fade-up';
+      item.dataset.aosDelay = String((i % 4) * 50);
+
+      const img = document.createElement('img');
+      img.src = dest.image_url;
+      img.alt = dest.name;
+      img.loading = 'lazy';
+      item.appendChild(img);
+
+      const caption = document.createElement('div');
+      caption.className = 'gallery-caption';
+      caption.textContent = dest.name;
+      item.appendChild(caption);
+
+      galleryEl.appendChild(item);
+    });
+    // The gallery items above carry data-aos attributes but were added
+    // after AOS.init() already scanned the page, so AOS doesn't know about
+    // them yet without an explicit rescan.
+    if (window.AOS) AOS.refreshHard();
+  }
+}
+
+// Live destination count + hero/gallery imagery, both pulled straight from
+// the API so neither goes stale relative to what's actually in the app.
+// The count animates once the real value is known, rather than racing the
+// generic observer above with a placeholder target.
 fetch('/destinations')
   .then((res) => (res.ok ? res.json() : Promise.reject(res.status)))
   .then((data) => {
-    const el = document.getElementById('stat-destinations');
-    if (!el) return;
-    const count = Array.isArray(data) ? data.length : null;
-    if (count === null) {
-      el.textContent = '—';
-      return;
+    const destinations = Array.isArray(data) ? data : [];
+
+    const countEl = document.getElementById('stat-destinations');
+    if (countEl) {
+      if (Array.isArray(data)) {
+        countEl.dataset.countTo = String(destinations.length);
+        animateCountUp(countEl);
+      } else {
+        countEl.textContent = '—';
+      }
     }
-    el.dataset.countTo = String(count);
-    animateCountUp(el);
+
+    loadDestinationMedia(destinations);
   })
   .catch(() => {
-    // Leave the placeholder dash in place if the API isn't reachable.
+    // Leave the placeholder dash in place, and the hero/gallery empty,
+    // if the API isn't reachable.
   });
 
 // Grey out / label download buttons whose files haven't been uploaded
