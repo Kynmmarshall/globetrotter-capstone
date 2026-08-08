@@ -82,10 +82,9 @@ if ('IntersectionObserver' in window && countTargets.length) {
   countTargets.forEach((el) => countObserver.observe(el));
 }
 
-// Fisher-Yates - used to vary which destinations show up in the hero
-// slideshow/gallery between page loads, same "at random" spirit as the
-// slideshow's own animation picking above, rather than freezing on
-// whichever destinations happen to sort first.
+// Fisher-Yates - used to vary the order the curated hero images play in
+// between page loads, same "at random" spirit as the slideshow's own
+// animation picking above, rather than always opening on the same image.
 function shuffled(items) {
   const arr = items.slice();
   for (let i = arr.length - 1; i > 0; i--) {
@@ -97,8 +96,7 @@ function shuffled(items) {
 
 // Hand-picked highlight reel for the hero background - deliberately a
 // small, curated subset rather than all 101 destinations, so the very
-// first thing a visitor sees is consistently strong rather than whatever
-// the random gallery draw below happens to include. Filenames are served
+// first thing a visitor sees is consistently strong. Filenames are served
 // straight off recommendation_service's /static/destinations mount (same
 // as every other destination image on the site), so re-uploading a photo
 // under one of these names through the admin dashboard updates the hero
@@ -143,75 +141,25 @@ function buildHeroSlideshow() {
 }
 buildHeroSlideshow();
 
-// Builds the "Explore" gallery straight from live destination data instead
-// of a hand-typed, hardcoded image list that silently drifts out of sync as
-// destinations get added/edited/removed through the admin dashboard. Uses
-// DOM APIs (not innerHTML) since destination names can originate from user
-// submissions (see the admin-approval flow) and shouldn't be trusted as
-// markup.
-function loadDestinationMedia(destinations) {
-  const withImages = destinations.filter((d) => d && d.image_url && d.name);
-  const pool = shuffled(withImages);
-
-  const galleryEl = document.getElementById('destination-gallery');
-  if (galleryEl) {
-    const galleryPicks = pool.slice(9, 9 + 16);
-    galleryPicks.forEach((dest, i) => {
-      const item = document.createElement('div');
-      // Every 5th card runs tall, the last one runs wide - keeps the same
-      // masonry-style variety the old hardcoded gallery had without
-      // depending on a fixed-length, hand-picked list.
-      let variant = '';
-      if (i === galleryPicks.length - 1) variant = ' wide';
-      else if (i % 5 === 0) variant = ' tall';
-      item.className = `gallery-item${variant}`;
-      item.dataset.aos = 'fade-up';
-      item.dataset.aosDelay = String((i % 4) * 50);
-
-      const img = document.createElement('img');
-      img.src = dest.image_url;
-      img.alt = dest.name;
-      img.loading = 'lazy';
-      item.appendChild(img);
-
-      const caption = document.createElement('div');
-      caption.className = 'gallery-caption';
-      caption.textContent = dest.name;
-      item.appendChild(caption);
-
-      galleryEl.appendChild(item);
-    });
-    // The gallery items above carry data-aos attributes but were added
-    // after AOS.init() already scanned the page, so AOS doesn't know about
-    // them yet without an explicit rescan.
-    if (window.AOS) AOS.refreshHard();
-  }
-}
-
-// Live destination count + hero/gallery imagery, both pulled straight from
-// the API so neither goes stale relative to what's actually in the app.
-// The count animates once the real value is known, rather than racing the
-// generic observer above with a placeholder target.
+// Live destination count, pulled straight from the API so the number
+// never goes stale relative to what's actually in the app. Animated once
+// the real value is known, rather than racing the generic observer above
+// with a placeholder target.
 fetch('/destinations')
   .then((res) => (res.ok ? res.json() : Promise.reject(res.status)))
   .then((data) => {
-    const destinations = Array.isArray(data) ? data : [];
-
-    const countEl = document.getElementById('stat-destinations');
-    if (countEl) {
-      if (Array.isArray(data)) {
-        countEl.dataset.countTo = String(destinations.length);
-        animateCountUp(countEl);
-      } else {
-        countEl.textContent = '—';
-      }
+    const el = document.getElementById('stat-destinations');
+    if (!el) return;
+    const count = Array.isArray(data) ? data.length : null;
+    if (count === null) {
+      el.textContent = '—';
+      return;
     }
-
-    loadDestinationMedia(destinations);
+    el.dataset.countTo = String(count);
+    animateCountUp(el);
   })
   .catch(() => {
-    // Leave the placeholder dash in place, and the hero/gallery empty,
-    // if the API isn't reachable.
+    // Leave the placeholder dash in place if the API isn't reachable.
   });
 
 // Grey out / label download buttons whose files haven't been uploaded
