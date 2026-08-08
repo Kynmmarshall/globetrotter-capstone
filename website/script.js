@@ -8,14 +8,14 @@ if (window.AOS) {
 // (rather than one static hero image forever), picking both the next image
 // and its entrance animation at random each time so the rotation doesn't
 // just repeat the same fade - see the .anim-* keyframes in style.css.
-// Called once loadDestinationMedia() below has injected the actual slide
-// elements - there's nothing to cycle through before that fetch resolves.
+// Called once buildHeroSlideshow() below has injected the actual slide
+// elements - there's nothing to cycle through before that.
 function initHeroSlideshow() {
   const slides = document.querySelectorAll('.hero-bg-slide');
   if (slides.length < 2) return;
   if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
-  const animations = ['anim-zoom', 'anim-slide-left', 'anim-slide-right', 'anim-blur', 'anim-rotate', 'anim-drop', 'anim-flip'];
+  const animations = ['anim-cube', 'anim-flip', 'anim-vortex', 'anim-curtain', 'anim-fall', 'anim-swing', 'anim-iris', 'anim-blur'];
   let current = 0;
 
   function pickNextIndex() {
@@ -95,27 +95,63 @@ function shuffled(items) {
   return arr;
 }
 
-// Builds the hero background slideshow and the "Explore" gallery straight
-// from live destination data instead of a hand-typed, hardcoded image list
-// that silently drifts out of sync as destinations get added/edited/removed
-// through the admin dashboard. Uses DOM APIs (not innerHTML) since
-// destination names can originate from user submissions (see the
-// admin-approval flow) and shouldn't be trusted as markup.
+// Hand-picked highlight reel for the hero background - deliberately a
+// small, curated subset rather than all 101 destinations, so the very
+// first thing a visitor sees is consistently strong rather than whatever
+// the random gallery draw below happens to include. Filenames are served
+// straight off recommendation_service's /static/destinations mount (same
+// as every other destination image on the site), so re-uploading a photo
+// under one of these names through the admin dashboard updates the hero
+// automatically without touching this list.
+const CURATED_HERO_IMAGES = [
+  'bar_panoramique.jpg',
+  'basilica.png',
+  'blackitude_museum.png',
+  'cathedrale_notre_dame_des_victoires.jpg',
+  'briqueterie_soya.jpg',
+  'grande_mosquee_de_yaounde.jpg',
+  'v_gaming.png',
+  'Stade_Paul_Biya.jpg',
+  'reunification_monument.png',
+  'pizzeria_glacier_grill_dolcezza.jpg',
+  'mvog_betsi_zoo.png',
+  'monument_de_l_independance.jpg',
+  'majestic_cinema.jpg',
+  'cez_fitness_club.jpg',
+  'albatros_premium_hotel.jpg',
+  'bois_d_ebene.jpg',
+  'black_and_white_sportsbar.jpg',
+  'the_fifty_five.png',
+  'yaounde_roundabout_ilovemycountrycameroon.jpg',
+  'sindz_palace_hotel.jpg',
+];
+
+// Builds the hero background slideshow from the curated list above. Doesn't
+// need to wait on the /destinations fetch below since it isn't drawing from
+// live data - runs immediately so the hero doesn't sit empty during that
+// round trip.
+function buildHeroSlideshow() {
+  const heroEl = document.getElementById('hero-slideshow');
+  if (!heroEl) return;
+  shuffled(CURATED_HERO_IMAGES).forEach((filename, i) => {
+    const slide = document.createElement('div');
+    slide.className = i === 0 ? 'hero-bg-slide is-active' : 'hero-bg-slide';
+    slide.style.backgroundImage = `url('/static/destinations/${filename}')`;
+    heroEl.appendChild(slide);
+  });
+  initHeroSlideshow();
+}
+buildHeroSlideshow();
+
+// Builds the "Explore" gallery straight from live destination data instead
+// of a hand-typed, hardcoded image list that silently drifts out of sync as
+// destinations get added/edited/removed through the admin dashboard. Uses
+// DOM APIs (not innerHTML) since destination names can originate from user
+// submissions (see the admin-approval flow) and shouldn't be trusted as
+// markup.
 function loadDestinationMedia(destinations) {
   const withImages = destinations.filter((d) => d && d.image_url && d.name);
   const pool = shuffled(withImages);
-
-  const heroEl = document.getElementById('hero-slideshow');
-  if (heroEl) {
-    const heroPicks = pool.slice(0, 9);
-    heroPicks.forEach((dest, i) => {
-      const slide = document.createElement('div');
-      slide.className = i === 0 ? 'hero-bg-slide is-active' : 'hero-bg-slide';
-      slide.style.backgroundImage = `url('${dest.image_url}')`;
-      heroEl.appendChild(slide);
-    });
-    initHeroSlideshow();
-  }
 
   const galleryEl = document.getElementById('destination-gallery');
   if (galleryEl) {
