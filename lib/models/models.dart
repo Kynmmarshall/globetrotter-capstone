@@ -37,6 +37,7 @@ class Destination {
     required this.country,
     required this.tags,
     this.imageUrl,
+    this.videoUrl,
     this.description,
     this.location,
     this.lat,
@@ -59,6 +60,7 @@ class Destination {
   final String country;
   final List<String> tags;
   final String? imageUrl;
+  final String? videoUrl;
   final String? description;
   final String? location;
   final double? lat;
@@ -84,6 +86,8 @@ class Destination {
   /// featured, photo-led card rather than a plain search result.
   bool get isFeatured => (imageUrl ?? '').isNotEmpty;
 
+  bool get hasVideo => (videoUrl ?? '').isNotEmpty;
+
   bool get hasRatings => ratingCount > 0 && ratingAverage != null;
 
   bool get hasCoordinates => lat != null && lon != null;
@@ -105,6 +109,7 @@ class Destination {
       country: (json['country'] ?? '').toString(),
       tags: rawTags,
       imageUrl: optionalString('image_url'),
+      videoUrl: optionalString('video_url'),
       description: optionalString('description'),
       location: optionalString('location'),
       lat: (json['lat'] as num?)?.toDouble(),
@@ -138,6 +143,7 @@ class Destination {
       country: country,
       tags: tags,
       imageUrl: imageUrl,
+      videoUrl: videoUrl,
       description: description,
       location: location,
       lat: lat,

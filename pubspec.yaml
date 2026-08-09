@@ -23,6 +23,8 @@ dependencies:
   maplibre_gl: ^0.26.2
   geolocator: ^14.0.3
   flutter_tts: ^4.2.5
+  webview_flutter: ^4.14.1
+  url_launcher: ^6.3.2
 
 dev_dependencies:
   flutter_test:
@@ -52,3 +54,4 @@ flutter:
   assets:
     - assets/backgrounds/
     - assets/logo.png
+    - assets/yango.jpg

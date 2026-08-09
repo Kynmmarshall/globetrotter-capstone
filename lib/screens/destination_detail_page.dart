@@ -7,6 +7,7 @@ import 'package:trip_io/models/models.dart';
 import 'package:trip_io/screens/map_page.dart';
 import 'package:trip_io/services/api_client.dart';
 import 'package:trip_io/services/session_controller.dart';
+import 'package:trip_io/services/video_launcher.dart';
 import 'package:trip_io/themes/trip_colors.dart';
 import 'package:trip_io/widgets/comments_section.dart';
 import 'package:trip_io/widgets/add_to_itinerary_button.dart';
@@ -474,6 +475,43 @@ class _DestinationDetailPageState extends State<DestinationDetailPage> {
     );
   }
 
+  Widget _buildPlayVideoButton(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(22),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () => playDestinationVideo(context, destination.videoUrl!),
+        child: GlassPanel(
+          borderRadius: BorderRadius.circular(22),
+          padding: const EdgeInsets.all(18),
+          child: Row(
+            children: [
+              const Icon(
+                Icons.play_circle_outline,
+                color: Colors.white,
+                size: 20,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  l10n.playVideoButton,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 15,
+                  ),
+                ),
+              ),
+              const Icon(Icons.chevron_right, color: Colors.white70),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildCommentsButton(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     return Material(
@@ -829,6 +867,10 @@ class _DestinationDetailPageState extends State<DestinationDetailPage> {
                             if (destination.hasCoordinates) ...[
                               const SizedBox(height: 22),
                               _buildViewOnMapButton(context),
+                            ],
+                            if (destination.hasVideo) ...[
+                              const SizedBox(height: 22),
+                              _buildPlayVideoButton(context),
                             ],
                             const SizedBox(height: 22),
                             _buildCommentsButton(context),

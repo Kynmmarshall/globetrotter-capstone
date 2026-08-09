@@ -516,6 +516,13 @@ class AppLocalizationsFr extends AppLocalizations {
   String get mapAmenityDirectionsButton => 'Itinéraire jusqu\'ici';
 
   @override
+  String get mapYangoButtonTooltip => 'Réserver un taxi';
+
+  @override
+  String get mapYangoLaunchFailed =>
+      'Impossible d\'ouvrir l\'application de taxi.';
+
+  @override
   String get navMap => 'Carte';
 
   @override
@@ -563,6 +570,18 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get viewOnMapButton => 'Voir sur la carte';
+
+  @override
+  String get playVideoButton => 'Voir la vidéo';
+
+  @override
+  String get videoCloseTooltip => 'Fermer la vidéo';
+
+  @override
+  String get videoLoadError => 'Impossible de charger cette vidéo.';
+
+  @override
+  String get videoLaunchFailed => 'Impossible d\'ouvrir le lien de la vidéo.';
 
   @override
   String get mapLocationPermissionDenied =>
