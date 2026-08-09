@@ -992,6 +992,18 @@ abstract class AppLocalizations {
   /// **'Directions to here'**
   String get mapAmenityDirectionsButton;
 
+  /// No description provided for @mapYangoButtonTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Book a taxi'**
+  String get mapYangoButtonTooltip;
+
+  /// No description provided for @mapYangoLaunchFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t open the taxi app.'**
+  String get mapYangoLaunchFailed;
+
   /// No description provided for @navMap.
   ///
   /// In en, this message translates to:
@@ -1081,6 +1093,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'View on map'**
   String get viewOnMapButton;
+
+  /// No description provided for @playVideoButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Play video'**
+  String get playVideoButton;
+
+  /// No description provided for @videoCloseTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Close video'**
+  String get videoCloseTooltip;
+
+  /// No description provided for @videoLoadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t load this video.'**
+  String get videoLoadError;
+
+  /// No description provided for @videoLaunchFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t open the video link.'**
+  String get videoLaunchFailed;
 
   /// No description provided for @mapLocationPermissionDenied.
   ///

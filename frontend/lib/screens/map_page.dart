@@ -9,6 +9,7 @@ import 'package:trip_io/screens/destination_detail_page.dart';
 import 'package:trip_io/screens/itineraries_page.dart' show formatDuration;
 import 'package:trip_io/services/analytics.dart';
 import 'package:trip_io/services/session_controller.dart';
+import 'package:trip_io/services/yango_launcher.dart';
 import 'package:trip_io/themes/trip_colors.dart';
 import 'package:trip_io/widgets/amenities_legend.dart';
 import 'package:trip_io/widgets/amenity_categories.dart';
@@ -16,6 +17,7 @@ import 'package:trip_io/widgets/glass_panel.dart';
 import 'package:trip_io/widgets/order_destinations_sheet.dart';
 import 'package:trip_io/widgets/session_expired_card.dart';
 import 'package:trip_io/widgets/trip_map.dart';
+import 'package:trip_io/widgets/yango_button.dart';
 
 /// Sentinel [Destination.id] marking the synthetic "my current location"
 /// entry a user can pick as a route start point - never a real destination.
@@ -110,6 +112,7 @@ class _MapPageState extends State<MapPage> {
   bool _amenitiesLegendExpanded = false;
   bool _amenitiesFetchedOnce = false;
   final Set<String> _enabledAmenityCategories = amenityCategories.toSet();
+  bool _yangoLaunching = false;
 
   // The options panel starts collapsed so the map fills the whole screen -
   // "get directions"/"my location"/"select itinerary" live behind this
@@ -158,6 +161,54 @@ class _MapPageState extends State<MapPage> {
       // Best-effort overlay - a failed lookup just means no dots show up,
       // never an error state on top of the rest of the map.
       if (mounted) setState(() => _amenitiesFetchedOnce = true);
+    }
+  }
+
+  /// Hands the current route off to Yango: fetches a fresh GPS fix (not
+  /// the possibly-stale [_origin] synthetic "my location" point, since the
+  /// route may have been computed a while ago) and pairs it with the
+  /// route's destination - the next remaining stop in itinerary mode
+  /// (continuing from wherever the user actually is), or [_destination] in
+  /// browsing mode.
+  Future<void> _onYangoTap() async {
+    final l10n = AppLocalizations.of(context)!;
+    final destTarget = _isItineraryMode
+        ? (_remainingCheckpoints.isNotEmpty ? _remainingCheckpoints.first : null)
+        : _destination;
+    if (destTarget?.lat == null || destTarget?.lon == null) return;
+
+    setState(() => _yangoLaunching = true);
+    try {
+      if (!await ensureLocationPermission()) {
+        if (mounted) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(l10n.mapYangoLaunchFailed)));
+        }
+        return;
+      }
+      final position = await Geolocator.getCurrentPosition(
+        locationSettings: buildLocationSettings(),
+      );
+      final launched = await launchYangoRoute(
+        pickupLat: position.latitude,
+        pickupLon: position.longitude,
+        destLat: destTarget!.lat!,
+        destLon: destTarget.lon!,
+      );
+      if (!launched && mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(l10n.mapYangoLaunchFailed)));
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(l10n.mapYangoLaunchFailed)));
+      }
+    } finally {
+      if (mounted) setState(() => _yangoLaunching = false);
     }
   }
 
@@ -1310,6 +1361,20 @@ class _MapPageState extends State<MapPage> {
                           _amenitiesFetchedOnce &&
                           _amenities.isEmpty,
                     ),
+                  ),
+                ),
+              // Right side mirrors the left-side locate-me/amenities stack,
+              // just above where the dashboard's AI chat FAB sits (a fixed
+              // bottom-right Scaffold-level button on every screen, not
+              // part of this Stack) - only shown once a route actually
+              // exists to hand off.
+              if (_route != null)
+                Positioned(
+                  right: 16,
+                  bottom: 84,
+                  child: YangoButton(
+                    onTap: _onYangoTap,
+                    loading: _yangoLaunching,
                   ),
                 ),
             ],

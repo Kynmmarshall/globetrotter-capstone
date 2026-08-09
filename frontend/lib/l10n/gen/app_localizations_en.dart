@@ -504,6 +504,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get mapAmenityDirectionsButton => 'Directions to here';
 
   @override
+  String get mapYangoButtonTooltip => 'Book a taxi';
+
+  @override
+  String get mapYangoLaunchFailed => 'Couldn\'t open the taxi app.';
+
+  @override
   String get navMap => 'Map';
 
   @override
@@ -550,6 +556,18 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get viewOnMapButton => 'View on map';
+
+  @override
+  String get playVideoButton => 'Play video';
+
+  @override
+  String get videoCloseTooltip => 'Close video';
+
+  @override
+  String get videoLoadError => 'Couldn\'t load this video.';
+
+  @override
+  String get videoLaunchFailed => 'Couldn\'t open the video link.';
 
   @override
   String get mapLocationPermissionDenied =>
