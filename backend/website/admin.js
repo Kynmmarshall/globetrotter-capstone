@@ -11,6 +11,8 @@
   let token = localStorage.getItem(TOKEN_KEY);
   let currentStatus = 'pending';
   let editingId = null; // null while creating a brand-new destination
+  let allDestinations = []; // last full fetch - re-filtered locally as the admin types, no refetch per keystroke
+  let searchQuery = '';
 
   // ---------- location picker map (editor dialog) ----------
 
@@ -244,14 +246,42 @@
     }[c]));
   }
 
-  async function refresh() {
-    showError(el('dash-error'), '');
+  // Strips accents so typing "etoudi" still finds "Étoudi", "marche" finds
+  // "Marché", etc. - most of this catalog is French place names, and admins
+  // shouldn't need exact diacritics to find one.
+  function normalizeForSearch(value) {
+    return String(value ?? '')
+      .normalize('NFD')
+      .replace(/[̀-ͯ]/g, '')
+      .toLowerCase();
+  }
+
+  function matchesSearch(dest, query) {
+    if (!query) return true;
+    const haystack = normalizeForSearch(
+      [dest.name, dest.location, dest.id, dest.description, (dest.tags || []).join(' ')].join(' '),
+    );
+    return haystack.includes(query);
+  }
+
+  function renderList() {
     const list = el('dest-list');
     list.innerHTML = '';
+    const query = normalizeForSearch(searchQuery.trim());
+    const shown = allDestinations.filter(
+      (d) => (d.status || 'approved') === currentStatus && matchesSearch(d, query),
+    );
+    el('dest-empty').hidden = shown.length > 0;
+    el('dest-empty').textContent = query ? 'No destinations match your search.' : 'Nothing here.';
+    shown.forEach((d) => list.appendChild(card(d)));
+  }
+
+  async function refresh() {
+    showError(el('dash-error'), '');
     try {
-      const all = await api('/admin/destinations');
+      allDestinations = await api('/admin/destinations');
       const counts = { pending: 0, approved: 0, rejected: 0 };
-      all.forEach((d) => {
+      allDestinations.forEach((d) => {
         const s = d.status || 'approved';
         if (counts[s] !== undefined) counts[s] += 1;
       });
@@ -259,9 +289,7 @@
       el('count-approved').textContent = counts.approved;
       el('count-rejected').textContent = counts.rejected;
 
-      const shown = all.filter((d) => (d.status || 'approved') === currentStatus);
-      el('dest-empty').hidden = shown.length > 0;
-      shown.forEach((d) => list.appendChild(card(d)));
+      renderList();
     } catch (err) {
       showError(el('dash-error'), err.message);
     }
@@ -308,6 +336,7 @@
     el('f-fee').value = dest?.entry_fee || '';
     el('f-price-tier').value = dest?.price_tier || '';
     el('f-tips').value = dest?.tips || '';
+    el('f-video').value = dest?.video_url || '';
     showError(el('edit-error'), '');
     el('edit-dialog').showModal();
 
@@ -361,6 +390,7 @@
       entry_fee: el('f-fee').value.trim() || null,
       price_tier: el('f-price-tier').value || null,
       tips: el('f-tips').value.trim() || null,
+      video_url: el('f-video').value.trim() || null,
     };
     try {
       const saved = editingId
@@ -417,6 +447,11 @@
     const file = el('f-image-file').files[0] || null;
     pendingImageFile = file;
     if (file) setImagePreview(URL.createObjectURL(file));
+  });
+
+  el('search-input').addEventListener('input', (e) => {
+    searchQuery = e.target.value;
+    renderList();
   });
 
   document.querySelectorAll('.admin-tab').forEach((tab) => {

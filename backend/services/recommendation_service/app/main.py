@@ -173,7 +173,14 @@ def admin_list_destinations(status: str = None, admin: str = Depends(require_adm
 
 @app.patch("/admin/destinations/{destination_id}", response_model=Destination)
 def admin_update_destination(destination_id: str, payload: DestinationUpdate, admin: str = Depends(require_admin)):
-    changes = {k: v for k, v in payload.dict().items() if v is not None}
+    # exclude_unset (not "drop Nones") is what makes this endpoint work for
+    # both of its callers: setStatus() in the admin UI sends just {"status":
+    # ...}, so every other field is genuinely unset and must stay untouched;
+    # the destination editor always sends the whole form, including explicit
+    # nulls for fields the admin cleared, which must actually clear them
+    # rather than silently keep the old value (see crud.update_destination,
+    # which now applies every key in `changes` unconditionally).
+    changes = payload.dict(exclude_unset=True)
     if changes.get("status") and changes["status"] not in (crud.APPROVED, crud.PENDING, crud.REJECTED):
         raise HTTPException(status_code=400, detail="Invalid status")
     updated = crud.update_destination(destination_id, changes)

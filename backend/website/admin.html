@@ -66,6 +66,9 @@
             <button type="button" class="admin-tab" data-status="approved">Approved <span class="admin-count" id="count-approved">0</span></button>
             <button type="button" class="admin-tab" data-status="rejected">Rejected <span class="admin-count" id="count-rejected">0</span></button>
           </div>
+          <div class="admin-search">
+            <input type="search" id="search-input" placeholder="Search destinations…" aria-label="Search destinations" />
+          </div>
           <button type="button" class="btn btn-primary" id="new-btn">+ New destination</button>
         </div>
 
@@ -113,6 +116,7 @@
         </select>
       </label>
       <label><span>Tips</span><textarea id="f-tips" rows="2"></textarea></label>
+      <label><span>Video URL</span><input type="url" id="f-video" placeholder="https://youtube.com/watch?v=..." /></label>
       <p class="admin-error" id="edit-error" hidden></p>
       <div class="admin-dialog-actions">
         <button type="button" class="btn btn-ghost" id="edit-cancel">Cancel</button>

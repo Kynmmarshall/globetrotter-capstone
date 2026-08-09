@@ -208,12 +208,15 @@ def get_submissions_by(username: str):
 
 
 def update_destination(destination_id: str, changes: dict):
+    # Applies every key in `changes` as-is, including None - callers are
+    # responsible for only passing keys they actually want touched (see
+    # admin_update_destination's use of exclude_unset), since a None here is
+    # meant as "clear this field," not "leave it alone."
     data = read_data()
     for d in data.get("destinations", []):
         if d.get("id") == destination_id:
             for key, value in changes.items():
-                if value is not None:
-                    d[key] = value
+                d[key] = value
             write_data(data)
             return d
     return None

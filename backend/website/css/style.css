@@ -256,70 +256,87 @@ img {
 }
 
 /* A different flourish plays each time a slide becomes active (picked
-   randomly in script.js), so the rotation doesn't just repeat one fade.
-   Kept snappy (under ~1.1s) so the motion actually reads as motion instead
-   of a slow, easy-to-miss drift. */
-.hero-bg-slide.anim-zoom.is-active {
-  animation: heroZoomIn 1s ease-out both;
+   randomly in script.js) - deliberately big, PowerPoint-transition-style
+   moves (cube turns, a full flip, a spin-in, a curtain wipe, a pendulum
+   swing, an iris reveal) rather than a subtle fade, so the rotation reads
+   as a real "moment" instead of an easy-to-miss drift. Durations run
+   1-1.4s: enough for the bigger moves (vortex, swing) to actually read as
+   motion without lingering. */
+.hero-bg-slide.anim-cube.is-active {
+  animation: heroCubeIn 1.15s cubic-bezier(0.22, 0.75, 0.32, 1) both;
 }
 
-.hero-bg-slide.anim-slide-left.is-active {
-  animation: heroSlideLeft 1s ease-out both;
+.hero-bg-slide.anim-flip.is-active {
+  animation: heroFlipIn 1.2s cubic-bezier(0.22, 0.75, 0.32, 1) both;
 }
 
-.hero-bg-slide.anim-slide-right.is-active {
-  animation: heroSlideRight 1s ease-out both;
+.hero-bg-slide.anim-vortex.is-active {
+  animation: heroVortexIn 1.4s cubic-bezier(0.22, 0.75, 0.32, 1) both;
+}
+
+.hero-bg-slide.anim-curtain.is-active {
+  animation: heroCurtainIn 1.1s cubic-bezier(0.65, 0, 0.35, 1) both;
+}
+
+.hero-bg-slide.anim-fall.is-active {
+  animation: heroFallIn 1.1s cubic-bezier(0.22, 0.75, 0.32, 1) both;
+}
+
+.hero-bg-slide.anim-swing.is-active {
+  animation: heroSwingIn 1.3s cubic-bezier(0.22, 0.75, 0.32, 1) both;
+}
+
+.hero-bg-slide.anim-iris.is-active {
+  animation: heroIrisIn 1.1s cubic-bezier(0.65, 0, 0.35, 1) both;
 }
 
 .hero-bg-slide.anim-blur.is-active {
   animation: heroBlurIn 1.1s ease-out both;
 }
 
-.hero-bg-slide.anim-rotate.is-active {
-  animation: heroRotateIn 1s ease-out both;
-}
-
-.hero-bg-slide.anim-drop.is-active {
-  animation: heroDropIn 0.9s ease-out both;
-}
-
-.hero-bg-slide.anim-flip.is-active {
-  animation: heroFlipIn 1.1s ease-out both;
-}
-
-@keyframes heroZoomIn {
-  from { opacity: 0; transform: scale(1.28); }
-  to { opacity: 1; transform: scale(1); }
-}
-
-@keyframes heroSlideLeft {
-  from { opacity: 0; transform: translateX(7%) scale(1.08); }
-  to { opacity: 1; transform: translateX(0) scale(1.08); }
-}
-
-@keyframes heroSlideRight {
-  from { opacity: 0; transform: translateX(-7%) scale(1.08); }
-  to { opacity: 1; transform: translateX(0) scale(1.08); }
-}
-
-@keyframes heroBlurIn {
-  from { opacity: 0; filter: blur(22px) saturate(1.05); transform: scale(1.1); }
-  to { opacity: 1; filter: blur(0) saturate(1.05); transform: scale(1.02); }
-}
-
-@keyframes heroRotateIn {
-  from { opacity: 0; transform: rotate(-4deg) scale(1.2); }
-  to { opacity: 1; transform: rotate(0deg) scale(1.03); }
-}
-
-@keyframes heroDropIn {
-  from { opacity: 0; transform: translateY(-10%) scale(1.08); }
-  to { opacity: 1; transform: translateY(0) scale(1.08); }
+@keyframes heroCubeIn {
+  0% { opacity: 0; transform: perspective(1200px) rotateY(-100deg) scale(1.1); transform-origin: left center; }
+  55% { opacity: 1; }
+  100% { opacity: 1; transform: perspective(1200px) rotateY(0deg) scale(1.02); transform-origin: left center; }
 }
 
 @keyframes heroFlipIn {
-  from { opacity: 0; transform: perspective(900px) rotateY(14deg) scale(1.1); }
-  to { opacity: 1; transform: perspective(900px) rotateY(0deg) scale(1.02); }
+  0% { opacity: 0; transform: perspective(1000px) rotateY(110deg) scale(1.15); }
+  70% { opacity: 1; transform: perspective(1000px) rotateY(-8deg) scale(1.03); }
+  100% { opacity: 1; transform: perspective(1000px) rotateY(0deg) scale(1.02); }
+}
+
+@keyframes heroVortexIn {
+  0% { opacity: 0; transform: rotate(-540deg) scale(0.15); }
+  65% { opacity: 1; }
+  100% { opacity: 1; transform: rotate(0deg) scale(1.03); }
+}
+
+@keyframes heroCurtainIn {
+  0% { opacity: 1; -webkit-clip-path: inset(0 100% 0 0); clip-path: inset(0 100% 0 0); transform: scale(1.06); }
+  100% { opacity: 1; -webkit-clip-path: inset(0 0% 0 0); clip-path: inset(0 0% 0 0); transform: scale(1.02); }
+}
+
+@keyframes heroFallIn {
+  0% { opacity: 0; transform: perspective(1000px) rotateX(-70deg) scale(1.1); transform-origin: bottom center; }
+  100% { opacity: 1; transform: perspective(1000px) rotateX(0deg) scale(1.02); transform-origin: bottom center; }
+}
+
+@keyframes heroSwingIn {
+  0% { opacity: 0; transform: rotate(-18deg) scale(1.15); transform-origin: top center; }
+  55% { opacity: 1; transform: rotate(6deg) scale(1.05); transform-origin: top center; }
+  80% { transform: rotate(-3deg) scale(1.03); transform-origin: top center; }
+  100% { opacity: 1; transform: rotate(0deg) scale(1.02); transform-origin: top center; }
+}
+
+@keyframes heroIrisIn {
+  0% { opacity: 1; -webkit-clip-path: circle(0% at 50% 45%); clip-path: circle(0% at 50% 45%); transform: scale(1.08); }
+  100% { opacity: 1; -webkit-clip-path: circle(150% at 50% 45%); clip-path: circle(150% at 50% 45%); transform: scale(1.02); }
+}
+
+@keyframes heroBlurIn {
+  from { opacity: 0; filter: blur(32px) saturate(1.1); transform: scale(1.18); }
+  to { opacity: 1; filter: blur(0) saturate(1.05); transform: scale(1.02); }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1359,6 +1376,31 @@ footer .footer-brand img {
   padding: 1px 7px;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.18);
+}
+
+.admin-search {
+  flex: 1 1 220px;
+  max-width: 360px;
+}
+
+.admin-search input {
+  width: 100%;
+  font-family: inherit;
+  font-size: 0.92rem;
+  padding: 9px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--glass-border);
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+}
+
+.admin-search input:focus {
+  outline: none;
+  border-color: var(--brand-teal-light);
+}
+
+.admin-search input::placeholder {
+  color: var(--text-faint);
 }
 
 .admin-list {
