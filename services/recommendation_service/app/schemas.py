@@ -16,6 +16,7 @@ class Destination(BaseModel):
     country: Optional[str]
     tags: Optional[List[str]] = []
     image_url: Optional[str] = None
+    video_url: Optional[str] = None
     description: Optional[str] = None
     location: Optional[str] = None
     lat: Optional[float] = None
@@ -47,6 +48,7 @@ class DestinationSubmit(BaseModel):
     tags: Optional[List[str]] = []
     country: Optional[str] = "Cameroon"
     image_url: Optional[str] = None
+    video_url: Optional[str] = None
     opening_hours: Optional[str] = None
     entry_fee: Optional[str] = None
     price_tier: Optional[str] = None
@@ -62,6 +64,7 @@ class DestinationUpdate(BaseModel):
     tags: Optional[List[str]] = None
     country: Optional[str] = None
     image_url: Optional[str] = None
+    video_url: Optional[str] = None
     opening_hours: Optional[str] = None
     entry_fee: Optional[str] = None
     price_tier: Optional[str] = None

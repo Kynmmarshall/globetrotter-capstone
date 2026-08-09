@@ -226,6 +226,39 @@ async def test_price_tier_round_trips_through_admin_create_and_update(tmp_path, 
 
 
 @pytest.mark.asyncio
+async def test_video_url_round_trips_through_admin_create_and_update(tmp_path, monkeypatch):
+    _use_temp_data(tmp_path)
+    token = create_access_token("admin_user")
+    headers = {"Authorization": f"Bearer {token}"}
+
+    async def is_admin(username):
+        return True
+
+    monkeypatch.setattr(clients, "is_admin", is_admin)
+
+    async with AsyncClient(app=app, base_url="http://test") as ac:
+        created = await ac.post(
+            "/admin/destinations",
+            json={"name": "Test Museum", "video_url": "https://youtube.com/watch?v=abc123"},
+            headers=headers,
+        )
+        assert created.status_code == 200
+        assert created.json()["video_url"] == "https://youtube.com/watch?v=abc123"
+        dest_id = created.json()["id"]
+
+        updated = await ac.patch(
+            f"/admin/destinations/{dest_id}",
+            json={"video_url": "https://www.facebook.com/watch/?v=999"},
+            headers=headers,
+        )
+        assert updated.status_code == 200
+        assert updated.json()["video_url"] == "https://www.facebook.com/watch/?v=999"
+
+        fetched = await ac.get(f"/destinations/{dest_id}")
+        assert fetched.json()["video_url"] == "https://www.facebook.com/watch/?v=999"
+
+
+@pytest.mark.asyncio
 async def test_route_endpoint_maps_error_types_to_distinct_status_codes(tmp_path, monkeypatch):
     _use_temp_data(tmp_path)
     token = create_access_token("alice")

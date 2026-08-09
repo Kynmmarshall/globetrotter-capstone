@@ -308,6 +308,7 @@
     el('f-fee').value = dest?.entry_fee || '';
     el('f-price-tier').value = dest?.price_tier || '';
     el('f-tips').value = dest?.tips || '';
+    el('f-video').value = dest?.video_url || '';
     showError(el('edit-error'), '');
     el('edit-dialog').showModal();
 
@@ -361,6 +362,7 @@
       entry_fee: el('f-fee').value.trim() || null,
       price_tier: el('f-price-tier').value || null,
       tips: el('f-tips').value.trim() || null,
+      video_url: el('f-video').value.trim() || null,
     };
     try {
       const saved = editingId
