@@ -259,6 +259,79 @@ async def test_video_url_round_trips_through_admin_create_and_update(tmp_path, m
 
 
 @pytest.mark.asyncio
+async def test_admin_update_can_clear_a_field_back_to_null(tmp_path, monkeypatch):
+    # Regression test: the admin dashboard's editor always PATCHes the whole
+    # form, including explicit nulls for fields the admin cleared. Those
+    # nulls must actually clear the field, not be silently dropped in favor
+    # of the old value (see admin_update_destination's exclude_unset and
+    # crud.update_destination applying every key unconditionally).
+    _use_temp_data(tmp_path)
+    token = create_access_token("admin_user")
+    headers = {"Authorization": f"Bearer {token}"}
+
+    async def is_admin(username):
+        return True
+
+    monkeypatch.setattr(clients, "is_admin", is_admin)
+
+    async with AsyncClient(app=app, base_url="http://test") as ac:
+        created = await ac.post(
+            "/admin/destinations",
+            json={"name": "Test Cafe", "tips": "Bring cash", "entry_fee": "500 CFA"},
+            headers=headers,
+        )
+        assert created.status_code == 200
+        assert created.json()["tips"] == "Bring cash"
+        dest_id = created.json()["id"]
+
+        cleared = await ac.patch(
+            f"/admin/destinations/{dest_id}",
+            json={"tips": None, "entry_fee": None},
+            headers=headers,
+        )
+        assert cleared.status_code == 200
+        assert cleared.json()["tips"] is None
+        assert cleared.json()["entry_fee"] is None
+
+        fetched = await ac.get(f"/destinations/{dest_id}")
+        assert fetched.json()["tips"] is None
+        assert fetched.json()["entry_fee"] is None
+
+
+@pytest.mark.asyncio
+async def test_admin_set_status_does_not_wipe_untouched_fields(tmp_path, monkeypatch):
+    # The other caller of the same PATCH endpoint (setStatus() in the admin
+    # UI) sends only {"status": ...} - that must remain a true partial
+    # update and not clear every other field, which exclude_unset is what
+    # makes safe alongside the fix above.
+    _use_temp_data(tmp_path)
+    token = create_access_token("admin_user")
+    headers = {"Authorization": f"Bearer {token}"}
+
+    async def is_admin(username):
+        return True
+
+    monkeypatch.setattr(clients, "is_admin", is_admin)
+
+    async with AsyncClient(app=app, base_url="http://test") as ac:
+        created = await ac.post(
+            "/admin/destinations",
+            json={"name": "Test Landmark", "tips": "Bring cash"},
+            headers=headers,
+        )
+        dest_id = created.json()["id"]
+
+        updated = await ac.patch(
+            f"/admin/destinations/{dest_id}",
+            json={"status": "approved"},
+            headers=headers,
+        )
+        assert updated.status_code == 200
+        assert updated.json()["status"] == "approved"
+        assert updated.json()["tips"] == "Bring cash"
+
+
+@pytest.mark.asyncio
 async def test_route_endpoint_maps_error_types_to_distinct_status_codes(tmp_path, monkeypatch):
     _use_temp_data(tmp_path)
     token = create_access_token("alice")
