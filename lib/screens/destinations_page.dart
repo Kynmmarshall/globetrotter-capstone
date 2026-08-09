@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:trip_io/l10n/gen/app_localizations.dart';
 import 'package:trip_io/models/models.dart';
@@ -32,6 +34,7 @@ class _DestinationsPageState extends State<DestinationsPage> {
   final TextEditingController _searchController = TextEditingController();
   late Future<List<Destination>> _future;
   final Set<String> _selectedTags = {};
+  Timer? _searchDebounce;
 
   @override
   void initState() {
@@ -41,6 +44,7 @@ class _DestinationsPageState extends State<DestinationsPage> {
 
   @override
   void dispose() {
+    _searchDebounce?.cancel();
     _searchController.dispose();
     super.dispose();
   }
@@ -51,6 +55,14 @@ class _DestinationsPageState extends State<DestinationsPage> {
         query: _searchController.text.trim(),
       );
     });
+  }
+
+  // Searches as the user types, same live-filtering feel as the admin
+  // dashboard's search box - debounced (not on every keystroke) because
+  // this one hits the API rather than filtering an already-loaded list.
+  void _onSearchChanged(String _) {
+    _searchDebounce?.cancel();
+    _searchDebounce = Timer(const Duration(milliseconds: 350), _search);
   }
 
   void _toggleTag(String tag) {
@@ -358,7 +370,14 @@ class _DestinationsPageState extends State<DestinationsPage> {
                 hintText: l10n.destinationsSearchHint,
                 hintStyle: const TextStyle(color: Colors.white60),
               ),
-              onSubmitted: (_) => _search(),
+              onChanged: _onSearchChanged,
+              onSubmitted: (_) {
+                // Enter/search-key jumps the queue instead of waiting out
+                // the debounce - same instant-search entry point the
+                // FilledButton below already offers.
+                _searchDebounce?.cancel();
+                _search();
+              },
             ),
           ),
           FilledButton(onPressed: _search, child: Text(l10n.searchButton)),
