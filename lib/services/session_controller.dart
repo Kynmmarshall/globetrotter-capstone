@@ -355,6 +355,14 @@ class SessionController extends ChangeNotifier {
     return ApiClient().getDestinations(query: query, token: token);
   }
 
+  // Not gated behind _requireToken() either, for the same reason as
+  // destinations() above - used to resolve an AI-mentioned destination
+  // (see AiFormattedText) into a full Destination for its detail page.
+  Future<Destination> destination(String id) {
+    final token = (_token != null && !_isTokenExpired(_token!)) ? _token : null;
+    return ApiClient().getDestination(id, token: token);
+  }
+
   Future<Destination> rateDestination(String destinationId, int stars) async {
     final token = _requireToken();
     final result = await ApiClient().rateDestination(

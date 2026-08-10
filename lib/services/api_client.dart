@@ -269,6 +269,15 @@ class ApiClient {
         .toList();
   }
 
+  Future<Destination> getDestination(String destinationId, {String? token}) async {
+    final response = await _client.get(
+      _uri('/destinations/$destinationId'),
+      headers: token != null ? {'Authorization': 'Bearer $token'} : null,
+    );
+    _throwIfNotOk(response);
+    return Destination.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
+  }
+
   Future<Destination> rateDestination(
     String token,
     String destinationId,

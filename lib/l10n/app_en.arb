@@ -58,6 +58,7 @@
   "aiExplainButton": "Ask AI to explain",
   "aiExplainTitle": "AI explanation",
   "aiExplainError": "Couldn't get an explanation right now.",
+  "aiLinkOpenFailed": "Couldn't open that destination.",
 
   "commentsTitle": "Comments",
   "commentsInputHint": "Add a comment…",

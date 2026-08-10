@@ -9,6 +9,7 @@ import 'package:trip_io/services/api_client.dart';
 import 'package:trip_io/services/session_controller.dart';
 import 'package:trip_io/services/video_launcher.dart';
 import 'package:trip_io/themes/trip_colors.dart';
+import 'package:trip_io/widgets/ai_formatted_text.dart';
 import 'package:trip_io/widgets/comments_section.dart';
 import 'package:trip_io/widgets/add_to_itinerary_button.dart';
 import 'package:trip_io/widgets/directions_button.dart';
@@ -349,68 +350,78 @@ class _DestinationDetailPageState extends State<DestinationDetailPage> {
 
   Widget _buildAiExplainSection(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+
+    // On a narrow screen (small phones, or a phone-width web/desktop
+    // window) the title and this action button can't both fit on one line
+    // without either overflowing or squeezing the title into a near-
+    // unreadable column - see the button being pulled onto its own row
+    // below instead of sitting inline with the title in that case.
+    final isNarrow = MediaQuery.sizeOf(context).width < 400;
+
+    final Widget action = _explanation == null
+        ? TextButton.icon(
+            onPressed: _explaining ? null : _askAi,
+            icon: _explaining
+                ? const SizedBox(
+                    width: 14,
+                    height: 14,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white70,
+                    ),
+                  )
+                : const Icon(Icons.auto_awesome, size: 16, color: Colors.white),
+            label: Text(
+              l10n.aiExplainButton,
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          )
+        : IconButton(
+            onPressed: () => _toggleReadAloud('explanation', _explanation!),
+            icon: Icon(
+              _speaking && _speakingSource == 'explanation'
+                  ? Icons.stop_circle
+                  : Icons.volume_up,
+              color: Colors.white,
+              size: 20,
+            ),
+            tooltip: _speaking && _speakingSource == 'explanation'
+                ? l10n.readAloudStopTooltip
+                : l10n.readAloudTooltip,
+          );
+
+    final titleRow = Row(
+      children: [
+        const Icon(Icons.smart_toy, color: Colors.white, size: 18),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            l10n.aiExplainTitle,
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w700,
+              fontSize: 14.5,
+            ),
+          ),
+        ),
+        if (!isNarrow) action,
+      ],
+    );
+
     return GlassPanel(
       borderRadius: BorderRadius.circular(22),
       padding: const EdgeInsets.all(18),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              const Icon(Icons.smart_toy, color: Colors.white, size: 18),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  l10n.aiExplainTitle,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 14.5,
-                  ),
-                ),
-              ),
-              if (_explanation == null)
-                TextButton.icon(
-                  onPressed: _explaining ? null : _askAi,
-                  icon: _explaining
-                      ? const SizedBox(
-                          width: 14,
-                          height: 14,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white70,
-                          ),
-                        )
-                      : const Icon(
-                          Icons.auto_awesome,
-                          size: 16,
-                          color: Colors.white,
-                        ),
-                  label: Text(
-                    l10n.aiExplainButton,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              if (_explanation != null)
-                IconButton(
-                  onPressed: () =>
-                      _toggleReadAloud('explanation', _explanation!),
-                  icon: Icon(
-                    _speaking && _speakingSource == 'explanation'
-                        ? Icons.stop_circle
-                        : Icons.volume_up,
-                    color: Colors.white,
-                    size: 20,
-                  ),
-                  tooltip: _speaking && _speakingSource == 'explanation'
-                      ? l10n.readAloudStopTooltip
-                      : l10n.readAloudTooltip,
-                ),
-            ],
-          ),
+          titleRow,
+          if (isNarrow) ...[
+            const SizedBox(height: 4),
+            Align(alignment: Alignment.centerRight, child: action),
+          ],
           if (_explainError != null) ...[
             const SizedBox(height: 8),
             Text(
@@ -420,8 +431,9 @@ class _DestinationDetailPageState extends State<DestinationDetailPage> {
           ],
           if (_explanation != null) ...[
             const SizedBox(height: 10),
-            Text(
-              _explanation!,
+            AiFormattedText(
+              content: _explanation!,
+              session: widget.session,
               style: TextStyle(
                 color: Colors.white.withValues(alpha: 0.92),
                 fontSize: 14,

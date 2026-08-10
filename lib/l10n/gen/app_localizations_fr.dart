@@ -178,6 +178,9 @@ class AppLocalizationsFr extends AppLocalizations {
       'Impossible d\'obtenir une explication pour le moment.';
 
   @override
+  String get aiLinkOpenFailed => 'Impossible d\'ouvrir cette destination.';
+
+  @override
   String get commentsTitle => 'Commentaires';
 
   @override
