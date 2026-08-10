@@ -1,48 +1,59 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:trip_io/l10n/gen/app_localizations.dart';
+import 'package:trip_io/services/video_embed.dart';
+import 'package:trip_io/widgets/platform_iframe_stub.dart'
+    if (dart.library.html) 'package:trip_io/widgets/platform_iframe_web.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
-/// Fullscreen dialog that plays a destination's video (a Facebook/YouTube/
-/// Instagram/etc. link) via an embedded WebView - only pushed on
-/// Android/iOS, see [playDestinationVideo] in video_launcher.dart for why.
-/// Native WebViews aren't subject to browser iframe restrictions, so the
-/// raw watch-page URL loads directly rather than needing a platform-
-/// specific "embed" URL.
+/// Fullscreen dialog that plays a destination's video.
+///
+/// - Android/iOS: an embedded WebView loads the raw video_url directly -
+///   native WebViews aren't subject to browser iframe restrictions, so no
+///   platform-specific "embed" URL is needed there.
+/// - Web: embeds [webEmbed] (see video_embed.dart) as a real <iframe> -
+///   only reachable this way for YouTube/Facebook/TikTok, the platforms
+///   confirmed to actually allow third-party framing. [playDestinationVideo]
+///   in video_launcher.dart only pushes this page on web when that resolved
+///   to something non-null; anything else opens externally instead.
 class VideoPlayerPage extends StatefulWidget {
-  const VideoPlayerPage({super.key, required this.videoUrl});
+  const VideoPlayerPage({super.key, required this.videoUrl, this.webEmbed});
 
   final String videoUrl;
+  final VideoEmbedInfo? webEmbed;
 
   @override
   State<VideoPlayerPage> createState() => _VideoPlayerPageState();
 }
 
 class _VideoPlayerPageState extends State<VideoPlayerPage> {
-  late final WebViewController _controller;
+  WebViewController? _controller;
   bool _hasError = false;
   bool _loading = true;
 
   @override
   void initState() {
     super.initState();
-    _controller = WebViewController()
-      ..setJavaScriptMode(JavaScriptMode.unrestricted)
-      ..setNavigationDelegate(
-        NavigationDelegate(
-          onPageFinished: (_) {
-            if (mounted) setState(() => _loading = false);
-          },
-          onWebResourceError: (_) {
-            if (mounted) {
-              setState(() {
-                _hasError = true;
-                _loading = false;
-              });
-            }
-          },
-        ),
-      )
-      ..loadRequest(Uri.parse(widget.videoUrl));
+    if (!kIsWeb) {
+      _controller = WebViewController()
+        ..setJavaScriptMode(JavaScriptMode.unrestricted)
+        ..setNavigationDelegate(
+          NavigationDelegate(
+            onPageFinished: (_) {
+              if (mounted) setState(() => _loading = false);
+            },
+            onWebResourceError: (_) {
+              if (mounted) {
+                setState(() {
+                  _hasError = true;
+                  _loading = false;
+                });
+              }
+            },
+          ),
+        )
+        ..loadRequest(Uri.parse(widget.videoUrl));
+    }
   }
 
   @override
@@ -60,26 +71,50 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
           onPressed: () => Navigator.of(context).pop(),
         ),
       ),
-      body: Stack(
-        children: [
-          if (!_hasError) WebViewWidget(controller: _controller),
-          if (_hasError)
-            Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Text(
-                  l10n.videoLoadError,
-                  style: const TextStyle(color: Colors.white70, fontSize: 15),
-                  textAlign: TextAlign.center,
-                ),
+      body: kIsWeb ? _buildWebEmbed(l10n) : _buildMobileWebView(l10n),
+    );
+  }
+
+  Widget _buildWebEmbed(AppLocalizations l10n) {
+    final embed = widget.webEmbed;
+    if (embed == null) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Text(
+            l10n.videoLoadError,
+            style: const TextStyle(color: Colors.white70, fontSize: 15),
+            textAlign: TextAlign.center,
+          ),
+        ),
+      );
+    }
+    // The iframe shows the embedded player's own loading/error UI directly -
+    // there's no cross-origin way to hook page-load/error events on it the
+    // way the mobile WebView's NavigationDelegate does.
+    return embed.mode == VideoEmbedMode.srcDoc
+        ? buildIframe(srcDoc: embed.value)
+        : buildIframe(src: embed.value);
+  }
+
+  Widget _buildMobileWebView(AppLocalizations l10n) {
+    return Stack(
+      children: [
+        if (!_hasError) WebViewWidget(controller: _controller!),
+        if (_hasError)
+          Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Text(
+                l10n.videoLoadError,
+                style: const TextStyle(color: Colors.white70, fontSize: 15),
+                textAlign: TextAlign.center,
               ),
             ),
-          if (_loading && !_hasError)
-            const Center(
-              child: CircularProgressIndicator(color: Colors.white),
-            ),
-        ],
-      ),
+          ),
+        if (_loading && !_hasError)
+          const Center(child: CircularProgressIndicator(color: Colors.white)),
+      ],
     );
   }
 }
