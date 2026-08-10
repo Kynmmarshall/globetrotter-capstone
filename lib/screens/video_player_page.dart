@@ -71,7 +71,32 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
           onPressed: () => Navigator.of(context).pop(),
         ),
       ),
-      body: kIsWeb ? _buildWebEmbed(l10n) : _buildMobileWebView(l10n),
+      // A wide/landscape-ish box (whether the full screen, a forced 16:9
+      // ratio, or even a generously-capped-but-still-wide box - all tried
+      // before this) only has room for a portrait phone-shot clip (the
+      // overwhelming majority of what's in this catalog - TikTok/Facebook
+      // clips) at a small fraction of its actual height, so a chunk of the
+      // video reads as "cut off". TikTok's own web player deliberately
+      // uses a narrow, tall column instead for exactly this reason - a
+      // portrait video gets its full height, and a landscape video just
+      // pillarboxes narrower than it would on a wide screen (still whole,
+      // never cropped). Matching that shape here, rather than the ordinary
+      // "wide video player" default, is what actually fixes this.
+      body: Center(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final maxHeight = constraints.maxHeight * 0.92;
+            final maxWidth = (maxHeight * 9 / 16).clamp(280.0, 480.0);
+            return ConstrainedBox(
+              constraints: BoxConstraints(
+                maxWidth: maxWidth,
+                maxHeight: maxHeight,
+              ),
+              child: kIsWeb ? _buildWebEmbed(l10n) : _buildMobileWebView(l10n),
+            );
+          },
+        ),
+      ),
     );
   }
 
