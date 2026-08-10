@@ -398,6 +398,12 @@ abstract class AppLocalizations {
   /// **'Couldn\'t get an explanation right now.'**
   String get aiExplainError;
 
+  /// No description provided for @aiLinkOpenFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t open that destination.'**
+  String get aiLinkOpenFailed;
+
   /// No description provided for @commentsTitle.
   ///
   /// In en, this message translates to:

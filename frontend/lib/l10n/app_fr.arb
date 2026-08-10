@@ -54,6 +54,7 @@
   "aiExplainButton": "Demander une explication à l'IA",
   "aiExplainTitle": "Explication de l'IA",
   "aiExplainError": "Impossible d'obtenir une explication pour le moment.",
+  "aiLinkOpenFailed": "Impossible d'ouvrir cette destination.",
 
   "commentsTitle": "Commentaires",
   "commentsInputHint": "Ajouter un commentaire…",

@@ -107,6 +107,81 @@ class _DestinationsPageState extends State<DestinationsPage> {
     );
   }
 
+  Widget _buildHeader(
+    BuildContext context,
+    AppLocalizations l10n,
+    BoxConstraints constraints,
+  ) {
+    final title = _sectionTitle(
+      context,
+      l10n.destinationsTitle,
+      subtitle: l10n.destinationsSubtitle,
+    );
+    final suggestButton = OutlinedButton.icon(
+      onPressed: () {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => SubmitDestinationPage(session: widget.session),
+          ),
+        );
+      },
+      style: OutlinedButton.styleFrom(
+        foregroundColor: Colors.white,
+        side: BorderSide(color: Colors.white.withValues(alpha: 0.4)),
+      ),
+      icon: const Icon(Icons.add_location_alt, size: 18),
+      label: Text(l10n.suggestDestinationButton),
+    );
+    final mySubmissionsButton = TextButton.icon(
+      onPressed: () {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => MySubmissionsPage(session: widget.session),
+          ),
+        );
+      },
+      style: TextButton.styleFrom(foregroundColor: Colors.white70),
+      icon: const Icon(Icons.checklist, size: 16),
+      label: Text(l10n.viewMySubmissionsButton),
+    );
+
+    // Side-by-side with the title only leaves the title a sliver of the
+    // row's width on a narrow screen (small phones, or a phone-width web/
+    // desktop window), which wraps the subtitle into a cramped, awkward
+    // column instead of the couple of clean lines it gets at full width -
+    // stack the buttons below the title there instead.
+    if (constraints.maxWidth < 520) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          title,
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [suggestButton, mySubmissionsButton],
+          ),
+        ],
+      );
+    }
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(child: title),
+        const SizedBox(width: 12),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            suggestButton,
+            const SizedBox(height: 8),
+            mySubmissionsButton,
+          ],
+        ),
+      ],
+    );
+  }
+
   Widget _buildTagChip(String label) {
     return DecoratedBox(
       decoration: BoxDecoration(
@@ -448,59 +523,7 @@ class _DestinationsPageState extends State<DestinationsPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: _sectionTitle(
-                      context,
-                      l10n.destinationsTitle,
-                      subtitle: l10n.destinationsSubtitle,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      OutlinedButton.icon(
-                        onPressed: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => SubmitDestinationPage(
-                                session: widget.session,
-                              ),
-                            ),
-                          );
-                        },
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: Colors.white,
-                          side: BorderSide(
-                            color: Colors.white.withValues(alpha: 0.4),
-                          ),
-                        ),
-                        icon: const Icon(Icons.add_location_alt, size: 18),
-                        label: Text(l10n.suggestDestinationButton),
-                      ),
-                      const SizedBox(height: 8),
-                      TextButton.icon(
-                        onPressed: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) =>
-                                  MySubmissionsPage(session: widget.session),
-                            ),
-                          );
-                        },
-                        style: TextButton.styleFrom(
-                          foregroundColor: Colors.white70,
-                        ),
-                        icon: const Icon(Icons.checklist, size: 16),
-                        label: Text(l10n.viewMySubmissionsButton),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
+              _buildHeader(context, l10n, constraints),
               const SizedBox(height: 14),
               _buildSearchBar(l10n),
               const SizedBox(height: 12),

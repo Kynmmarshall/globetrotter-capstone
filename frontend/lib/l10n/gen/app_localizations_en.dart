@@ -169,6 +169,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get aiExplainError => 'Couldn\'t get an explanation right now.';
 
   @override
+  String get aiLinkOpenFailed => 'Couldn\'t open that destination.';
+
+  @override
   String get commentsTitle => 'Comments';
 
   @override

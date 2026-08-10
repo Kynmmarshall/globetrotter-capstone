@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:trip_io/l10n/gen/app_localizations.dart';
 import 'package:trip_io/models/models.dart';
 import 'package:trip_io/services/session_controller.dart';
+import 'package:trip_io/widgets/ai_formatted_text.dart';
 import 'package:trip_io/widgets/glass_panel.dart';
 import 'package:trip_io/widgets/session_expired_card.dart';
 
@@ -221,14 +222,28 @@ class _AiChatSheetState extends State<AiChatSheet> {
                     ).colorScheme.primary.withValues(alpha: 0.4),
             ),
           ),
-          child: Text(
-            message.content,
-            style: const TextStyle(
-              color: Colors.white,
-              height: 1.4,
-              fontSize: 13.5,
-            ),
-          ),
+          // Only the assistant's own replies can contain [[Name|id]]
+          // destination links (see ai.py's system prompt) - a user's own
+          // message is shown as plain text so we never touch their literal
+          // asterisks/etc.
+          child: isUser
+              ? Text(
+                  message.content,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    height: 1.4,
+                    fontSize: 13.5,
+                  ),
+                )
+              : AiFormattedText(
+                  content: message.content,
+                  session: widget.session,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    height: 1.4,
+                    fontSize: 13.5,
+                  ),
+                ),
         ),
       ),
     );
