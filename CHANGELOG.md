@@ -13,6 +13,23 @@ Planned for **Phase 3: Cloud Deployment** — see [README → Roadmap](README.md
 - Load balancing and auto-scaling across multiple instances of each service.
 - Cut the live deployment over from the Phase 1 monolith to the Phase 2 microservices stack.
 
+## [0.26.0] - 2026-08-10 — Tappable AI destination links & video embedding
+
+- The AI assistant now writes destination mentions as `[[Name|id]]` links (per an updated system prompt instructing it to do so), rendered in-app as tappable links that navigate straight to that destination's detail page — plus clearer error messaging when navigation fails. Also tightened the assistant's general response-formatting instructions for more consistent, readable replies.
+- Added web video embedding (`frontend/lib/services/video_embed.dart`) for destination `video_url`s: YouTube and Facebook embed directly via iframe `src`; TikTok uses its documented `blockquote` + `embed.js` integration loaded via `srcdoc` (embedding its `/embed/v2/{id}` URL directly intermittently trips TikTok's anti-abuse response). Anything else falls back to opening externally, since raw Instagram post URLs and similar block third-party framing outright.
+- Improved the in-app video player's layout for portrait-orientation videos, and added a custom loading splash screen for the Flutter **web** build specifically (shown while the web engine itself boots, separate from the in-app onboarding splash).
+
+## [0.25.0] - 2026-08-09 — Yango rides, destination videos & admin fixes
+
+- **Yango taxi integration**: a button on the map opens a pre-filled Yango ride-order page (pickup → destination coordinates) in the browser/app, so users can request a ride to a destination in one tap.
+- **Destination videos**: destinations gained a `video_url` field (admin-editable), with an in-app video player (mobile: WebView; web: embedded iframe, see 0.26.0).
+- **Admin dashboard fixes**: added destination search to the admin panel, and fixed partial destination updates so an admin can now explicitly clear a field to null instead of every `PATCH` accidentally leaving untouched fields alone only by coincidence of what was sent.
+- Made the destinations search bar reactive to typing (live filtering) instead of requiring a submit action.
+
+## [0.24.0] - 2026-08-08 — Website gallery/hero image curation
+
+- Briefly made the marketing website's hero slideshow and gallery load images dynamically from the API, then reverted both to a curated, hand-picked image list — dynamic loading pulled in inconsistent-quality/unrelated shots, whereas a curated set keeps the landing page's first impression consistent.
+
 ## [0.23.0] - 2026-08-07 — Live nearby amenities
 
 - Added `GET /amenities` (recommendation_service): live lookup of nearby hospitals, pharmacies, fuel stations, hotels, banks/ATMs, and police stations across the whole Yaoundé urban area, sourced from the public OpenStreetMap Overpass API (no API key needed).
