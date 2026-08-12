@@ -443,6 +443,87 @@ async def test_ai_chat_passes_language_instruction_to_groq(tmp_path, monkeypatch
 
 
 @pytest.mark.asyncio
+async def test_ai_voice_transcribes_and_returns_text(tmp_path, monkeypatch):
+    _use_temp_data(tmp_path)
+    token = create_access_token("alice")
+    headers = {"Authorization": f"Bearer {token}"}
+
+    async def fake_transcribe(audio_bytes, filename, content_type):
+        assert audio_bytes == b"fake-wav-bytes"
+        assert content_type == "audio/wav"
+        return "what's the best time to visit"
+
+    monkeypatch.setattr(ai, "transcribe", fake_transcribe)
+
+    async with AsyncClient(app=app, base_url="http://test") as ac:
+        r = await ac.post(
+            "/ai/voice",
+            files={"file": ("voice.wav", b"fake-wav-bytes", "audio/wav")},
+            headers=headers,
+        )
+        assert r.status_code == 200
+        assert r.json()["reply"] == "what's the best time to visit"
+
+
+@pytest.mark.asyncio
+async def test_ai_voice_rejects_non_wav_content_type(tmp_path):
+    _use_temp_data(tmp_path)
+    token = create_access_token("alice")
+    headers = {"Authorization": f"Bearer {token}"}
+
+    async with AsyncClient(app=app, base_url="http://test") as ac:
+        r = await ac.post(
+            "/ai/voice",
+            files={"file": ("voice.mp3", b"not-a-wav", "audio/mpeg")},
+            headers=headers,
+        )
+        assert r.status_code == 400
+
+
+@pytest.mark.asyncio
+async def test_ai_voice_rejects_empty_recording(tmp_path):
+    _use_temp_data(tmp_path)
+    token = create_access_token("alice")
+    headers = {"Authorization": f"Bearer {token}"}
+
+    async with AsyncClient(app=app, base_url="http://test") as ac:
+        r = await ac.post(
+            "/ai/voice",
+            files={"file": ("voice.wav", b"", "audio/wav")},
+            headers=headers,
+        )
+        assert r.status_code == 400
+
+
+@pytest.mark.asyncio
+async def test_ai_voice_not_configured(tmp_path, monkeypatch):
+    _use_temp_data(tmp_path)
+    monkeypatch.setattr(ai, "GROQ_API_KEY", None)
+    token = create_access_token("alice")
+    headers = {"Authorization": f"Bearer {token}"}
+
+    async with AsyncClient(app=app, base_url="http://test") as ac:
+        r = await ac.post(
+            "/ai/voice",
+            files={"file": ("voice.wav", b"fake-wav-bytes", "audio/wav")},
+            headers=headers,
+        )
+        assert r.status_code == 503
+
+
+@pytest.mark.asyncio
+async def test_ai_voice_requires_auth(tmp_path):
+    _use_temp_data(tmp_path)
+
+    async with AsyncClient(app=app, base_url="http://test") as ac:
+        r = await ac.post(
+            "/ai/voice",
+            files={"file": ("voice.wav", b"fake-wav-bytes", "audio/wav")},
+        )
+        assert r.status_code == 403
+
+
+@pytest.mark.asyncio
 async def test_ai_explain_bypasses_cache_when_language_requested(tmp_path, monkeypatch):
     _use_temp_data(
         tmp_path,
