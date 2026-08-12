@@ -1,9 +1,11 @@
+import 'dart:async';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:trip_io/l10n/gen/app_localizations.dart';
 import 'package:trip_io/models/models.dart';
 import 'package:trip_io/services/session_controller.dart';
+import 'package:trip_io/services/voice_launcher.dart';
 import 'package:trip_io/widgets/ai_formatted_text.dart';
 import 'package:trip_io/widgets/glass_panel.dart';
 import 'package:trip_io/widgets/session_expired_card.dart';
@@ -70,8 +72,12 @@ class AiChatSheet extends StatefulWidget {
 class _AiChatSheetState extends State<AiChatSheet> {
   final List<ChatMessage> _messages = [];
   final TextEditingController _controller = TextEditingController();
+  final VoiceRecorder _recorder = VoiceRecorder();
   bool _sending = false;
+  bool _recording = false;
+  bool _transcribing = false;
   String? _error;
+  Timer? _maxDurationTimer;
 
   @override
   void initState() {
@@ -81,6 +87,8 @@ class _AiChatSheetState extends State<AiChatSheet> {
 
   @override
   void dispose() {
+    _maxDurationTimer?.cancel();
+    _recorder.dispose();
     _controller.dispose();
     super.dispose();
   }
@@ -124,6 +132,50 @@ class _AiChatSheetState extends State<AiChatSheet> {
       if (mounted) setState(() => _sending = false);
       _scrollToBottom();
     }
+  }
+
+  Future<void> _toggleRecording() async {
+    final l10n = AppLocalizations.of(context)!;
+    if (_recording) {
+      _maxDurationTimer?.cancel();
+      setState(() {
+        _recording = false;
+        _transcribing = true;
+      });
+      try {
+        final result = await _recorder.stop();
+        if (result == null || result.bytes.isEmpty) {
+          throw Exception(l10n.aiChatVoiceEmptyError);
+        }
+        final text = await widget.session.transcribeVoiceMessage(
+          result.bytes,
+          result.filename,
+        );
+        if (mounted) _controller.text = text;
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(l10n.aiChatVoiceFailedError)),
+          );
+        }
+      } finally {
+        if (mounted) setState(() => _transcribing = false);
+      }
+      return;
+    }
+
+    if (!await _recorder.ensurePermission()) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.aiChatVoicePermissionDenied)),
+        );
+      }
+      return;
+    }
+    await _recorder.start();
+    if (!mounted) return;
+    setState(() => _recording = true);
+    _maxDurationTimer = Timer(const Duration(seconds: 90), _toggleRecording);
   }
 
   void _scrollToBottom() {
@@ -389,7 +441,28 @@ class _AiChatSheetState extends State<AiChatSheet> {
                       ),
                     ),
                     IconButton(
-                      onPressed: _sending ? null : _send,
+                      onPressed: _transcribing ? null : _toggleRecording,
+                      icon: _transcribing
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white70,
+                              ),
+                            )
+                          : Icon(
+                              _recording ? Icons.stop_circle : Icons.mic_none,
+                              color: _recording
+                                  ? const Color(0xFFFF6B81)
+                                  : Colors.white,
+                            ),
+                      tooltip: _recording
+                          ? l10n.aiChatVoiceStopTooltip
+                          : l10n.aiChatVoiceStartTooltip,
+                    ),
+                    IconButton(
+                      onPressed: (_sending || _transcribing) ? null : _send,
                       icon: const Icon(Icons.send, color: Colors.white),
                     ),
                   ],

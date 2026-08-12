@@ -160,6 +160,24 @@ class AppLocalizationsEn extends AppLocalizations {
   String get aiChatSuggestion4 => 'Best spot for a sunset view?';
 
   @override
+  String get aiChatVoiceStartTooltip => 'Record a voice message';
+
+  @override
+  String get aiChatVoiceStopTooltip => 'Stop recording';
+
+  @override
+  String get aiChatVoiceEmptyError =>
+      'Didn\'t catch that - try recording again.';
+
+  @override
+  String get aiChatVoiceFailedError =>
+      'Couldn\'t transcribe that. Please try again.';
+
+  @override
+  String get aiChatVoicePermissionDenied =>
+      'Microphone access is needed to record a voice message.';
+
+  @override
   String get aiExplainButton => 'Ask AI to explain';
 
   @override

@@ -380,6 +380,36 @@ abstract class AppLocalizations {
   /// **'Best spot for a sunset view?'**
   String get aiChatSuggestion4;
 
+  /// No description provided for @aiChatVoiceStartTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Record a voice message'**
+  String get aiChatVoiceStartTooltip;
+
+  /// No description provided for @aiChatVoiceStopTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop recording'**
+  String get aiChatVoiceStopTooltip;
+
+  /// No description provided for @aiChatVoiceEmptyError.
+  ///
+  /// In en, this message translates to:
+  /// **'Didn\'t catch that - try recording again.'**
+  String get aiChatVoiceEmptyError;
+
+  /// No description provided for @aiChatVoiceFailedError.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t transcribe that. Please try again.'**
+  String get aiChatVoiceFailedError;
+
+  /// No description provided for @aiChatVoicePermissionDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'Microphone access is needed to record a voice message.'**
+  String get aiChatVoicePermissionDenied;
+
   /// No description provided for @aiExplainButton.
   ///
   /// In en, this message translates to:

@@ -568,6 +568,13 @@ class SessionController extends ChangeNotifier {
     return reply;
   }
 
+  Future<String> transcribeVoiceMessage(List<int> bytes, String filename) async {
+    final token = _requireToken();
+    final text = await ApiClient().transcribeVoice(token, bytes, filename);
+    Analytics.instance.trackEvent('ai', 'voice_message');
+    return text;
+  }
+
   Future<String> aiExplain(String destinationId) async {
     final token = _requireToken();
     final reply = await ApiClient().aiExplain(
