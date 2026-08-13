@@ -324,6 +324,31 @@ async def ai_chat(payload: ChatRequest, user: str = Depends(get_current_user)):
     return {"reply": reply}
 
 
+# A 90s WAV clip (the client-side recording cap) is ~2.8MB - generous
+# headroom, still far under Groq's 25MB free-tier cap.
+_AUDIO_MAX_BYTES = 10 * 1024 * 1024
+_AUDIO_CONTENT_TYPES = {"audio/wav", "audio/wave", "audio/x-wav"}
+
+
+@app.post("/ai/voice", response_model=ChatResponse)
+async def ai_voice(file: UploadFile = File(...), user: str = Depends(get_current_user)):
+    if (file.content_type or "").lower() not in _AUDIO_CONTENT_TYPES:
+        raise HTTPException(status_code=400, detail="Unsupported audio type - use WAV")
+    body = await file.read()
+    if not body:
+        raise HTTPException(status_code=400, detail="Empty recording")
+    if len(body) > _AUDIO_MAX_BYTES:
+        raise HTTPException(status_code=400, detail="Recording is too long")
+    try:
+        text = await ai.transcribe(body, file.filename or "voice.wav", file.content_type)
+    except (ai.AiNotConfiguredError, ai.AiRequestError) as exc:
+        raise _ai_error_response(exc)
+    # Reuses ChatResponse purely for shape consistency with the rest of
+    # /ai/* - the frontend treats this as text to fill the message box
+    # with, not as an assistant reply to display as one.
+    return {"reply": text}
+
+
 @app.post("/ai/explain/{destination_id}", response_model=ChatResponse)
 async def ai_explain(
     destination_id: str,

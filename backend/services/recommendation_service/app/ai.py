@@ -15,6 +15,10 @@ logger = logging.getLogger("trip_io.recommendation_service.ai")
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
 GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
+GROQ_TRANSCRIBE_URL = "https://api.groq.com/openai/v1/audio/transcriptions"
+# turbo over the plain whisper-large-v3: ~3x cheaper and faster, and
+# accuracy isn't the bottleneck for a short chat voice message.
+GROQ_TRANSCRIBE_MODEL = os.getenv("GROQ_TRANSCRIBE_MODEL", "whisper-large-v3-turbo")
 
 
 class AiNotConfiguredError(Exception):
@@ -151,3 +155,32 @@ async def explain_destination(destination: dict, language_code: str | None = Non
         {"role": "user", "content": prompt},
     ]
     return await _generate(messages)
+
+
+async def transcribe(audio_bytes: bytes, filename: str, content_type: str) -> str:
+    """Transcribes a voice message to text via Groq's Whisper endpoint - the
+    result is meant to land back in the chat's own text input for the user
+    to review/send like a typed message, not treated as an AI reply itself.
+    Reuses the same two exceptions chat()/explain_destination() raise so
+    main.py's existing _ai_error_response mapping needs no changes."""
+    if not GROQ_API_KEY:
+        raise AiNotConfiguredError("GROQ_API_KEY is not set")
+
+    try:
+        async with httpx.AsyncClient(timeout=25) as client:
+            resp = await client.post(
+                GROQ_TRANSCRIBE_URL,
+                headers={"Authorization": f"Bearer {GROQ_API_KEY}"},
+                data={"model": GROQ_TRANSCRIBE_MODEL},
+                files={"file": (filename, audio_bytes, content_type)},
+            )
+        resp.raise_for_status()
+        payload = resp.json()
+    except httpx.HTTPError as exc:
+        logger.warning("Groq transcription request failed: %s", exc)
+        raise AiRequestError(str(exc)) from exc
+
+    text = (payload.get("text") or "").strip()
+    if not text:
+        raise AiRequestError("Transcription returned no text")
+    return text
