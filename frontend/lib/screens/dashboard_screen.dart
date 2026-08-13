@@ -127,6 +127,29 @@ class _DashboardScreenState extends State<DashboardScreen> {
   // A fixed (non-draggable) shortcut into the AI chat, available from every
   // dashboard tab as an overlay sheet rather than a nav item - asking the
   // AI something no longer means navigating away from what you're browsing.
+  // A quick crossfade + slight upward slide when switching tabs - the body
+  // used to swap instantly with no transition at all.
+  Widget _animatedPage(Widget child) {
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 320),
+      switchInCurve: Curves.easeOutCubic,
+      switchOutCurve: Curves.easeInCubic,
+      transitionBuilder: (child, animation) {
+        return FadeTransition(
+          opacity: animation,
+          child: SlideTransition(
+            position: Tween<Offset>(
+              begin: const Offset(0, 0.03),
+              end: Offset.zero,
+            ).animate(animation),
+            child: child,
+          ),
+        );
+      },
+      child: KeyedSubtree(key: ValueKey(_index), child: child),
+    );
+  }
+
   Widget _aiFab(BuildContext context) {
     return AiFabButton(
       onTap: () => showAiChatSheet(context, session: widget.session),
@@ -328,7 +351,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             backgroundColor: Colors.transparent,
             appBar: appBar,
             drawer: _navDrawer(labels),
-            body: pages[_index],
+            body: _animatedPage(pages[_index]),
             floatingActionButton: _aiFab(context),
           );
         } else {
@@ -337,10 +360,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   children: [
                     navRail(),
                     const VerticalDivider(width: 1, color: Colors.white24),
-                    Expanded(child: pages[_index]),
+                    Expanded(child: _animatedPage(pages[_index])),
                   ],
                 )
-              : pages[_index];
+              : _animatedPage(pages[_index]);
           scaffold = Scaffold(
             backgroundColor: Colors.transparent,
             appBar: appBar,

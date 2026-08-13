@@ -641,6 +641,28 @@ class ApiClient {
     return (decoded['reply'] ?? '').toString();
   }
 
+  Future<String> transcribeVoice(
+    String token,
+    List<int> bytes,
+    String filename,
+  ) async {
+    final request = http.MultipartRequest('POST', _uri('/ai/voice'))
+      ..headers['Authorization'] = 'Bearer $token'
+      ..files.add(
+        http.MultipartFile.fromBytes(
+          'file',
+          bytes,
+          filename: filename,
+          contentType: MediaType('audio', 'wav'),
+        ),
+      );
+    final streamed = await _client.send(request);
+    final response = await http.Response.fromStream(streamed);
+    _throwIfNotOk(response);
+    final decoded = jsonDecode(response.body) as Map<String, dynamic>;
+    return (decoded['reply'] ?? '').toString();
+  }
+
   Future<String> aiExplain(
     String token,
     String destinationId, {

@@ -168,6 +168,24 @@ class AppLocalizationsFr extends AppLocalizations {
       'Meilleur endroit pour un coucher de soleil ?';
 
   @override
+  String get aiChatVoiceStartTooltip => 'Enregistrer un message vocal';
+
+  @override
+  String get aiChatVoiceStopTooltip => 'Arrêter l\'enregistrement';
+
+  @override
+  String get aiChatVoiceEmptyError =>
+      'Je n\'ai rien entendu - réessayez l\'enregistrement.';
+
+  @override
+  String get aiChatVoiceFailedError =>
+      'Impossible de transcrire ce message. Réessayez.';
+
+  @override
+  String get aiChatVoicePermissionDenied =>
+      'L\'accès au microphone est nécessaire pour enregistrer un message vocal.';
+
+  @override
   String get aiExplainButton => 'Demander une explication à l\'IA';
 
   @override
