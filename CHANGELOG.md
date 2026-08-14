@@ -13,6 +13,12 @@ Planned for **Phase 3: Cloud Deployment** — see [README → Roadmap](README.md
 - Load balancing and auto-scaling across multiple instances of each service.
 - Cut the live deployment over from the Phase 1 monolith to the Phase 2 microservices stack.
 
+## [0.27.0] - 2026-08-12 to 2026-08-13 — Voice input for AI chat & dashboard polish
+
+- Added `POST /ai/voice`: uploads a recorded voice message and transcribes it via Groq's Whisper (`whisper-large-v3-turbo` — ~3x cheaper/faster than plain Whisper-large-v3, and accuracy isn't the bottleneck for a short chat message). The transcript lands back in the chat's text input for the user to review and send, rather than being treated as a message on its own.
+- Added a microphone button to the AI chat sheet (`frontend/lib/services/voice_launcher.dart`) that records audio client-side (via the `record` package, with its own permission handling — mirroring how the map already handles location permissions) and uploads it to `/ai/voice`. Works on mobile, Windows, and web (the browser keeps the recording in memory as a Blob rather than writing to disk).
+- Dashboard tab switches now crossfade with a slight upward slide instead of swapping instantly, and cleaned up unused Linux/macOS/Windows plugin registrations left over from now-removed dependencies.
+
 ## [0.26.0] - 2026-08-10 — Tappable AI destination links & video embedding
 
 - The AI assistant now writes destination mentions as `[[Name|id]]` links (per an updated system prompt instructing it to do so), rendered in-app as tappable links that navigate straight to that destination's detail page — plus clearer error messaging when navigation fails. Also tightened the assistant's general response-formatting instructions for more consistent, readable replies.

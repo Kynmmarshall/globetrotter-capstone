@@ -1,6 +1,6 @@
 # GlobeTrotter — Travel Recommendation & Itinerary Platform
 
-GlobeTrotter is a full-stack travel assistant that lets users search destinations, receive personalized recommendations that skip places they've already planned to visit, and plan, edit, delete, and share itineraries (including a public web link and a "claim this trip" flow). It has an interactive map with turn-by-turn directions, live nearby amenities, and one-tap Yango ride booking; an AI travel assistant with read-aloud support and tappable destination links in its replies; and destination videos (YouTube/Facebook/TikTok, embedded on web). Social features include ratings, editable/threaded comments, favorites, profile avatars (with in-app cropping), notifications (moderation decisions and trip reminders), community-submitted destinations reviewed through a searchable admin moderation panel, Google Sign-In, forgot-password email recovery, light/dark theming, and public usage analytics. The repository contains two independently deployable projects:
+GlobeTrotter is a full-stack travel assistant that lets users search destinations, receive personalized recommendations that skip places they've already planned to visit, and plan, edit, delete, and share itineraries (including a public web link and a "claim this trip" flow). It has an interactive map with turn-by-turn directions, live nearby amenities, and one-tap Yango ride booking; an AI travel assistant with read-aloud support, voice input, and tappable destination links in its replies; and destination videos (YouTube/Facebook/TikTok, embedded on web). Social features include ratings, editable/threaded comments, favorites, profile avatars (with in-app cropping), notifications (moderation decisions and trip reminders), community-submitted destinations reviewed through a searchable admin moderation panel, Google Sign-In, forgot-password email recovery, light/dark theming, and public usage analytics. The repository contains two independently deployable projects:
 
 | Project | Description | Stack |
 |---|---|---|
@@ -227,6 +227,7 @@ Base URL: `https://trip-io.duckdns.org` (production) or `http://localhost:8000` 
 | `GET` | `/shared/itineraries/{token}` | — | Public, unauthenticated view of a shared itinerary (trimmed, no viewer-specific data) |
 | `POST` | `/itineraries/claim/{token}` | Bearer token | Copy a shared itinerary into your own account |
 | `POST` | `/ai/chat` | Bearer token | Chat with the in-app AI travel assistant (Groq-backed, grounded in the real destination catalog); optional `language_code` (`en`/`fr`) forces the reply language |
+| `POST` | `/ai/voice` | Bearer token | Transcribe an uploaded voice message (Groq Whisper) to text, for the user to review/send as a chat message |
 | `POST` | `/ai/explain/{destination_id}` | Bearer token | Get (and cache per language) an AI-generated explanation of a destination |
 | `GET` | `/amenities?categories=` | Bearer token | Nearby hospitals/pharmacies/fuel/hotels/banks/police across Yaoundé, live from OpenStreetMap (Overpass), disk-cached and refreshed in the background |
 | `GET` | `/stats/public` | — | Aggregated, anonymized usage stats (total users, active today/this week, 14-day daily-active series, top sections) for the public stats page, sourced from Matomo server-side and cached for 60s |
@@ -277,6 +278,7 @@ Every third-party integration below is optional — the feature it powers just r
 | `PUBLIC_SITE_URL` | `https://trip-io.duckdns.org` | Builds the logo image URL embedded in password-reset emails | user_service |
 | `GROQ_API_KEY` | *(unset)* | Powers `/ai/chat` and `/ai/explain`; without it, both return `503` | recommendation_service |
 | `GROQ_MODEL` | `llama-3.3-70b-versatile` | Groq model used for the AI assistant | recommendation_service |
+| `GROQ_TRANSCRIBE_MODEL` | `whisper-large-v3-turbo` | Groq model used to transcribe voice messages for `/ai/voice` | recommendation_service |
 | `ORS_API_KEY` | *(unset)* | Powers `/route`; without it, the endpoint fails with a "not configured" error | recommendation_service |
 | `USER_SERVICE_URL` / `ITINERARY_SERVICE_URL` / `RECOMMENDATION_SERVICE_URL` | `http://localhost:800{1,2,3}` | Where the Gateway and sibling services reach each other; already wired to Docker Compose service names in `docker-compose.microservices.yml` | gateway + services |
 | `*_SERVICE_DATA_PATH` | per-service default under `data/` | Override a service's own JSON data file location (also used to isolate test runs) | per-service, optional |
