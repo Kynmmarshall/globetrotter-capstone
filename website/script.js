@@ -4,6 +4,173 @@ if (window.AOS) {
   AOS.init({ duration: 700, once: true, offset: 60, easing: 'ease-out-cubic' });
 }
 
+// Ambient star field: small glowing dots in the brand palette, drifting
+// slowly and scattering away from the pointer as it gets close - an
+// "anti-gravity" feel layered above .ambient-blobs. No-ops on pages
+// without the #star-field canvas (only index.html has one). Respects
+// prefers-reduced-motion the same way the hero slideshow does - a single
+// static frame, no drift, no pointer reaction.
+function initStarField() {
+  const canvas = document.getElementById('star-field');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+
+  const reduceMotion =
+    window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  const PALETTE = ['#ffffff', '#14b8c4', '#1e88e5', '#f2a93b', '#ffc670', '#0a7e8c'];
+  const POINTER_RADIUS = 160;
+  // Idle cruise speed (px/sec) - always moving, not just an initial
+  // velocity that friction decays toward a near-stop.
+  const BASE_SPEED_MIN = 18;
+  const BASE_SPEED_MAX = 42;
+  // Speed a star eases toward the closer the pointer gets to it.
+  const BOOST_SPEED_MIN = 70;
+  const BOOST_SPEED_MAX = 160;
+  const WANDER_TURN = 1.4; // max heading change per second while idle, radians
+  const SPEED_EASE = 4; // how fast current speed chases its target, per second
+
+  let width = 0;
+  let height = 0;
+  let dpr = 1;
+  let stars = [];
+  let rafId = null;
+  let lastTime = 0;
+  const pointer = { x: -9999, y: -9999, active: false };
+
+  function starCount() {
+    const area = width * height;
+    return Math.max(100, Math.min(220, Math.round(area / 6000)));
+  }
+
+  function lerpAngle(a, b, t) {
+    const twoPi = Math.PI * 2;
+    let diff = (b - a) % twoPi;
+    if (diff > Math.PI) diff -= twoPi;
+    if (diff < -Math.PI) diff += twoPi;
+    return a + diff * t;
+  }
+
+  function makeStar() {
+    return {
+      x: Math.random() * width,
+      y: Math.random() * height,
+      r: 0.8 + Math.random() * 1.8,
+      color: PALETTE[Math.floor(Math.random() * PALETTE.length)],
+      angle: Math.random() * Math.PI * 2,
+      speed: 0,
+      baseSpeed: BASE_SPEED_MIN + Math.random() * (BASE_SPEED_MAX - BASE_SPEED_MIN),
+      boostSpeed: BOOST_SPEED_MIN + Math.random() * (BOOST_SPEED_MAX - BOOST_SPEED_MIN),
+      twinklePhase: Math.random() * Math.PI * 2,
+      twinkleSpeed: 0.6 + Math.random() * 1.2,
+      baseAlpha: 0.45 + Math.random() * 0.5,
+    };
+  }
+
+  function resize() {
+    width = window.innerWidth;
+    height = window.innerHeight;
+    dpr = Math.max(1, Math.min(window.devicePixelRatio || 1, 2));
+    canvas.width = Math.round(width * dpr);
+    canvas.height = Math.round(height * dpr);
+    canvas.style.width = width + 'px';
+    canvas.style.height = height + 'px';
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    const target = starCount();
+    if (stars.length < target) {
+      while (stars.length < target) stars.push(makeStar());
+    } else {
+      stars.length = target;
+    }
+  }
+
+  function step(now) {
+    const dt = lastTime ? Math.min((now - lastTime) / 1000, 0.05) : 0;
+    lastTime = now;
+    ctx.clearRect(0, 0, width, height);
+
+    for (const s of stars) {
+      // Idle wander - the heading drifts randomly over time instead of
+      // holding a dead-straight line, which reads as mechanical.
+      s.angle += (Math.random() - 0.5) * WANDER_TURN * dt;
+
+      let targetSpeed = s.baseSpeed;
+      if (pointer.active) {
+        const dx = s.x - pointer.x;
+        const dy = s.y - pointer.y;
+        const distSq = dx * dx + dy * dy;
+        if (distSq < POINTER_RADIUS * POINTER_RADIUS) {
+          const dist = Math.sqrt(distSq) || 1;
+          const proximity = 1 - dist / POINTER_RADIUS; // 0 at the edge, 1 at the cursor
+          // Steer away from the pointer, blended in by proximity so it's a
+          // smooth scatter rather than a snap to a new heading.
+          s.angle = lerpAngle(s.angle, Math.atan2(dy, dx), proximity * 0.9);
+          targetSpeed = s.baseSpeed + (s.boostSpeed - s.baseSpeed) * proximity;
+        }
+      }
+      // Ease current speed toward its target instead of jumping straight
+      // to it, so the speed-up/settle-down both read as motion, not a cut.
+      s.speed += (targetSpeed - s.speed) * Math.min(1, SPEED_EASE * dt);
+
+      s.x += Math.cos(s.angle) * s.speed * dt;
+      s.y += Math.sin(s.angle) * s.speed * dt;
+
+      // Wrap at the edges with a small margin so nothing visibly pops.
+      const margin = 20;
+      if (s.x < -margin) s.x = width + margin;
+      if (s.x > width + margin) s.x = -margin;
+      if (s.y < -margin) s.y = height + margin;
+      if (s.y > height + margin) s.y = -margin;
+
+      s.twinklePhase += s.twinkleSpeed * dt;
+      const twinkle = 0.65 + 0.35 * Math.sin(s.twinklePhase);
+
+      ctx.beginPath();
+      ctx.fillStyle = s.color;
+      ctx.globalAlpha = s.baseAlpha * twinkle;
+      ctx.shadowColor = s.color;
+      ctx.shadowBlur = s.r * 3;
+      ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+    ctx.shadowBlur = 0;
+
+    if (!reduceMotion) rafId = requestAnimationFrame(step);
+  }
+
+  resize();
+  window.addEventListener('resize', resize);
+
+  if (reduceMotion) {
+    step(0);
+    return;
+  }
+
+  window.addEventListener('pointermove', (e) => {
+    pointer.x = e.clientX;
+    pointer.y = e.clientY;
+    pointer.active = true;
+  });
+  window.addEventListener('pointerleave', () => {
+    pointer.active = false;
+  });
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      if (rafId) cancelAnimationFrame(rafId);
+      rafId = null;
+      lastTime = 0;
+    } else if (!rafId) {
+      rafId = requestAnimationFrame(step);
+    }
+  });
+
+  rafId = requestAnimationFrame(step);
+}
+initStarField();
+
 // Hero background slideshow: cycles through real Yaoundé destination photos
 // (rather than one static hero image forever), picking both the next image
 // and its entrance animation at random each time so the rotation doesn't
