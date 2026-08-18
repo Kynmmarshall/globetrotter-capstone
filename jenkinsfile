@@ -84,12 +84,7 @@ pipeline {
             // It only fetches + fast-forwards; if local changes conflict
             // with origin/main, the merge fails loudly instead of
             // overwriting anything.
-            agent {
-                node {
-                    label 'windows'
-                    customWorkspace 'C:\\Users\\kynm\\Desktop\\trip_io'
-                }
-            }
+            agent { label 'windows' }
             stages {
                 stage('Checkout (Windows)') {
                     steps {
@@ -98,58 +93,62 @@ pipeline {
                         // working tree with the target commit itself, which
                         // risks the same "discard local changes" outcome we
                         // just avoided by dropping CleanBeforeCheckout.
-                        withCredentials([usernamePassword(
-                            credentialsId: env.GIT_CREDENTIALS_ID,
-                            usernameVariable: 'GIT_USER',
-                            passwordVariable: 'GIT_TOKEN'
-                        )]) {
-                            bat '''
-                                git config --global --add safe.directory "*"
-                                if not exist .git (
-                                    echo === No repo here yet, cloning once ===
-                                    git clone --branch main https://%GIT_USER%:%GIT_TOKEN%@github.com/Kynmmarshall/trip_io.git .
-                                ) else (
-                                    echo === Existing checkout found - fetching latest main only, not touching local changes ===
-                                    git fetch https://%GIT_USER%:%GIT_TOKEN%@github.com/Kynmmarshall/trip_io.git main
-                                    git merge --ff-only FETCH_HEAD
-                                )
-                                echo Local HEAD:
-                                git rev-parse --short HEAD
-                            '''
+                        dir('C:\\Users\\kynm\\Desktop\\trip_io') {
+                            withCredentials([usernamePassword(
+                                credentialsId: env.GIT_CREDENTIALS_ID,
+                                usernameVariable: 'GIT_USER',
+                                passwordVariable: 'GIT_TOKEN'
+                            )]) {
+                                bat '''
+                                    git config --global --add safe.directory "*"
+                                    if not exist .git (
+                                        echo === No repo here yet, cloning once ===
+                                        git clone --branch main https://%GIT_USER%:%GIT_TOKEN%@github.com/Kynmmarshall/trip_io.git .
+                                    ) else (
+                                        echo === Existing checkout found - fetching latest main only, not touching local changes ===
+                                        git fetch https://%GIT_USER%:%GIT_TOKEN%@github.com/Kynmmarshall/trip_io.git main
+                                        git merge --ff-only FETCH_HEAD
+                                    )
+                                    echo Local HEAD:
+                                    git rev-parse --short HEAD
+                                '''
+                            }
                         }
                     }
                 }
 
                 stage('Build Windows Installer') {
                     steps {
-                        bat '''
-                            rem The Jenkins Windows agent runs as a service, which
-                            rem doesn't inherit the interactive user's PATH - Flutter
-                            rem lives at C:\\flutter\\bin (confirmed via `where flutter`)
-                            rem but is invisible to the service without this.
-                            set PATH=C:\\flutter\\bin;%PATH%
+                        dir('C:\\Users\\kynm\\Desktop\\trip_io') {
+                            bat '''
+                                rem The Jenkins Windows agent runs as a service, which
+                                rem doesn't inherit the interactive user's PATH - Flutter
+                                rem lives at C:\\flutter\\bin (confirmed via `where flutter`)
+                                rem but is invisible to the service without this.
+                                set PATH=C:\\flutter\\bin;%PATH%
 
-                            echo === Flutter Windows build start ===
-                            flutter pub get
-                            if %errorlevel% neq 0 exit /b %errorlevel%
+                                echo === Flutter Windows build start ===
+                                flutter pub get
+                                if %errorlevel% neq 0 exit /b %errorlevel%
 
-                            flutter build windows --release --dart-define=API_BASE_URL=%API_BASE_URL%
-                            if %errorlevel% neq 0 exit /b %errorlevel%
+                                flutter build windows --release --dart-define=API_BASE_URL=%API_BASE_URL%
+                                if %errorlevel% neq 0 exit /b %errorlevel%
 
-                            if not exist "build\\windows\\x64\\runner\\Release" (
-                                echo "Flutter Windows build output was not created at build\\windows\\x64\\runner\\Release"
-                                exit /b 1
-                            )
+                                if not exist "build\\windows\\x64\\runner\\Release" (
+                                    echo "Flutter Windows build output was not created at build\\windows\\x64\\runner\\Release"
+                                    exit /b 1
+                                )
 
-                            if exist Output rmdir /s /q Output
-                            "C:\\Program Files (x86)\\Inno Setup 6\\ISCC.exe" trip_io_setup.iss
-                            if %errorlevel% neq 0 exit /b %errorlevel%
+                                if exist Output rmdir /s /q Output
+                                "C:\\Program Files (x86)\\Inno Setup 6\\ISCC.exe" trip_io_setup.iss
+                                if %errorlevel% neq 0 exit /b %errorlevel%
 
-                            if not exist Output (
-                                echo "Inno Setup output directory was not created."
-                                exit /b 1
-                            )
-                        '''
+                                if not exist Output (
+                                    echo "Inno Setup output directory was not created."
+                                    exit /b 1
+                                )
+                            '''
+                        }
                     }
                 }
 
@@ -158,32 +157,34 @@ pipeline {
                         expression { currentBuild.result != 'FAILURE' }
                     }
                     steps {
-                        powershell '''
-                            $ErrorActionPreference = "Stop"
-                            $remote = "$env:VPS_USER@$env:VPS_HOST"
-                            $remoteDir = "$env:VPS_APP_DIR/website/downloads"
-                            $remoteTmp = "$remoteDir/trip_io_windows.exe.uploading"
-                            $remoteFinal = "$remoteDir/trip_io_windows.exe"
-                            $sshOpts = @("-i", $env:SSH_KEY, "-o", "StrictHostKeyChecking=accept-new")
+                        dir('C:\\Users\\kynm\\Desktop\\trip_io') {
+                            powershell '''
+                                $ErrorActionPreference = "Stop"
+                                $remote = "$env:VPS_USER@$env:VPS_HOST"
+                                $remoteDir = "$env:VPS_APP_DIR/website/downloads"
+                                $remoteTmp = "$remoteDir/trip_io_windows.exe.uploading"
+                                $remoteFinal = "$remoteDir/trip_io_windows.exe"
+                                $sshOpts = @("-i", $env:SSH_KEY, "-o", "StrictHostKeyChecking=accept-new")
 
-                            $installer = Get-ChildItem -Path "Output" -Filter "*.exe" -Recurse | Select-Object -First 1
-                            if (-not $installer) {
-                                throw "No installer .exe found in Output/. Check the Flutter Windows build and Inno Setup step logs."
-                            }
+                                $installer = Get-ChildItem -Path "Output" -Filter "*.exe" -Recurse | Select-Object -First 1
+                                if (-not $installer) {
+                                    throw "No installer .exe found in Output/. Check the Flutter Windows build and Inno Setup step logs."
+                                }
 
-                            $totalMB = [math]::Round($installer.Length / 1MB, 2)
-                            Write-Output "=== Uploading $($installer.Name) ($totalMB MB) to $remote ==="
+                                $totalMB = [math]::Round($installer.Length / 1MB, 2)
+                                Write-Output "=== Uploading $($installer.Name) ($totalMB MB) to $remote ==="
 
-                            & ssh @sshOpts $remote "mkdir -p '$remoteDir'"
-                            if ($LASTEXITCODE -ne 0) { throw "Failed to prepare remote downloads directory" }
+                                & ssh @sshOpts $remote "mkdir -p '$remoteDir'"
+                                if ($LASTEXITCODE -ne 0) { throw "Failed to prepare remote downloads directory" }
 
-                            & scp @sshOpts $installer.FullName "${remote}:${remoteTmp}"
-                            if ($LASTEXITCODE -ne 0) { throw "scp upload failed" }
+                                & scp @sshOpts $installer.FullName "${remote}:${remoteTmp}"
+                                if ($LASTEXITCODE -ne 0) { throw "scp upload failed" }
 
-                            & ssh @sshOpts $remote "mv '$remoteTmp' '$remoteFinal' && ls -lh '$remoteFinal'"
-                            if ($LASTEXITCODE -ne 0) { throw "Failed to finalize remote file" }
-                            Write-Output "Deployed to ${remote}:${remoteFinal}"
-                        '''
+                                & ssh @sshOpts $remote "mv '$remoteTmp' '$remoteFinal' && ls -lh '$remoteFinal'"
+                                if ($LASTEXITCODE -ne 0) { throw "Failed to finalize remote file" }
+                                Write-Output "Deployed to ${remote}:${remoteFinal}"
+                            '''
+                        }
                     }
                 }
             }
@@ -272,11 +273,9 @@ pipeline {
         always {
             script {
                 node('windows') {
-                    // ws(...) here matters: node('windows') alone reopens
-                    // Jenkins' own default workspace for this job, not the
-                    // customWorkspace the build stages actually ran in -
-                    // without it, this would silently archive nothing.
-                    ws('C:\\Users\\kynm\\Desktop\\trip_io') {
+                    // Use dir(...) to avoid Jenkins workspace-lease suffixes
+                    // like @2 and always archive from the exact folder.
+                    dir('C:\\Users\\kynm\\Desktop\\trip_io') {
                         archiveArtifacts artifacts: 'Output/*.exe', fingerprint: true, allowEmptyArchive: true
                     }
                 }
