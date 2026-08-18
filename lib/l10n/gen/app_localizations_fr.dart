@@ -18,12 +18,10 @@ class AppLocalizationsFr extends AppLocalizations {
   String get authRegisterTitle => 'Inscription';
 
   @override
-  String get authLoginSubtitle =>
-      'Connectez-vous pour continuer à planifier et gérer vos voyages.';
+  String get authLoginSubtitle => 'Connectez-vous pour continuer à planifier et gérer vos voyages.';
 
   @override
-  String get authRegisterSubtitle =>
-      'Créez votre compte pour enregistrer vos itinéraires et recevoir des recommandations.';
+  String get authRegisterSubtitle => 'Créez votre compte pour enregistrer vos itinéraires et recevoir des recommandations.';
 
   @override
   String get authHidePassword => 'Masquer le mot de passe';
@@ -35,8 +33,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get authEmailLabel => 'E-mail';
 
   @override
-  String get authEmailHelper =>
-      'Utilisé pour vous contacter et compléter votre profil';
+  String get authEmailHelper => 'Utilisé pour vous contacter et compléter votre profil';
 
   @override
   String get authEmailRequired => 'L\'e-mail est requis';
@@ -48,8 +45,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get authUsernameLabel => 'Nom d\'utilisateur';
 
   @override
-  String get authUsernameHelper =>
-      'C\'est l\'identifiant de connexion de votre compte';
+  String get authUsernameHelper => 'C\'est l\'identifiant de connexion de votre compte';
 
   @override
   String get authUsernameRequired => 'Le nom d\'utilisateur est requis';
@@ -64,15 +60,13 @@ class AppLocalizationsFr extends AppLocalizations {
   String get authConfirmPasswordLabel => 'Confirmer le mot de passe';
 
   @override
-  String get authConfirmPasswordRequired =>
-      'Veuillez confirmer votre mot de passe';
+  String get authConfirmPasswordRequired => 'Veuillez confirmer votre mot de passe';
 
   @override
   String get authPasswordsMismatch => 'Les mots de passe ne correspondent pas';
 
   @override
-  String get authLoginTip =>
-      'Astuce : utilisez le nom d\'utilisateur et le mot de passe saisis lors de la création de votre compte.';
+  String get authLoginTip => 'Astuce : utilisez le nom d\'utilisateur et le mot de passe saisis lors de la création de votre compte.';
 
   @override
   String get authLoginButton => 'Connexion';
@@ -90,12 +84,10 @@ class AppLocalizationsFr extends AppLocalizations {
   String get authOrDivider => 'ou';
 
   @override
-  String get authTaglineTitle =>
-      'Planifiez plus vite. Voyagez plus intelligemment.';
+  String get authTaglineTitle => 'Planifiez plus vite. Voyagez plus intelligemment.';
 
   @override
-  String get authTaglineSubtitle =>
-      'Recherchez des destinations, créez des itinéraires et gardez votre compte synchronisé sur mobile, web et Windows.';
+  String get authTaglineSubtitle => 'Recherchez des destinations, créez des itinéraires et gardez votre compte synchronisé sur mobile, web et Windows.';
 
   @override
   String get authFeatureMobile => 'Compatible mobile';
@@ -125,47 +117,39 @@ class AppLocalizationsFr extends AppLocalizations {
   String get navProfile => 'Profil';
 
   @override
-  String get aiChatTitle => 'Demander à l\'IA';
+  String get aiChatTitle => 'Demander à TIA';
 
   @override
-  String get aiChatSubtitle =>
-      'Discutez des destinations de Yaoundé et recevez des suggestions personnalisées.';
+  String get aiChatSubtitle => 'Discutez avec TIA des destinations de Yaoundé et recevez des conseils de voyage personnalisés.';
 
   @override
-  String get aiChatInputHint =>
-      'Demandez à propos d\'un lieu, ou quoi faire aujourd\'hui…';
+  String get aiChatInputHint => 'Demandez à TIA à propos d\'un lieu, ou quoi faire aujourd\'hui…';
 
   @override
-  String get aiChatEmptyState =>
-      'Posez-moi une question sur Yaoundé - je peux suggérer des lieux selon vos centres d\'intérêt ou expliquer pourquoi un lieu vaut le détour.';
+  String get aiChatEmptyState => 'Demandez à TIA à propos de Yaoundé - je peux suggérer des lieux selon vos centres d\'intérêt et guider votre plan de voyage.';
 
   @override
   String aiChatErrorMessage(String error) {
-    return 'Impossible de contacter l\'assistant IA.\n$error';
+    return 'Impossible de contacter TIA.\n$error';
   }
 
   @override
-  String get aiChatNotConfigured =>
-      'L\'assistant IA n\'est pas encore configuré. Revenez bientôt.';
+  String get aiChatNotConfigured => 'TIA n\'est pas encore configuré. Revenez bientôt.';
 
   @override
-  String get aiChatSuggestionsLabel => 'Essayez de demander';
+  String get aiChatSuggestionsLabel => 'Essayez de demander à TIA';
 
   @override
-  String get aiChatSuggestion1 =>
-      'Que vaut-il la peine de visiter à Yaoundé aujourd\'hui ?';
+  String get aiChatSuggestion1 => 'Que vaut-il la peine de visiter à Yaoundé aujourd\'hui ?';
 
   @override
-  String get aiChatSuggestion2 =>
-      'Suggérez un itinéraire culturel d\'une demi-journée';
+  String get aiChatSuggestion2 => 'Suggérez un itinéraire culturel d\'une demi-journée';
 
   @override
-  String get aiChatSuggestion3 =>
-      'Où puis-je manger de la cuisine camerounaise locale ?';
+  String get aiChatSuggestion3 => 'Où puis-je manger de la cuisine camerounaise locale ?';
 
   @override
-  String get aiChatSuggestion4 =>
-      'Meilleur endroit pour un coucher de soleil ?';
+  String get aiChatSuggestion4 => 'Meilleur endroit pour un coucher de soleil ?';
 
   @override
   String get aiChatVoiceStartTooltip => 'Enregistrer un message vocal';
@@ -174,26 +158,22 @@ class AppLocalizationsFr extends AppLocalizations {
   String get aiChatVoiceStopTooltip => 'Arrêter l\'enregistrement';
 
   @override
-  String get aiChatVoiceEmptyError =>
-      'Je n\'ai rien entendu - réessayez l\'enregistrement.';
+  String get aiChatVoiceEmptyError => 'Je n\'ai rien entendu - réessayez l\'enregistrement.';
 
   @override
-  String get aiChatVoiceFailedError =>
-      'Impossible de transcrire ce message. Réessayez.';
+  String get aiChatVoiceFailedError => 'Impossible de transcrire ce message. Réessayez.';
 
   @override
-  String get aiChatVoicePermissionDenied =>
-      'L\'accès au microphone est nécessaire pour enregistrer un message vocal.';
+  String get aiChatVoicePermissionDenied => 'L\'accès au microphone est nécessaire pour enregistrer un message vocal.';
 
   @override
-  String get aiExplainButton => 'Demander une explication à l\'IA';
+  String get aiExplainButton => 'Demander à TIA une explication';
 
   @override
-  String get aiExplainTitle => 'Explication de l\'IA';
+  String get aiExplainTitle => 'Explication TIA';
 
   @override
-  String get aiExplainError =>
-      'Impossible d\'obtenir une explication pour le moment.';
+  String get aiExplainError => 'Impossible d\'obtenir une explication pour le moment.';
 
   @override
   String get aiLinkOpenFailed => 'Impossible d\'ouvrir cette destination.';
@@ -214,8 +194,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get commentsButtonLabel => 'Voir les commentaires';
 
   @override
-  String get commentsEmpty =>
-      'Aucun commentaire pour l\'instant — soyez le premier à partager votre avis.';
+  String get commentsEmpty => 'Aucun commentaire pour l\'instant — soyez le premier à partager votre avis.';
 
   @override
   String commentsLoadError(String error) {
@@ -247,12 +226,10 @@ class AppLocalizationsFr extends AppLocalizations {
   String get destinationsTitle => 'Destinations à Yaoundé';
 
   @override
-  String get destinationsSubtitle =>
-      'Explorez les monuments, la culture et la nature de la capitale du Cameroun.';
+  String get destinationsSubtitle => 'Explorez les monuments, la culture et la nature de la capitale du Cameroun.';
 
   @override
-  String get destinationsSearchHint =>
-      'Rechercher une destination par nom ou mot-clé';
+  String get destinationsSearchHint => 'Rechercher une destination par nom ou mot-clé';
 
   @override
   String get searchButton => 'Rechercher';
@@ -267,8 +244,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get destinationsFilterClear => 'Effacer';
 
   @override
-  String get destinationsFilterEmpty =>
-      'Aucune destination ne correspond aux filtres sélectionnés.';
+  String get destinationsFilterEmpty => 'Aucune destination ne correspond aux filtres sélectionnés.';
 
   @override
   String destinationCardSemanticLabel(String name) {
@@ -282,8 +258,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get submitDestinationTitle => 'Suggérer une destination';
 
   @override
-  String get submitDestinationSubtitle =>
-      'Vous connaissez un vrai lieu à Yaoundé qui manque ? Suggérez-le ici - un administrateur examine chaque suggestion avant sa mise en ligne.';
+  String get submitDestinationSubtitle => 'Vous connaissez un vrai lieu à Yaoundé qui manque ? Suggérez-le ici - un administrateur examine chaque suggestion avant sa mise en ligne.';
 
   @override
   String get submitDestinationNameLabel => 'Nom de la destination';
@@ -301,15 +276,13 @@ class AppLocalizationsFr extends AppLocalizations {
   String get submitDestinationDescriptionLabel => 'Description';
 
   @override
-  String get submitDestinationReviewNotice =>
-      'Votre suggestion n\'apparaîtra pas dans l\'application tant qu\'un administrateur ne l\'aura pas approuvée.';
+  String get submitDestinationReviewNotice => 'Votre suggestion n\'apparaîtra pas dans l\'application tant qu\'un administrateur ne l\'aura pas approuvée.';
 
   @override
   String get submitDestinationButton => 'Envoyer pour examen';
 
   @override
-  String get submitDestinationSuccess =>
-      'Merci ! Votre suggestion a été envoyée pour examen.';
+  String get submitDestinationSuccess => 'Merci ! Votre suggestion a été envoyée pour examen.';
 
   @override
   String submitDestinationSuccessImageFailed(String error) {
@@ -320,8 +293,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get submitDestinationAddPhoto => 'Ajouter une photo (facultatif)';
 
   @override
-  String get submitDestinationLocationPickButton =>
-      'Définir la position sur la carte';
+  String get submitDestinationLocationPickButton => 'Définir la position sur la carte';
 
   @override
   String submitDestinationLocationPickedLabel(String lat, String lon) {
@@ -332,8 +304,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get pickLocationTitle => 'Choisir la position';
 
   @override
-  String get pickLocationHint =>
-      'Touchez la carte pour placer une épingle à l\'emplacement de cette destination';
+  String get pickLocationHint => 'Touchez la carte pour placer une épingle à l\'emplacement de cette destination';
 
   @override
   String get pickLocationConfirm => 'Utiliser cette position';
@@ -342,8 +313,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get recommendationsTitle => 'Sélectionné pour vous';
 
   @override
-  String get recommendationsSubtitle =>
-      'Une courte liste de lieux à Yaoundé à ajouter à votre itinéraire.';
+  String get recommendationsSubtitle => 'Une courte liste de lieux à Yaoundé à ajouter à votre itinéraire.';
 
   @override
   String recommendationsErrorMessage(String error) {
@@ -351,19 +321,16 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
-  String get recommendationsEmptyTitle =>
-      'Aucune recommandation pour l\'instant';
+  String get recommendationsEmptyTitle => 'Aucune recommandation pour l\'instant';
 
   @override
-  String get recommendationsEmptySubtitle =>
-      'Explorez les destinations et nous vous suggérerons des lieux.';
+  String get recommendationsEmptySubtitle => 'Explorez les destinations et nous vous suggérerons des lieux.';
 
   @override
   String get forYouTitle => 'Pour vous';
 
   @override
-  String get forYouSubtitle =>
-      'Un mélange personnalisé de suggestions faites pour vous et de ce qui est populaire à Yaoundé.';
+  String get forYouSubtitle => 'Un mélange personnalisé de suggestions faites pour vous et de ce qui est populaire à Yaoundé.';
 
   @override
   String get forYouPersonalizedSectionTitle => 'Sélectionné pour vous';
@@ -386,8 +353,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get favoritesEmptyTitle => 'Aucun favori pour l\'instant';
 
   @override
-  String get favoritesEmptySubtitle =>
-      'Appuyez sur le cœur d\'une destination pour l\'enregistrer ici.';
+  String get favoritesEmptySubtitle => 'Appuyez sur le cœur d\'une destination pour l\'enregistrer ici.';
 
   @override
   String get viewMySubmissionsButton => 'Mes suggestions';
@@ -396,8 +362,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get mySubmissionsTitle => 'Vos suggestions';
 
   @override
-  String get mySubmissionsSubtitle =>
-      'Les destinations que vous avez suggérées, et leur statut de validation.';
+  String get mySubmissionsSubtitle => 'Les destinations que vous avez suggérées, et leur statut de validation.';
 
   @override
   String mySubmissionsErrorMessage(String error) {
@@ -408,8 +373,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get mySubmissionsEmptyTitle => 'Aucune suggestion pour l\'instant';
 
   @override
-  String get mySubmissionsEmptySubtitle =>
-      'Suggérez une destination et suivez son statut de validation ici.';
+  String get mySubmissionsEmptySubtitle => 'Suggérez une destination et suivez son statut de validation ici.';
 
   @override
   String get submissionStatusPending => 'En attente de validation';
@@ -421,8 +385,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get submissionStatusRejected => 'Non approuvée';
 
   @override
-  String get itinerariesFormMissing =>
-      'Ajoutez un titre et choisissez au moins une destination.';
+  String get itinerariesFormMissing => 'Ajoutez un titre et choisissez au moins une destination.';
 
   @override
   String get itineraryCreatedSnackbar => 'Itinéraire créé.';
@@ -465,8 +428,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get orderDestinationsSheetTitle => 'Ordonnez votre visite';
 
   @override
-  String get orderDestinationsSheetSubtitle =>
-      'Faites glisser pour définir l\'ordre de visite souhaité.';
+  String get orderDestinationsSheetSubtitle => 'Faites glisser pour définir l\'ordre de visite souhaité.';
 
   @override
   String get orderDestinationsConfirmButton => 'Confirmer l\'ordre';
@@ -484,8 +446,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get mapLeaveItineraryButton => 'Quitter l\'itinéraire';
 
   @override
-  String get mapNoItinerariesAvailable =>
-      'Vous n\'avez pas encore d\'itinéraire.';
+  String get mapNoItinerariesAvailable => 'Vous n\'avez pas encore d\'itinéraire.';
 
   @override
   String mapItineraryProgress(int visited, int total) {
@@ -540,8 +501,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get mapYangoButtonTooltip => 'Réserver un taxi';
 
   @override
-  String get mapYangoLaunchFailed =>
-      'Impossible d\'ouvrir l\'application de taxi.';
+  String get mapYangoLaunchFailed => 'Impossible d\'ouvrir l\'application de taxi.';
 
   @override
   String get navMap => 'Carte';
@@ -565,8 +525,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get mapSearchHint => 'Rechercher des destinations…';
 
   @override
-  String get mapNoCoordinates =>
-      'Cette destination n\'a pas encore de position définie';
+  String get mapNoCoordinates => 'Cette destination n\'a pas encore de position définie';
 
   @override
   String get mapProfileDriving => 'Voiture';
@@ -578,16 +537,13 @@ class AppLocalizationsFr extends AppLocalizations {
   String get mapProfileCycling => 'Vélo';
 
   @override
-  String get mapRoutingNotConfigured =>
-      'L\'itinéraire n\'est pas encore configuré. Revenez bientôt.';
+  String get mapRoutingNotConfigured => 'L\'itinéraire n\'est pas encore configuré. Revenez bientôt.';
 
   @override
-  String get mapNoRouteFound =>
-      'Impossible de trouver un itinéraire entre ces points. L\'un d\'eux est peut-être inaccessible - vérifiez les destinations et votre position.';
+  String get mapNoRouteFound => 'Impossible de trouver un itinéraire entre ces points. L\'un d\'eux est peut-être inaccessible - vérifiez les destinations et votre position.';
 
   @override
-  String get mapLocationTooFar =>
-      'Votre position actuelle semble éloignée de ces destinations. Vérifiez que la localisation est précise, puis réessayez.';
+  String get mapLocationTooFar => 'Votre position actuelle semble éloignée de ces destinations. Vérifiez que la localisation est précise, puis réessayez.';
 
   @override
   String get viewOnMapButton => 'Voir sur la carte';
@@ -605,20 +561,16 @@ class AppLocalizationsFr extends AppLocalizations {
   String get videoLaunchFailed => 'Impossible d\'ouvrir le lien de la vidéo.';
 
   @override
-  String get mapLocationPermissionDenied =>
-      'L\'accès à la position est nécessaire pour l\'afficher sur la carte. Veuillez l\'autoriser dans les paramètres de votre appareil.';
+  String get mapLocationPermissionDenied => 'L\'accès à la position est nécessaire pour l\'afficher sur la carte. Veuillez l\'autoriser dans les paramètres de votre appareil.';
 
   @override
-  String get mapLocationServicesDisabled =>
-      'Activez la localisation sur votre appareil pour afficher votre position sur la carte.';
+  String get mapLocationServicesDisabled => 'Activez la localisation sur votre appareil pour afficher votre position sur la carte.';
 
   @override
-  String get mapLocateFailed =>
-      'Impossible d\'obtenir votre position. Veuillez réessayer.';
+  String get mapLocateFailed => 'Impossible d\'obtenir votre position. Veuillez réessayer.';
 
   @override
-  String get mapLocationApproximate =>
-      'Votre position est approximative - sans GPS (par ex. sur un navigateur de bureau), elle est estimée à partir des données WiFi/réseau.';
+  String get mapLocationApproximate => 'Votre position est approximative - sans GPS (par ex. sur un navigateur de bureau), elle est estimée à partir des données WiFi/réseau.';
 
   @override
   String get mapRetryButton => 'Réessayer';
@@ -647,8 +599,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get logoutConfirmTitle => 'Se déconnecter ?';
 
   @override
-  String get logoutConfirmMessage =>
-      'Vous devrez vous reconnecter pour voir vos itinéraires et favoris.';
+  String get logoutConfirmMessage => 'Vous devrez vous reconnecter pour voir vos itinéraires et favoris.';
 
   @override
   String get deleteItineraryConfirmTitle => 'Supprimer cet itinéraire ?';
@@ -668,15 +619,13 @@ class AppLocalizationsFr extends AppLocalizations {
   String get forgotPasswordTitle => 'Réinitialiser votre mot de passe';
 
   @override
-  String get forgotPasswordStep1Subtitle =>
-      'Entrez votre nom d\'utilisateur ou votre email et nous vous enverrons un code de réinitialisation.';
+  String get forgotPasswordStep1Subtitle => 'Entrez votre nom d\'utilisateur ou votre email et nous vous enverrons un code de réinitialisation.';
 
   @override
   String get forgotPasswordIdentifierLabel => 'Nom d\'utilisateur ou email';
 
   @override
-  String get forgotPasswordIdentifierRequired =>
-      'Entrez votre nom d\'utilisateur ou votre email';
+  String get forgotPasswordIdentifierRequired => 'Entrez votre nom d\'utilisateur ou votre email';
 
   @override
   String get forgotPasswordSendCodeButton => 'Envoyer le code';
@@ -687,8 +636,7 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
-  String get forgotPasswordStep2Subtitle =>
-      'Entrez le code que nous vous avons envoyé, ainsi qu\'un nouveau mot de passe.';
+  String get forgotPasswordStep2Subtitle => 'Entrez le code que nous vous avons envoyé, ainsi qu\'un nouveau mot de passe.';
 
   @override
   String get forgotPasswordCodeLabel => 'Code de réinitialisation';
@@ -706,8 +654,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get forgotPasswordResetButton => 'Réinitialiser le mot de passe';
 
   @override
-  String get forgotPasswordSuccessMessage =>
-      'Mot de passe mis à jour. Vous pouvez maintenant vous connecter.';
+  String get forgotPasswordSuccessMessage => 'Mot de passe mis à jour. Vous pouvez maintenant vous connecter.';
 
   @override
   String get forgotPasswordResendCodeButton => 'Renvoyer le code';
@@ -728,12 +675,10 @@ class AppLocalizationsFr extends AppLocalizations {
   String get destinationsLabel => 'Destinations';
 
   @override
-  String get noDestinationsAvailable =>
-      'Aucune destination disponible pour l\'instant.';
+  String get noDestinationsAvailable => 'Aucune destination disponible pour l\'instant.';
 
   @override
-  String get itineraryDestinationSearchHint =>
-      'Rechercher des destinations à ajouter…';
+  String get itineraryDestinationSearchHint => 'Rechercher des destinations à ajouter…';
 
   @override
   String itineraryShowAllDestinations(int count) {
@@ -744,8 +689,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get itineraryHideAllDestinations => 'Masquer la liste complète';
 
   @override
-  String get itineraryDestinationSearchPrompt =>
-      'Recherchez par nom, ou appuyez sur « afficher tout » pour parcourir toutes les destinations.';
+  String get itineraryDestinationSearchPrompt => 'Recherchez par nom, ou appuyez sur « afficher tout » pour parcourir toutes les destinations.';
 
   @override
   String itineraryDestinationSearchNoMatches(String query) {
@@ -753,8 +697,7 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
-  String get itineraryAllDestinationsAdded =>
-      'Toutes les destinations ont été ajoutées.';
+  String get itineraryAllDestinationsAdded => 'Toutes les destinations ont été ajoutées.';
 
   @override
   String get createItineraryButton => 'Créer l\'itinéraire';
@@ -768,8 +711,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get itinerariesEmptyTitle => 'Aucun itinéraire pour l\'instant';
 
   @override
-  String get itinerariesEmptySubtitle =>
-      'Choisissez quelques destinations ci-dessus pour créer votre premier plan.';
+  String get itinerariesEmptySubtitle => 'Choisissez quelques destinations ci-dessus pour créer votre premier plan.';
 
   @override
   String get yourItinerariesTitle => 'Vos itinéraires';
@@ -813,8 +755,7 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
-  String get itineraryNoSchedule =>
-      'Aucun plan chronométré pour cet itinéraire pour l\'instant.';
+  String get itineraryNoSchedule => 'Aucun plan chronométré pour cet itinéraire pour l\'instant.';
 
   @override
   String get itineraryTravelTime => 'Temps de trajet';
@@ -872,8 +813,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get travellerFallback => 'Voyageur';
 
   @override
-  String get avatarSemanticLabel =>
-      'Appuyez pour changer votre photo de profil';
+  String get avatarSemanticLabel => 'Appuyez pour changer votre photo de profil';
 
   @override
   String couldNotPickImage(String error) {
@@ -905,8 +845,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get interestsLabel => 'Centres d\'intérêt';
 
   @override
-  String get interestsHelper =>
-      'Choisissez ce qui vous intéresse - nous nous en servirons pour vous recommander des lieux à Yaoundé.';
+  String get interestsHelper => 'Choisissez ce qui vous intéresse - nous nous en servirons pour vous recommander des lieux à Yaoundé.';
 
   @override
   String get interestsUpdatedSnackbar => 'Centres d\'intérêt mis à jour.';
@@ -915,8 +854,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get nearbyTitle => 'Manger et dormir à proximité';
 
   @override
-  String get nearbySubtitle =>
-      'Vrais restaurants et hôtels proches de ce lieu.';
+  String get nearbySubtitle => 'Vrais restaurants et hôtels proches de ce lieu.';
 
   @override
   String get practicalInfoTitle => 'Bon à savoir';
@@ -934,8 +872,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get sessionExpiredTitle => 'Votre session a expiré';
 
   @override
-  String get sessionExpiredSubtitle =>
-      'Veuillez vous reconnecter pour continuer.';
+  String get sessionExpiredSubtitle => 'Veuillez vous reconnecter pour continuer.';
 
   @override
   String get signInAgainButton => 'Se reconnecter';
@@ -949,26 +886,22 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
-  String get shareItineraryDialogMessage =>
-      'Toute personne qui ouvre ce lien reçoit sa propre copie de cet itinéraire directement dans son compte trip_io - il lui sera demandé d\'en créer un si elle n\'en a pas encore. Le lien continue de fonctionner pour tous ceux à qui vous l\'envoyez jusqu\'à ce que vous désactiviez le partage.';
+  String get shareItineraryDialogMessage => 'Toute personne qui ouvre ce lien reçoit sa propre copie de cet itinéraire directement dans son compte trip_io - il lui sera demandé d\'en créer un si elle n\'en a pas encore. Le lien continue de fonctionner pour tous ceux à qui vous l\'envoyez jusqu\'à ce que vous désactiviez le partage.';
 
   @override
   String get shareItineraryCopyLinkButton => 'Copier le lien';
 
   @override
-  String get shareItineraryLinkCopiedSnackbar =>
-      'Lien copié dans le presse-papiers.';
+  String get shareItineraryLinkCopiedSnackbar => 'Lien copié dans le presse-papiers.';
 
   @override
   String get shareItineraryTurnOffButton => 'Désactiver le partage';
 
   @override
-  String get shareItineraryTurnedOffSnackbar =>
-      'Partage désactivé. L\'ancien lien ne fonctionne plus.';
+  String get shareItineraryTurnedOffSnackbar => 'Partage désactivé. L\'ancien lien ne fonctionne plus.';
 
   @override
-  String get shareItineraryErrorSnackbar =>
-      'Impossible de créer un lien de partage pour le moment.';
+  String get shareItineraryErrorSnackbar => 'Impossible de créer un lien de partage pour le moment.';
 
   @override
   String get closeButton => 'Fermer';
@@ -977,8 +910,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get claimedItinerarySnackbar => 'Ajouté à vos itinéraires.';
 
   @override
-  String get claimedItineraryErrorSnackbar =>
-      'Impossible d\'ajouter cet itinéraire partagé à votre compte.';
+  String get claimedItineraryErrorSnackbar => 'Impossible d\'ajouter cet itinéraire partagé à votre compte.';
 
   @override
   String get onboardingSkip => 'Passer';
@@ -993,29 +925,25 @@ class AppLocalizationsFr extends AppLocalizations {
   String get onboardingPage1Title => 'Découvrez Yaoundé';
 
   @override
-  String get onboardingPage1Body =>
-      'Parcourez de vrais lieux sélectionnés à la main : monuments, culture, marchés et nature à Yaoundé, Cameroun.';
+  String get onboardingPage1Body => 'Parcourez de vrais lieux sélectionnés à la main : monuments, culture, marchés et nature à Yaoundé, Cameroun.';
 
   @override
   String get onboardingPage2Title => 'Des suggestions pensées pour vous';
 
   @override
-  String get onboardingPage2Body =>
-      'Dites-nous ce qui vous intéresse et nous vous proposerons les lieux les plus susceptibles de vous plaire.';
+  String get onboardingPage2Body => 'Dites-nous ce qui vous intéresse et nous vous proposerons les lieux les plus susceptibles de vous plaire.';
 
   @override
   String get onboardingPage3Title => 'Planifiez votre journée';
 
   @override
-  String get onboardingPage3Body =>
-      'Choisissez vos arrêts et votre temps disponible - trip_io construit un planning chronométré pour vous.';
+  String get onboardingPage3Body => 'Choisissez vos arrêts et votre temps disponible - trip_io construit un planning chronométré pour vous.';
 
   @override
   String get onboardingPage4Title => 'Naviguez en temps réel';
 
   @override
-  String get onboardingPage4Body =>
-      'Suivez un itinéraire pas à pas et voyez chaque arrêt, numéroté dans l\'ordre, directement sur la carte.';
+  String get onboardingPage4Body => 'Suivez un itinéraire pas à pas et voyez chaque arrêt, numéroté dans l\'ordre, directement sur la carte.';
 
   @override
   String get avatarCropTitle => 'Ajuster la photo';
@@ -1024,15 +952,13 @@ class AppLocalizationsFr extends AppLocalizations {
   String get avatarCropConfirmButton => 'Terminé';
 
   @override
-  String get avatarCropHint =>
-      'Faites glisser pour repositionner, pincez ou faites défiler pour zoomer.';
+  String get avatarCropHint => 'Faites glisser pour repositionner, pincez ou faites défiler pour zoomer.';
 
   @override
   String get notificationsTitle => 'Notifications';
 
   @override
-  String get notificationsSubtitle =>
-      'Rappels de voyage et mises à jour sur vos suggestions.';
+  String get notificationsSubtitle => 'Rappels de voyage et mises à jour sur vos suggestions.';
 
   @override
   String notificationsErrorMessage(String error) {
@@ -1043,12 +969,10 @@ class AppLocalizationsFr extends AppLocalizations {
   String get notificationsEmptyTitle => 'Vous êtes à jour';
 
   @override
-  String get notificationsEmptySubtitle =>
-      'Les avis de modération et rappels de voyage apparaîtront ici.';
+  String get notificationsEmptySubtitle => 'Les avis de modération et rappels de voyage apparaîtront ici.';
 
   @override
-  String get notificationDestinationStatusTitle =>
-      'Mise à jour de votre suggestion';
+  String get notificationDestinationStatusTitle => 'Mise à jour de votre suggestion';
 
   @override
   String notificationDestinationApprovedBody(String name) {
