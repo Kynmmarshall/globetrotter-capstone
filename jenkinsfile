@@ -130,19 +130,36 @@ pipeline {
                             set PATH=C:\\flutter\\bin;%PATH%
 
                             rem flutter_tts Windows build requires nuget.exe on PATH.
+                            set "NUGET_EXE="
                             where nuget >nul 2>nul
-                            if %errorlevel% neq 0 (
-                                echo === nuget.exe not found on PATH; downloading local copy ===
-                                if not exist C:\\tools\\nuget mkdir C:\\tools\\nuget
-                                powershell -NoProfile -ExecutionPolicy Bypass -Command "Invoke-WebRequest -UseBasicParsing -Uri https://dist.nuget.org/win-x86-commandline/latest/nuget.exe -OutFile C:\\tools\\nuget\\nuget.exe"
-                                if %errorlevel% neq 0 exit /b %errorlevel%
+                            if %errorlevel% equ 0 (
+                                for /f "delims=" %%i in ('where nuget') do set "NUGET_EXE=%%i"
                             )
-                            set PATH=C:\\tools\\nuget;%PATH%
+                            if not defined NUGET_EXE if exist "C:\\tools\\nuget\\nuget.exe" set "NUGET_EXE=C:\\tools\\nuget\\nuget.exe"
+                            if not defined NUGET_EXE if exist "C:\\Program Files\\NuGet\\nuget.exe" set "NUGET_EXE=C:\\Program Files\\NuGet\\nuget.exe"
+                            if not defined NUGET_EXE if exist "C:\\Program Files (x86)\\NuGet\\nuget.exe" set "NUGET_EXE=C:\\Program Files (x86)\\NuGet\\nuget.exe"
+                            if not defined NUGET_EXE if exist "C:\\Program Files\\Microsoft Visual Studio\\2022\\BuildTools\\Common7\\IDE\\CommonExtensions\\Microsoft\\NuGet\\NuGet.exe" set "NUGET_EXE=C:\\Program Files\\Microsoft Visual Studio\\2022\\BuildTools\\Common7\\IDE\\CommonExtensions\\Microsoft\\NuGet\\NuGet.exe"
+                            if not defined NUGET_EXE if exist "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\IDE\\CommonExtensions\\Microsoft\\NuGet\\NuGet.exe" set "NUGET_EXE=C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\IDE\\CommonExtensions\\Microsoft\\NuGet\\NuGet.exe"
+
+                            if not defined NUGET_EXE (
+                                echo === nuget.exe not found locally; downloading local copy ===
+                                if not exist C:\\tools\\nuget mkdir C:\\tools\\nuget
+                                powershell -NoProfile -ExecutionPolicy Bypass -Command "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; Invoke-WebRequest -UseBasicParsing -Uri 'https://dist.nuget.org/win-x86-commandline/latest/nuget.exe' -OutFile 'C:\\tools\\nuget\\nuget.exe'"
+                                if %errorlevel% neq 0 (
+                                    echo "Failed to download nuget.exe. Ensure outbound HTTPS to dist.nuget.org is allowed for the Jenkins agent account."
+                                    exit /b %errorlevel%
+                                )
+                                set "NUGET_EXE=C:\\tools\\nuget\\nuget.exe"
+                            )
+
+                            for %%I in ("%NUGET_EXE%") do set "NUGET_DIR=%%~dpI"
+                            set PATH=%NUGET_DIR%;%PATH%
                             nuget help >nul 2>nul
                             if %errorlevel% neq 0 (
-                                echo "nuget.exe is unavailable after setup."
+                                echo "nuget.exe is unavailable after setup: %NUGET_EXE%"
                                 exit /b 1
                             )
+                            echo Using NuGet: %NUGET_EXE%
 
                             echo === Flutter Windows build start ===
                             call flutter pub get
