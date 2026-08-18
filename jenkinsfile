@@ -130,10 +130,10 @@ pipeline {
                             set PATH=C:\\flutter\\bin;%PATH%
 
                             echo === Flutter Windows build start ===
-                            flutter pub get
+                            call flutter pub get
                             if %errorlevel% neq 0 exit /b %errorlevel%
 
-                            flutter build windows --release --dart-define=API_BASE_URL=%API_BASE_URL%
+                            call flutter build windows --release --dart-define=API_BASE_URL=%API_BASE_URL%
                             if %errorlevel% neq 0 exit /b %errorlevel%
 
                             if not exist "build\\windows\\x64\\runner\\Release" (
