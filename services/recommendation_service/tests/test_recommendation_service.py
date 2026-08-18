@@ -30,6 +30,15 @@ def _seed_destination(**overrides):
     return base
 
 
+def test_tia_prompt_stays_travel_first_and_named():
+    prompt = ai._system_text(language_code="en", interests=["food", "nature"])
+    assert "Tia" in prompt
+    assert "Trip Intelligence Assistant" in prompt
+    assert "Ask TIA" in prompt
+    assert "travel assistance" in prompt.lower()
+    assert "answer all questions" not in prompt.lower()
+
+
 @pytest.mark.asyncio
 async def test_list_and_get_destination(tmp_path):
     _use_temp_data(tmp_path, destinations=[_seed_destination()])
