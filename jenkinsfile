@@ -129,12 +129,26 @@ pipeline {
                             rem but is invisible to the service without this.
                             set PATH=C:\\flutter\\bin;%PATH%
 
+                            echo === Flutter Windows build start ===
                             flutter pub get
                             if %errorlevel% neq 0 exit /b %errorlevel%
+
                             flutter build windows --release --dart-define=API_BASE_URL=%API_BASE_URL%
                             if %errorlevel% neq 0 exit /b %errorlevel%
+
+                            if not exist "build\\windows\\x64\\runner\\Release" (
+                                echo "Flutter Windows build output was not created at build\\windows\\x64\\runner\\Release"
+                                exit /b 1
+                            )
+
                             if exist Output rmdir /s /q Output
                             "C:\\Program Files (x86)\\Inno Setup 6\\ISCC.exe" trip_io_setup.iss
+                            if %errorlevel% neq 0 exit /b %errorlevel%
+
+                            if not exist Output (
+                                echo "Inno Setup output directory was not created."
+                                exit /b 1
+                            )
                         '''
                     }
                 }
@@ -145,15 +159,17 @@ pipeline {
                     }
                     steps {
                         powershell '''
-                            $ErrorActionPreference = "Continue"
+                            $ErrorActionPreference = "Stop"
                             $remote = "$env:VPS_USER@$env:VPS_HOST"
                             $remoteDir = "$env:VPS_APP_DIR/website/downloads"
                             $remoteTmp = "$remoteDir/trip_io_windows.exe.uploading"
                             $remoteFinal = "$remoteDir/trip_io_windows.exe"
                             $sshOpts = @("-i", $env:SSH_KEY, "-o", "StrictHostKeyChecking=accept-new")
 
-                            $installer = Get-ChildItem -Path "Output" -Filter "*.exe" | Select-Object -First 1
-                            if (-not $installer) { throw "No installer .exe found in Output/" }
+                            $installer = Get-ChildItem -Path "Output" -Filter "*.exe" -Recurse | Select-Object -First 1
+                            if (-not $installer) {
+                                throw "No installer .exe found in Output/. Check the Flutter Windows build and Inno Setup step logs."
+                            }
 
                             $totalMB = [math]::Round($installer.Length / 1MB, 2)
                             Write-Output "=== Uploading $($installer.Name) ($totalMB MB) to $remote ==="
