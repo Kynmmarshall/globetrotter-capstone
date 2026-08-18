@@ -129,6 +129,21 @@ pipeline {
                             rem but is invisible to the service without this.
                             set PATH=C:\\flutter\\bin;%PATH%
 
+                            rem flutter_tts Windows build requires nuget.exe on PATH.
+                            where nuget >nul 2>nul
+                            if %errorlevel% neq 0 (
+                                echo === nuget.exe not found on PATH; downloading local copy ===
+                                if not exist C:\\tools\\nuget mkdir C:\\tools\\nuget
+                                powershell -NoProfile -ExecutionPolicy Bypass -Command "Invoke-WebRequest -UseBasicParsing -Uri https://dist.nuget.org/win-x86-commandline/latest/nuget.exe -OutFile C:\\tools\\nuget\\nuget.exe"
+                                if %errorlevel% neq 0 exit /b %errorlevel%
+                            )
+                            set PATH=C:\\tools\\nuget;%PATH%
+                            nuget help >nul 2>nul
+                            if %errorlevel% neq 0 (
+                                echo "nuget.exe is unavailable after setup."
+                                exit /b 1
+                            )
+
                             echo === Flutter Windows build start ===
                             call flutter pub get
                             if %errorlevel% neq 0 exit /b %errorlevel%
