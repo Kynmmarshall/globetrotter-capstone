@@ -29,16 +29,39 @@ class AiRequestError(Exception):
     pass
 
 
-def _destination_catalog() -> str:
+_MAX_DESTINATION_CATALOG_ITEMS = 10
+_MAX_TAGS_PER_DESTINATION = 4
+
+
+def _destination_catalog(interests: list[str] | None = None, preferred_ids: list[str] | None = None) -> str:
     dests = read_data().get("destinations", [])
-    lines = []
+    preferred = {item for item in (preferred_ids or []) if item}
+    interest_lookup = {item.lower() for item in (interests or []) if item}
+
+    ranked = []
     for d in dests:
+        score = 0
+        dest_id = d.get("id")
+        if dest_id in preferred:
+            score += 100
+        tags = d.get("tags") or []
+        if interest_lookup:
+            score += sum(1 for tag in tags if str(tag).lower() in interest_lookup)
+        ranked.append((score, d))
+
+    ranked.sort(key=lambda item: (-item[0], item[1].get("name", "")))
+    selected = ranked[:_MAX_DESTINATION_CATALOG_ITEMS]
+    overflow = max(len(ranked) - _MAX_DESTINATION_CATALOG_ITEMS, 0)
+    lines = []
+    for _, d in selected:
         bits = []
         if d.get("tags"):
-            bits.append("tags: " + ", ".join(d["tags"]))
+            bits.append("tags: " + ", ".join(d["tags"][:_MAX_TAGS_PER_DESTINATION]))
         if d.get("location"):
             bits.append("location: " + d["location"])
         lines.append(f"- ({d.get('id')}) {d.get('name', '')} | " + " | ".join(bits))
+    if overflow > 0:
+        lines.append(f"... and {overflow} more destinations available if the user asks for a broader shortlist.")
     return "\n".join(lines)
 
 
@@ -74,8 +97,15 @@ def _language_instruction(language_code: str | None) -> str:
     return "Answer in the same language as the user unless the conversation clearly indicates a different app language."
 
 
-def _system_text(interests: list[str] | None = None, language_code: str | None = None) -> str:
-    system_text = _BASE_INSTRUCTIONS + _language_instruction(language_code) + "\n\n" + _destination_catalog()
+def _system_text(
+    interests: list[str] | None = None,
+    language_code: str | None = None,
+    preferred_ids: list[str] | None = None,
+) -> str:
+    system_text = _BASE_INSTRUCTIONS + _language_instruction(language_code) + "\n\n" + _destination_catalog(
+        interests=interests,
+        preferred_ids=preferred_ids,
+    )
     if interests:
         system_text += (
             "\n\nThis user's stated interests: "
@@ -120,7 +150,14 @@ async def chat(
     interests: list[str] | None = None,
     language_code: str | None = None,
 ) -> str:
-    system_text = _system_text(interests=interests, language_code=language_code)
+    preferred_ids = []
+    if messages:
+        for m in messages:
+            content = (m.get("content") or "")
+            for token in ("d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9", "d10"):
+                if f"{token}" in content.lower():
+                    preferred_ids.append(token)
+    system_text = _system_text(interests=interests, language_code=language_code, preferred_ids=preferred_ids)
     full_messages = [{"role": "system", "content": system_text}] + [
         {"role": "assistant" if m["role"] == "assistant" else "user", "content": m["content"]}
         for m in messages
@@ -149,7 +186,8 @@ async def explain_destination(destination: dict, language_code: str | None = Non
         "historical/cultural context, but do not invent specific facts (prices, "
         "hours, addresses, ratings) beyond what's given here:\n\n" + "\n".join(detail_lines)
     )
-    system_text = _system_text(language_code=language_code)
+    preferred_ids = [destination.get("id")] if destination.get("id") else []
+    system_text = _system_text(language_code=language_code, preferred_ids=preferred_ids)
     messages = [
         {"role": "system", "content": system_text},
         {"role": "user", "content": prompt},

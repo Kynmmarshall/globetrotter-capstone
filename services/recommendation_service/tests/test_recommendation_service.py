@@ -443,6 +443,34 @@ async def test_ai_chat_passes_language_instruction_to_groq(tmp_path, monkeypatch
 
 
 @pytest.mark.asyncio
+async def test_ai_chat_caps_destination_catalog_for_groq(tmp_path, monkeypatch):
+    destinations = [_seed_destination(id=f"d{i}", tags=["nature"]) for i in range(1, 40)]
+    _use_temp_data(tmp_path, destinations=destinations)
+    token = create_access_token("alice")
+    headers = {"Authorization": f"Bearer {token}"}
+
+    captured = {}
+
+    async def fake_generate(messages):
+        captured["messages"] = messages
+        return "ok"
+
+    async def fake_interests(username):
+        return ["nature"]
+
+    monkeypatch.setattr(ai, "_generate", fake_generate)
+    monkeypatch.setattr(clients, "get_user_interests", fake_interests)
+
+    async with AsyncClient(app=app, base_url="http://test") as ac:
+        r = await ac.post("/ai/chat", json={"messages": [{"role": "user", "content": "hi"}]}, headers=headers)
+        assert r.status_code == 200
+
+    system_message = captured["messages"][0]["content"]
+    assert "more destinations" in system_message
+    assert system_message.count("- (") <= 11
+
+
+@pytest.mark.asyncio
 async def test_ai_voice_transcribes_and_returns_text(tmp_path, monkeypatch):
     _use_temp_data(tmp_path)
     token = create_access_token("alice")
