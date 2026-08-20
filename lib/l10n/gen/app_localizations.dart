@@ -410,6 +410,18 @@ abstract class AppLocalizations {
   /// **'Microphone access is needed to record a voice message.'**
   String get aiChatVoicePermissionDenied;
 
+  /// No description provided for @aiChatVoiceMuteTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Mute Tia\'s voice'**
+  String get aiChatVoiceMuteTooltip;
+
+  /// No description provided for @aiChatVoiceUnmuteTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Unmute Tia\'s voice'**
+  String get aiChatVoiceUnmuteTooltip;
+
   /// No description provided for @aiExplainButton.
   ///
   /// In en, this message translates to:

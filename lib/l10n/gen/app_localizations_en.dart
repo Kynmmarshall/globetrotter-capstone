@@ -178,6 +178,12 @@ class AppLocalizationsEn extends AppLocalizations {
       'Microphone access is needed to record a voice message.';
 
   @override
+  String get aiChatVoiceMuteTooltip => 'Mute Tia\'s voice';
+
+  @override
+  String get aiChatVoiceUnmuteTooltip => 'Unmute Tia\'s voice';
+
+  @override
   String get aiExplainButton => 'Ask TIA to explain';
 
   @override

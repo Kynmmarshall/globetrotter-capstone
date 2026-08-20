@@ -56,6 +56,8 @@
   "aiChatVoiceEmptyError": "Je n'ai rien entendu - réessayez l'enregistrement.",
   "aiChatVoiceFailedError": "Impossible de transcrire ce message. Réessayez.",
   "aiChatVoicePermissionDenied": "L'accès au microphone est nécessaire pour enregistrer un message vocal.",
+  "aiChatVoiceMuteTooltip": "Couper la voix de Tia",
+  "aiChatVoiceUnmuteTooltip": "Activer la voix de Tia",
   "aiExplainButton": "Demander à TIA une explication",
   "aiExplainTitle": "Explication TIA",
   "aiExplainError": "Impossible d'obtenir une explication pour le moment.",

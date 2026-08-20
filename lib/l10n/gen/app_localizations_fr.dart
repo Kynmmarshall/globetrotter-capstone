@@ -186,6 +186,12 @@ class AppLocalizationsFr extends AppLocalizations {
       'L\'accès au microphone est nécessaire pour enregistrer un message vocal.';
 
   @override
+  String get aiChatVoiceMuteTooltip => 'Couper la voix de Tia';
+
+  @override
+  String get aiChatVoiceUnmuteTooltip => 'Activer la voix de Tia';
+
+  @override
   String get aiExplainButton => 'Demander à TIA une explication';
 
   @override

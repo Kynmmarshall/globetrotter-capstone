@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_tts/flutter_tts.dart';
 import 'package:trip_io/l10n/gen/app_localizations.dart';
 import 'package:trip_io/models/models.dart';
 import 'package:trip_io/services/session_controller.dart';
@@ -73,9 +74,11 @@ class _AiChatSheetState extends State<AiChatSheet> {
   final List<ChatMessage> _messages = [];
   final TextEditingController _controller = TextEditingController();
   final VoiceRecorder _recorder = VoiceRecorder();
+  final FlutterTts _tts = FlutterTts();
   bool _sending = false;
   bool _recording = false;
   bool _transcribing = false;
+  bool _speaking = false;
   String? _error;
   Timer? _maxDurationTimer;
 
@@ -83,11 +86,59 @@ class _AiChatSheetState extends State<AiChatSheet> {
   void initState() {
     super.initState();
     _loadHistory();
+    _initTts();
+  }
+
+  void _initTts() {
+    void resetSpeakingState() {
+      if (mounted) setState(() => _speaking = false);
+    }
+
+    _tts.setStartHandler(() {
+      if (mounted) setState(() => _speaking = true);
+    });
+    _tts.setCompletionHandler(resetSpeakingState);
+    _tts.setCancelHandler(resetSpeakingState);
+    _tts.setErrorHandler((_) => resetSpeakingState());
+  }
+
+  // Strips the [[Name|id]] destination-link markup (see ai_formatted_text.dart)
+  // and the **/__ bold and */_ italic markers down to plain words - reading
+  // the raw markup aloud (brackets, asterisks) would sound broken.
+  String _spokenText(String content) {
+    var text = content.replaceAllMapped(
+      RegExp(r'\[\[([^\|\]]+)\|([^\]]+)\]\]'),
+      (m) => m.group(1)!,
+    );
+    text = text.replaceAllMapped(
+      RegExp(r'\*\*([^*]+)\*\*|__([^_]+)__'),
+      (m) => m.group(1) ?? m.group(2) ?? '',
+    );
+    text = text.replaceAllMapped(
+      RegExp(r'\*([^*]+)\*|_([^_\s][^_]*)_'),
+      (m) => m.group(1) ?? m.group(2) ?? '',
+    );
+    return text;
+  }
+
+  Future<void> _speak(String content) async {
+    final languageCode = widget.session.locale?.languageCode ?? 'en';
+    await _tts.setLanguage(languageCode == 'fr' ? 'fr-FR' : 'en-US');
+    await _tts.speak(_spokenText(content));
+  }
+
+  Future<void> _toggleSound() async {
+    final enabling = !widget.session.aiVoiceEnabled;
+    await widget.session.setAiVoiceEnabled(enabling);
+    if (!enabling && _speaking) {
+      await _tts.stop();
+    }
   }
 
   @override
   void dispose() {
     _maxDurationTimer?.cancel();
+    unawaited(_tts.stop());
     _recorder.dispose();
     _controller.dispose();
     super.dispose();
@@ -115,6 +166,9 @@ class _AiChatSheetState extends State<AiChatSheet> {
       setState(
         () => _messages.add(ChatMessage(role: 'assistant', content: reply)),
       );
+      if (widget.session.aiVoiceEnabled) {
+        unawaited(_speak(reply));
+      }
     } catch (e) {
       setState(() => _error = e.toString().replaceFirst('Exception: ', ''));
     } finally {
@@ -362,6 +416,18 @@ class _AiChatSheetState extends State<AiChatSheet> {
                     ),
                   ],
                 ),
+              ),
+              IconButton(
+                icon: Icon(
+                  widget.session.aiVoiceEnabled
+                      ? Icons.volume_up
+                      : Icons.volume_off,
+                  color: Colors.white70,
+                ),
+                onPressed: _toggleSound,
+                tooltip: widget.session.aiVoiceEnabled
+                    ? l10n.aiChatVoiceMuteTooltip
+                    : l10n.aiChatVoiceUnmuteTooltip,
               ),
               IconButton(
                 icon: const Icon(Icons.close, color: Colors.white70),
