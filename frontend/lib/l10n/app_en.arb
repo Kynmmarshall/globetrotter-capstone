@@ -60,6 +60,8 @@
   "aiChatVoiceEmptyError": "Didn't catch that - try recording again.",
   "aiChatVoiceFailedError": "Couldn't transcribe that. Please try again.",
   "aiChatVoicePermissionDenied": "Microphone access is needed to record a voice message.",
+  "aiChatVoiceMuteTooltip": "Mute Tia's voice",
+  "aiChatVoiceUnmuteTooltip": "Unmute Tia's voice",
   "aiExplainButton": "Ask TIA to explain",
   "aiExplainTitle": "TIA explanation",
   "aiExplainError": "Couldn't get an explanation right now.",

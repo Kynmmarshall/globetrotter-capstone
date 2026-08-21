@@ -19,6 +19,7 @@ class SessionController extends ChangeNotifier {
   static const _memberSinceKey = 'gt_member_since';
   static const _localeKey = 'gt_locale';
   static const _themeModeKey = 'gt_theme_mode';
+  static const _aiVoiceEnabledKey = 'gt_ai_voice_enabled';
   static const _onboardingSeenKey = 'gt_onboarding_seen';
   static const _interestsKey = 'gt_interests';
   static const _favoriteIdsKey = 'gt_favorite_ids';
@@ -49,6 +50,9 @@ class SessionController extends ChangeNotifier {
   // under them on an unrelated update would be a surprise; light mode and
   // system-follow are both opt-in via the profile screen.
   ThemeMode _themeMode = ThemeMode.dark;
+  // Whether the AI chat auto-speaks its replies aloud - defaults on so the
+  // feature is discoverable, with a mute toggle in the chat sheet itself.
+  bool _aiVoiceEnabled = true;
   bool _hasSeenOnboarding = false;
   List<String> _interests = [];
   Set<String> _favoriteIds = {};
@@ -72,6 +76,7 @@ class SessionController extends ChangeNotifier {
   // Null means "follow the device's system language".
   Locale? get locale => _locale;
   ThemeMode get themeMode => _themeMode;
+  bool get aiVoiceEnabled => _aiVoiceEnabled;
   bool get hasSeenOnboarding => _hasSeenOnboarding;
   String? get pendingClaimToken => _pendingClaimToken;
 
@@ -114,6 +119,7 @@ class SessionController extends ChangeNotifier {
       (m) => m.name == themeModeName,
       orElse: () => ThemeMode.dark,
     );
+    _aiVoiceEnabled = prefs.getBool(_aiVoiceEnabledKey) ?? true;
     _hasSeenOnboarding = prefs.getBool(_onboardingSeenKey) ?? false;
     _interests = prefs.getStringList(_interestsKey) ?? [];
     _favoriteIds = (prefs.getStringList(_favoriteIdsKey) ?? []).toSet();
@@ -175,6 +181,13 @@ class SessionController extends ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_themeModeKey, mode.name);
     _themeMode = mode;
+    notifyListeners();
+  }
+
+  Future<void> setAiVoiceEnabled(bool enabled) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_aiVoiceEnabledKey, enabled);
+    _aiVoiceEnabled = enabled;
     notifyListeners();
   }
 
