@@ -98,6 +98,20 @@ body {
   }
 }
 
+/* ---------- Star field ---------- */
+/* Small drifting lights layered above the ambient blobs (sharper, not
+   blurred, so they read as distinct twinkling points rather than getting
+   lost in the blob glow) - see initStarField() in script.js. Fixed to the
+   viewport like the blobs, so it stays visible no matter how far down the
+   page you've scrolled, not just behind the hero. */
+
+.star-field {
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  pointer-events: none;
+}
+
 a {
   color: inherit;
   text-decoration: none;

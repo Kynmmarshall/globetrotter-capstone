@@ -30,6 +30,15 @@ def _seed_destination(**overrides):
     return base
 
 
+def test_tia_prompt_stays_travel_first_and_named():
+    prompt = ai._system_text(language_code="en", interests=["food", "nature"])
+    assert "Tia" in prompt
+    assert "Trip Intelligence Assistant" in prompt
+    assert "Ask TIA" in prompt
+    assert "travel assistance" in prompt.lower()
+    assert "answer all questions" not in prompt.lower()
+
+
 @pytest.mark.asyncio
 async def test_list_and_get_destination(tmp_path):
     _use_temp_data(tmp_path, destinations=[_seed_destination()])
@@ -440,6 +449,34 @@ async def test_ai_chat_passes_language_instruction_to_groq(tmp_path, monkeypatch
 
     system_message = captured["messages"][0]["content"]
     assert "exclusively in French" in system_message
+
+
+@pytest.mark.asyncio
+async def test_ai_chat_caps_destination_catalog_for_groq(tmp_path, monkeypatch):
+    destinations = [_seed_destination(id=f"d{i}", tags=["nature"]) for i in range(1, 40)]
+    _use_temp_data(tmp_path, destinations=destinations)
+    token = create_access_token("alice")
+    headers = {"Authorization": f"Bearer {token}"}
+
+    captured = {}
+
+    async def fake_generate(messages):
+        captured["messages"] = messages
+        return "ok"
+
+    async def fake_interests(username):
+        return ["nature"]
+
+    monkeypatch.setattr(ai, "_generate", fake_generate)
+    monkeypatch.setattr(clients, "get_user_interests", fake_interests)
+
+    async with AsyncClient(app=app, base_url="http://test") as ac:
+        r = await ac.post("/ai/chat", json={"messages": [{"role": "user", "content": "hi"}]}, headers=headers)
+        assert r.status_code == 200
+
+    system_message = captured["messages"][0]["content"]
+    assert "more destinations" in system_message
+    assert system_message.count("- (") <= 11
 
 
 @pytest.mark.asyncio
