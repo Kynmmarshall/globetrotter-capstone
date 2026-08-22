@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import 'package:trip_io/themes/trip_colors.dart';
@@ -28,6 +30,14 @@ class _SplashScreenState extends State<SplashScreen>
   // hero-logo-halo treatment (trip_io_backend/website/css/style.css) so the
   // app's own loading moment feels like the same brand.
   late final AnimationController _ambient;
+  // A slow Ken Burns zoom/pan on the background photo itself - previously
+  // completely static, which read as flat next to the animated logo.
+  late final AnimationController _bgZoom;
+  // Drifting glow particles over the photo, in the same brand palette and
+  // "anti-gravity" spirit as the marketing website's star field
+  // (trip_io_backend/website/script.js's initStarField()).
+  late final AnimationController _particles;
+  late final List<_Particle> _particleSeeds;
 
   late final Animation<double> _logoScale;
   late final Animation<double> _logoFade;
@@ -44,6 +54,15 @@ class _SplashScreenState extends State<SplashScreen>
       vsync: this,
       duration: const Duration(milliseconds: 1800),
     )..repeat(reverse: true);
+    _bgZoom = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 9000),
+    )..repeat(reverse: true);
+    _particles = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 7000),
+    )..repeat();
+    _particleSeeds = _Particle.generate(26, math.Random(7));
 
     _logoScale = Tween(begin: 0.85, end: 1.0).animate(
       CurvedAnimation(
@@ -70,6 +89,8 @@ class _SplashScreenState extends State<SplashScreen>
   void dispose() {
     _entrance.dispose();
     _ambient.dispose();
+    _bgZoom.dispose();
+    _particles.dispose();
     super.dispose();
   }
 
@@ -99,6 +120,30 @@ class _SplashScreenState extends State<SplashScreen>
           ),
         );
       },
+    );
+  }
+
+  Widget _background(bool isCompact) {
+    final image = Image.asset(
+      isCompact ? 'assets/backgrounds/mobile.png' : 'assets/backgrounds/pc.png',
+      fit: BoxFit.cover,
+      alignment: Alignment.topCenter,
+    );
+    return AnimatedBuilder(
+      animation: _bgZoom,
+      builder: (context, child) {
+        final t = Curves.easeInOut.transform(_bgZoom.value);
+        return Transform.scale(
+          scale: 1.0 + (0.09 * t),
+          alignment: Alignment.lerp(
+            const Alignment(-0.06, -1.0),
+            const Alignment(0.06, -0.85),
+            t,
+          )!,
+          child: child,
+        );
+      },
+      child: image,
     );
   }
 
@@ -133,30 +178,53 @@ class _SplashScreenState extends State<SplashScreen>
           return Stack(
             fit: StackFit.expand,
             children: [
-              Image.asset(
-                isCompact
-                    ? 'assets/backgrounds/mobile.png'
-                    : 'assets/backgrounds/pc.png',
-                fit: BoxFit.cover,
-                alignment: Alignment.topCenter,
-              ),
+              reduceMotion
+                  ? Image.asset(
+                      isCompact
+                          ? 'assets/backgrounds/mobile.png'
+                          : 'assets/backgrounds/pc.png',
+                      fit: BoxFit.cover,
+                      alignment: Alignment.topCenter,
+                    )
+                  : ClipRect(child: _background(isCompact)),
               DecoratedBox(
                 decoration: BoxDecoration(color: context.tripColors.scrim),
               ),
+              // A splash-only extra vignette (on top of the shared scrim
+              // above) - the background photo is bright/busy enough that
+              // the particle layer needs more contrast to actually read as
+              // "captivating" rather than blending into the sky.
+              const DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: RadialGradient(
+                    center: Alignment.center,
+                    radius: 1.1,
+                    colors: [Colors.transparent, Color(0x59000000)],
+                  ),
+                ),
+              ),
+              if (!reduceMotion)
+                Positioned.fill(
+                  child: AnimatedBuilder(
+                    animation: _particles,
+                    builder: (context, child) => CustomPaint(
+                      painter: _ParticlesPainter(
+                        particles: _particleSeeds,
+                        progress: _particles.value,
+                      ),
+                    ),
+                  ),
+                ),
               Center(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    SizedBox(
-                      width: 160,
-                      height: 160,
-                      child: Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          if (!reduceMotion) _glow(colorScheme),
-                          logo,
-                        ],
-                      ),
+                    Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        if (!reduceMotion) _glow(colorScheme),
+                        logo,
+                      ],
                     ),
                     const SizedBox(height: 28),
                     reduceMotion
@@ -174,4 +242,82 @@ class _SplashScreenState extends State<SplashScreen>
       ),
     );
   }
+}
+
+class _Particle {
+  const _Particle({
+    required this.dx,
+    required this.startY,
+    required this.size,
+    required this.color,
+    required this.speed,
+    required this.phase,
+  });
+
+  /// Horizontal position as a fraction of width (0..1) - fixed, particles
+  /// only drift vertically.
+  final double dx;
+  final double startY;
+  final double size;
+  final Color color;
+  final double speed;
+  final double phase;
+
+  static const _palette = [
+    Colors.white,
+    Color(0xFF14B8C4), // brand-teal-light
+    Color(0xFF1E88E5), // brand-blue
+    Color(0xFFFFC670), // brand-amber-light
+  ];
+
+  static List<_Particle> generate(int count, math.Random random) {
+    return List.generate(count, (_) {
+      return _Particle(
+        dx: random.nextDouble(),
+        startY: random.nextDouble(),
+        size: 2.2 + random.nextDouble() * 3.0,
+        color: _palette[random.nextInt(_palette.length)],
+        speed: 0.4 + random.nextDouble() * 0.8,
+        phase: random.nextDouble() * math.pi * 2,
+      );
+    });
+  }
+}
+
+class _ParticlesPainter extends CustomPainter {
+  _ParticlesPainter({required this.particles, required this.progress});
+
+  final List<_Particle> particles;
+  final double progress;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    for (final p in particles) {
+      // Drifts upward continuously and wraps back in at the bottom.
+      final y = (1 - ((p.startY + progress * p.speed) % 1.0)) * size.height;
+      final x = p.dx * size.width;
+      final twinkle =
+          0.55 + 0.45 * (0.5 + 0.5 * math.sin(progress * 2 * math.pi * 2 + p.phase));
+      final offset = Offset(x, y);
+
+      // A soft outer glow plus a crisp, brighter core - a single blurred
+      // circle alone washes out against a bright, busy photo.
+      canvas.drawCircle(
+        offset,
+        p.size * 2.2,
+        Paint()
+          ..color = p.color.withValues(alpha: twinkle * 0.45)
+          ..maskFilter = MaskFilter.blur(BlurStyle.normal, p.size * 1.4),
+      );
+      canvas.drawCircle(
+        offset,
+        p.size * 0.55,
+        Paint()..color = p.color.withValues(alpha: (twinkle * 1.1).clamp(0.0, 1.0)),
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _ParticlesPainter oldDelegate) =>
+      oldDelegate.progress != progress;
 }
