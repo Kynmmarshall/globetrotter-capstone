@@ -150,7 +150,6 @@
     "placeholders": { "title": { "type": "String" } }
   },
   "addToItineraryAlreadyAdded": "Déjà ajouté",
-  "addToItineraryNewDialogTitle": "Nouvel itinéraire",
 
   "orderDestinationsSheetTitle": "Ordonnez votre visite",
   "orderDestinationsSheetSubtitle": "Faites glisser pour définir l'ordre de visite souhaité.",

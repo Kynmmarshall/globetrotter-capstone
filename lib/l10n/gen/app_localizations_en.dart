@@ -453,9 +453,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get addToItineraryAlreadyAdded => 'Already added';
 
   @override
-  String get addToItineraryNewDialogTitle => 'New itinerary';
-
-  @override
   String get orderDestinationsSheetTitle => 'Order your visit';
 
   @override

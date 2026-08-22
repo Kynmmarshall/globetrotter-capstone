@@ -465,9 +465,6 @@ class AppLocalizationsFr extends AppLocalizations {
   String get addToItineraryAlreadyAdded => 'Déjà ajouté';
 
   @override
-  String get addToItineraryNewDialogTitle => 'Nouvel itinéraire';
-
-  @override
   String get orderDestinationsSheetTitle => 'Ordonnez votre visite';
 
   @override

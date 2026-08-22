@@ -896,12 +896,6 @@ abstract class AppLocalizations {
   /// **'Already added'**
   String get addToItineraryAlreadyAdded;
 
-  /// No description provided for @addToItineraryNewDialogTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'New itinerary'**
-  String get addToItineraryNewDialogTitle;
-
   /// No description provided for @orderDestinationsSheetTitle.
   ///
   /// In en, this message translates to:

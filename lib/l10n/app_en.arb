@@ -175,7 +175,6 @@
     "placeholders": { "title": { "type": "String" } }
   },
   "addToItineraryAlreadyAdded": "Already added",
-  "addToItineraryNewDialogTitle": "New itinerary",
 
   "orderDestinationsSheetTitle": "Order your visit",
   "orderDestinationsSheetSubtitle": "Drag to set the order you want to visit these in.",
