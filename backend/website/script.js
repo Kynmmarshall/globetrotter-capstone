@@ -281,7 +281,7 @@ const CURATED_HERO_IMAGES = [
   'pizzeria_glacier_grill_dolcezza.jpg',
   'mvog_betsi_zoo.png',
   'monument_de_l_independance.jpg',
-  'majestic_cinema.jpg',
+  'majestic.jpg',
   'cez_fitness_club.jpg',
   'albatros_premium_hotel.jpg',
   'bois_d_ebene.jpg',

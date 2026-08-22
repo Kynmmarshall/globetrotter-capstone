@@ -13,6 +13,25 @@ Planned for **Phase 3: Cloud Deployment** — see [README → Roadmap](README.md
 - Load balancing and auto-scaling across multiple instances of each service.
 - Cut the live deployment over from the Phase 1 monolith to the Phase 2 microservices stack.
 
+## [0.30.0] - 2026-08-22 — In-app "What's New", itinerary flow fixes & website polish
+
+- Added an in-app "What's New" sheet (`frontend/lib/widgets/whats_new_sheet.dart`): a hand-curated, per-version bullet list shown once after an update, tracked via `SessionController.lastSeenVersion` — the same idea as this changelog, surfaced directly to users instead of only living in the repo.
+- Itinerary creation moved to its own dedicated screen (`frontend/lib/screens/create_itinerary_page.dart`) instead of an inline flow, fixing several rough edges in the process; added a `formatDuration` utility for itinerary-related screens.
+- Further animated the splash screen (particle effects, animated background) and converted it to a stateful widget so its logo/spinner can animate.
+- Added a "visit our website" link with localized copy on the auth screen, and fixed several website image issues (wrong filenames, broken references).
+- Numerous smaller UX refinements across destinations, favorites, recommendations, notifications, and submissions screens, plus a round of French localization cleanup for consistency.
+
+## [0.29.0] - 2026-08-18 — Tia gets a name, and stops overflowing her own context
+
+- Meet **Tia** (Trip Intelligence Assistant) — the AI assistant's system prompt was refined and given an actual name/persona, referenced consistently in-app ("Ask Tia") instead of "the AI assistant."
+- Fixed `/ai/chat` silently failing (or erroring) once the destination catalog grew past what fits comfortably in a single Groq request: the embedded catalog is now capped at the top 25 most-relevant destinations (ranked, not just truncated arbitrarily) with an overflow count noted, instead of dumping the entire 60+-destination catalog into every system prompt.
+
+## [0.28.0] - 2026-08-15 to 2026-08-20 — Tia talks back
+
+- The AI chat now auto-speaks its replies aloud by default (with a mute/unmute toggle in the chat sheet, and the setting persisted per device via `SessionController`) — voice input (0.27.0) is now matched with voice output.
+- Improved the read-aloud voice itself: emoji are stripped before speaking (so replies don't get read as "grinning face" etc.), and a female voice is preferred when the platform's TTS engine exposes one (Android/iOS/web only — best-effort elsewhere).
+- Added a subtle animation to the marketing website's landing page.
+
 ## [0.27.0] - 2026-08-12 to 2026-08-13 — Voice input for AI chat & dashboard polish
 
 - Added `POST /ai/voice`: uploads a recorded voice message and transcribes it via Groq's Whisper (`whisper-large-v3-turbo` — ~3x cheaper/faster than plain Whisper-large-v3, and accuracy isn't the bottleneck for a short chat message). The transcript lands back in the chat's text input for the user to review and send, rather than being treated as a message on its own.
