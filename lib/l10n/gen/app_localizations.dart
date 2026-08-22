@@ -62,7 +62,8 @@ import 'app_localizations_fr.dart';
 /// be consistent with the languages listed in the AppLocalizations.supportedLocales
 /// property.
 abstract class AppLocalizations {
-  AppLocalizations(String locale) : localeName = intl.Intl.canonicalizedLocale(locale.toString());
+  AppLocalizations(String locale)
+    : localeName = intl.Intl.canonicalizedLocale(locale.toString());
 
   final String localeName;
 
@@ -70,7 +71,8 @@ abstract class AppLocalizations {
     return Localizations.of<AppLocalizations>(context, AppLocalizations);
   }
 
-  static const LocalizationsDelegate<AppLocalizations> delegate = _AppLocalizationsDelegate();
+  static const LocalizationsDelegate<AppLocalizations> delegate =
+      _AppLocalizationsDelegate();
 
   /// A list of this localizations delegate along with the default localizations
   /// delegates.
@@ -82,17 +84,18 @@ abstract class AppLocalizations {
   /// Additional delegates can be added by appending to this list in
   /// MaterialApp. This list does not have to be used at all if a custom list
   /// of delegates is preferred or required.
-  static const List<LocalizationsDelegate<dynamic>> localizationsDelegates = <LocalizationsDelegate<dynamic>>[
-    delegate,
-    GlobalMaterialLocalizations.delegate,
-    GlobalCupertinoLocalizations.delegate,
-    GlobalWidgetsLocalizations.delegate,
-  ];
+  static const List<LocalizationsDelegate<dynamic>> localizationsDelegates =
+      <LocalizationsDelegate<dynamic>>[
+        delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+      ];
 
   /// A list of this localizations delegate's supported locales.
   static const List<Locale> supportedLocales = <Locale>[
     Locale('en'),
-    Locale('fr')
+    Locale('fr'),
   ];
 
   /// No description provided for @appTitle.
@@ -587,6 +590,30 @@ abstract class AppLocalizations {
   /// **'No destinations match the selected filters.'**
   String get destinationsFilterEmpty;
 
+  /// No description provided for @destinationsSortTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Sort'**
+  String get destinationsSortTooltip;
+
+  /// No description provided for @destinationsSortByName.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get destinationsSortByName;
+
+  /// No description provided for @destinationsSortByRating.
+  ///
+  /// In en, this message translates to:
+  /// **'Rating'**
+  String get destinationsSortByRating;
+
+  /// No description provided for @destinationsSortByPrice.
+  ///
+  /// In en, this message translates to:
+  /// **'Price'**
+  String get destinationsSortByPrice;
+
   /// No description provided for @destinationCardSemanticLabel.
   ///
   /// In en, this message translates to:
@@ -755,6 +782,18 @@ abstract class AppLocalizations {
   /// **'Trending in Yaoundé'**
   String get forYouTrendingSectionTitle;
 
+  /// No description provided for @forYouSearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search these picks'**
+  String get forYouSearchHint;
+
+  /// No description provided for @forYouSearchNoMatches.
+  ///
+  /// In en, this message translates to:
+  /// **'No picks match your search.'**
+  String get forYouSearchNoMatches;
+
   /// No description provided for @favoritesTitle.
   ///
   /// In en, this message translates to:
@@ -784,6 +823,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Tap the heart on any destination to save it here.'**
   String get favoritesEmptySubtitle;
+
+  /// No description provided for @favoritesSearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search your favorites'**
+  String get favoritesSearchHint;
+
+  /// No description provided for @favoritesSearchNoMatches.
+  ///
+  /// In en, this message translates to:
+  /// **'No favorites match your search.'**
+  String get favoritesSearchNoMatches;
+
+  /// No description provided for @shareDestinationTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Share this place'**
+  String get shareDestinationTooltip;
 
   /// No description provided for @viewMySubmissionsButton.
   ///
@@ -1769,6 +1826,48 @@ abstract class AppLocalizations {
   /// **'Sign in again'**
   String get signInAgainButton;
 
+  /// No description provided for @errorNoConnection.
+  ///
+  /// In en, this message translates to:
+  /// **'No internet connection. Check your network and try again.'**
+  String get errorNoConnection;
+
+  /// No description provided for @errorTimedOut.
+  ///
+  /// In en, this message translates to:
+  /// **'That took too long to respond. Please try again.'**
+  String get errorTimedOut;
+
+  /// No description provided for @errorServerProblem.
+  ///
+  /// In en, this message translates to:
+  /// **'Something went wrong on our end. Please try again shortly.'**
+  String get errorServerProblem;
+
+  /// No description provided for @errorTryAgainButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Try again'**
+  String get errorTryAgainButton;
+
+  /// No description provided for @googleSignInButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in with Google'**
+  String get googleSignInButton;
+
+  /// No description provided for @whatsNewTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'What\'s new in {version}'**
+  String whatsNewTitle(String version);
+
+  /// No description provided for @whatsNewDismiss.
+  ///
+  /// In en, this message translates to:
+  /// **'Got it'**
+  String get whatsNewDismiss;
+
   /// No description provided for @shareItineraryTooltip.
   ///
   /// In en, this message translates to:
@@ -1937,6 +2036,12 @@ abstract class AppLocalizations {
   /// **'Could not load notifications.\n{error}'**
   String notificationsErrorMessage(String error);
 
+  /// No description provided for @notificationCardSemanticLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Notification: {title}'**
+  String notificationCardSemanticLabel(String title);
+
   /// No description provided for @notificationsEmptyTitle.
   ///
   /// In en, this message translates to:
@@ -1986,7 +2091,8 @@ abstract class AppLocalizations {
   String notificationTripReminderBodyInDays(String title, String days);
 }
 
-class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {
+class _AppLocalizationsDelegate
+    extends LocalizationsDelegate<AppLocalizations> {
   const _AppLocalizationsDelegate();
 
   @override
@@ -1995,25 +2101,26 @@ class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> 
   }
 
   @override
-  bool isSupported(Locale locale) => <String>['en', 'fr'].contains(locale.languageCode);
+  bool isSupported(Locale locale) =>
+      <String>['en', 'fr'].contains(locale.languageCode);
 
   @override
   bool shouldReload(_AppLocalizationsDelegate old) => false;
 }
 
 AppLocalizations lookupAppLocalizations(Locale locale) {
-
-
   // Lookup logic when only language code is specified.
   switch (locale.languageCode) {
-    case 'en': return AppLocalizationsEn();
-    case 'fr': return AppLocalizationsFr();
+    case 'en':
+      return AppLocalizationsEn();
+    case 'fr':
+      return AppLocalizationsFr();
   }
 
   throw FlutterError(
     'AppLocalizations.delegate failed to load unsupported locale "$locale". This is likely '
     'an issue with the localizations generation tool. Please file an issue '
     'on GitHub with a reproducible sample app and the gen-l10n configuration '
-    'that was used.'
+    'that was used.',
   );
 }

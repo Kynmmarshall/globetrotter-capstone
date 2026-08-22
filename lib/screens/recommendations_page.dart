@@ -40,11 +40,47 @@ class RecommendationsPage extends StatefulWidget {
 
 class _RecommendationsPageState extends State<RecommendationsPage> {
   late Future<_ForYouFeed> _future;
+  final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     _future = _loadFeed();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _refresh() {
+    setState(() => _future = _loadFeed());
+  }
+
+  Widget _buildSearchBar(AppLocalizations l10n) {
+    return GlassPanel(
+      padding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
+      child: Row(
+        children: [
+          const Icon(Icons.search, color: Colors.white70),
+          const SizedBox(width: 10),
+          Expanded(
+            child: TextField(
+              controller: _searchController,
+              style: const TextStyle(color: Colors.white),
+              cursorColor: Colors.white,
+              decoration: InputDecoration(
+                border: InputBorder.none,
+                hintText: l10n.forYouSearchHint,
+                hintStyle: const TextStyle(color: Colors.white60),
+              ),
+              onChanged: (_) => setState(() {}),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<_ForYouFeed> _loadFeed() async {
@@ -319,6 +355,8 @@ class _RecommendationsPageState extends State<RecommendationsPage> {
             ],
           ),
           const SizedBox(height: 20),
+          _buildSearchBar(l10n),
+          const SizedBox(height: 16),
           FutureBuilder<_ForYouFeed>(
             future: _future,
             builder: (context, snapshot) {
@@ -331,18 +369,37 @@ class _RecommendationsPageState extends State<RecommendationsPage> {
                 }
                 return ErrorStateCard(
                   message: l10n.recommendationsErrorMessage(
-                    snapshot.error.toString(),
+                    friendlyError(snapshot.error!, l10n),
                   ),
+                  onRetry: _refresh,
                 );
               }
               final feed = snapshot.data;
-              final personalized = feed?.personalized ?? const <Destination>[];
-              final trending = feed?.trending ?? const <Destination>[];
-              if (personalized.isEmpty && trending.isEmpty) {
+              final allPersonalized =
+                  feed?.personalized ?? const <Destination>[];
+              final allTrending = feed?.trending ?? const <Destination>[];
+              if (allPersonalized.isEmpty && allTrending.isEmpty) {
                 return EmptyStateCard(
                   icon: Icons.explore_off,
                   title: l10n.recommendationsEmptyTitle,
                   subtitle: l10n.recommendationsEmptySubtitle,
+                );
+              }
+              final query = _searchController.text.trim().toLowerCase();
+              final personalized = query.isEmpty
+                  ? allPersonalized
+                  : allPersonalized
+                        .where((d) => d.name.toLowerCase().contains(query))
+                        .toList();
+              final trending = query.isEmpty
+                  ? allTrending
+                  : allTrending
+                        .where((d) => d.name.toLowerCase().contains(query))
+                        .toList();
+              if (personalized.isEmpty && trending.isEmpty) {
+                return EmptyStateCard(
+                  icon: Icons.search_off,
+                  title: l10n.forYouSearchNoMatches,
                 );
               }
               return Column(

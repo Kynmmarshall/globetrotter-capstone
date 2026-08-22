@@ -12,6 +12,31 @@ bool isAuthError(Object error) {
       message.contains('401');
 }
 
+/// Maps common failure shapes (no connection, timed out, server error) to
+/// translated, human copy instead of showing raw exception text like
+/// "ClientException: Failed host lookup..." - falls back to the exception's
+/// own message (with the "Exception: " prefix stripped, for consistency
+/// with how the rest of the app already displays ad-hoc errors) when it
+/// doesn't recognize the shape.
+String friendlyError(Object error, AppLocalizations l10n) {
+  final raw = error.toString();
+  final lower = raw.toLowerCase();
+  if (lower.contains('socketexception') ||
+      lower.contains('failed host lookup') ||
+      lower.contains('network is unreachable') ||
+      lower.contains('connection refused') ||
+      lower.contains('connection failed')) {
+    return l10n.errorNoConnection;
+  }
+  if (lower.contains('timeoutexception') || lower.contains('timed out')) {
+    return l10n.errorTimedOut;
+  }
+  if (lower.contains('500') || lower.contains('internal server error')) {
+    return l10n.errorServerProblem;
+  }
+  return raw.replaceFirst('Exception: ', '');
+}
+
 class SessionExpiredCard extends StatelessWidget {
   const SessionExpiredCard({super.key, required this.session});
 
@@ -53,12 +78,18 @@ class SessionExpiredCard extends StatelessWidget {
 }
 
 class ErrorStateCard extends StatelessWidget {
-  const ErrorStateCard({super.key, required this.message});
+  const ErrorStateCard({super.key, required this.message, this.onRetry});
 
   final String message;
 
+  /// Optional - when set, shows a "Try again" button that re-triggers
+  /// whatever Future the caller loaded from. Omit for spots where there's
+  /// genuinely nothing to retry.
+  final VoidCallback? onRetry;
+
   @override
   Widget build(BuildContext context) {
+    final retry = onRetry;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 32),
       child: Column(
@@ -70,6 +101,18 @@ class ErrorStateCard extends StatelessWidget {
             style: const TextStyle(color: Colors.white70),
             textAlign: TextAlign.center,
           ),
+          if (retry != null) ...[
+            const SizedBox(height: 14),
+            OutlinedButton.icon(
+              onPressed: retry,
+              style: OutlinedButton.styleFrom(
+                foregroundColor: Colors.white,
+                side: BorderSide(color: Colors.white.withValues(alpha: 0.4)),
+              ),
+              icon: const Icon(Icons.refresh, size: 18),
+              label: Text(AppLocalizations.of(context)!.errorTryAgainButton),
+            ),
+          ],
         ],
       ),
     );

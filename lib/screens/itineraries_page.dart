@@ -34,6 +34,10 @@ class _ItinerariesPageState extends State<ItinerariesPage> {
     });
   }
 
+  void _refreshDestinations() {
+    setState(() => _destinationsFuture = widget.session.destinations());
+  }
+
   Future<void> _deleteItinerary(Itinerary item) async {
     final l10n = AppLocalizations.of(context)!;
     final confirmed = await showDialog<bool>(
@@ -135,7 +139,10 @@ class _ItinerariesPageState extends State<ItinerariesPage> {
             return SessionExpiredCard(session: widget.session);
           }
           return ErrorStateCard(
-            message: l10n.itinerariesErrorMessage(snapshot.error.toString()),
+            message: l10n.itinerariesErrorMessage(
+              friendlyError(snapshot.error!, l10n),
+            ),
+            onRetry: _refresh,
           );
         }
         final items = snapshot.data ?? <Itinerary>[];
@@ -267,8 +274,9 @@ class _ItinerariesPageState extends State<ItinerariesPage> {
             }
             return ErrorStateCard(
               message: l10n.destinationsLoadError(
-                destSnapshot.error.toString(),
+                friendlyError(destSnapshot.error!, l10n),
               ),
+              onRetry: _refreshDestinations,
             );
           }
           final destinations = destSnapshot.data ?? <Destination>[];

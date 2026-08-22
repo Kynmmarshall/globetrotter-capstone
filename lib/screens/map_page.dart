@@ -243,6 +243,17 @@ class _MapPageState extends State<MapPage> {
     }
   }
 
+  void _refreshDestinations() {
+    setState(() {
+      _future = widget.session.destinations();
+    });
+    unawaited(
+      _future.then((list) {
+        if (mounted) setState(() => _allDestinations = list);
+      }),
+    );
+  }
+
   /// One-shot version of [_startItineraryTracking]'s location resolution -
   /// used by the "Directions" button flow, which only needs a single origin
   /// fix to compute one route rather than a continuously updating position
@@ -1201,7 +1212,10 @@ class _MapPageState extends State<MapPage> {
               return SessionExpiredCard(session: widget.session);
             }
             return ErrorStateCard(
-              message: l10n.destinationsLoadError(snapshot.error.toString()),
+              message: l10n.destinationsLoadError(
+                friendlyError(snapshot.error!, l10n),
+              ),
+              onRetry: _refreshDestinations,
             );
           }
           final all = snapshot.data ?? <Destination>[];

@@ -40,7 +40,7 @@ class _CreateItineraryPageState extends State<CreateItineraryPage> {
   final _titleController = TextEditingController();
   final _destinationSearchController = TextEditingController();
   late final Set<String> _selectedDestinationIds;
-  late final Future<List<Destination>> _destinationsFuture;
+  late Future<List<Destination>> _destinationsFuture;
   bool _creating = false;
   bool _showAllDestinations = false;
   bool _destinationsTouched = false;
@@ -60,6 +60,10 @@ class _CreateItineraryPageState extends State<CreateItineraryPage> {
       if (widget.initialDestinationId != null) widget.initialDestinationId!,
     };
     _destinationsFuture = widget.session.destinations();
+  }
+
+  void _refreshDestinations() {
+    setState(() => _destinationsFuture = widget.session.destinations());
   }
 
   @override
@@ -647,8 +651,12 @@ class _CreateItineraryPageState extends State<CreateItineraryPage> {
                                           }
                                           return ErrorStateCard(
                                             message: l10n.destinationsLoadError(
-                                              snapshot.error.toString(),
+                                              friendlyError(
+                                                snapshot.error!,
+                                                l10n,
+                                              ),
                                             ),
+                                            onRetry: _refreshDestinations,
                                           );
                                         }
                                         final destinations =

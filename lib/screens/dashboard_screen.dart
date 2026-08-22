@@ -2,6 +2,7 @@ import 'dart:ui';
 
 import 'package:flutter/foundation.dart' show kIsWeb, defaultTargetPlatform;
 import 'package:flutter/material.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:trip_io/l10n/gen/app_localizations.dart';
 import 'package:trip_io/services/analytics.dart';
 import 'package:trip_io/services/session_controller.dart';
@@ -17,6 +18,7 @@ import 'package:trip_io/screens/recommendations_page.dart';
 import 'package:trip_io/themes/trip_colors.dart';
 import 'package:trip_io/widgets/ai_chat_sheet.dart';
 import 'package:trip_io/widgets/ai_fab_button.dart';
+import 'package:trip_io/widgets/whats_new_sheet.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key, required this.session});
@@ -74,14 +76,38 @@ class _DashboardScreenState extends State<DashboardScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted) return;
       await _claimPendingItineraryIfNeeded();
-      if (!mounted || widget.session.hasSeenOnboarding) return;
-      await Navigator.of(context).push(
-        MaterialPageRoute(
-          fullscreenDialog: true,
-          builder: (_) => OnboardingWalkthrough(session: widget.session),
-        ),
-      );
+      if (!mounted) return;
+      if (!widget.session.hasSeenOnboarding) {
+        await Navigator.of(context).push(
+          MaterialPageRoute(
+            fullscreenDialog: true,
+            builder: (_) => OnboardingWalkthrough(session: widget.session),
+          ),
+        );
+        // A first-time user has nothing to compare against - record the
+        // current version silently rather than following onboarding with a
+        // "what's new" sheet about changes they never experienced.
+        if (!mounted) return;
+        final info = await PackageInfo.fromPlatform();
+        await widget.session.setLastSeenVersion(info.version);
+        return;
+      }
+      await _maybeShowWhatsNew();
     });
+  }
+
+  Future<void> _maybeShowWhatsNew() async {
+    final info = await PackageInfo.fromPlatform();
+    if (!mounted || widget.session.lastSeenVersion == info.version) return;
+    WhatsNewEntry? entry;
+    for (final e in whatsNewEntries) {
+      if (e.version == info.version) entry = e;
+    }
+    // Recorded either way, so a version with no curated entry never gets
+    // re-checked on every subsequent launch either.
+    await widget.session.setLastSeenVersion(info.version);
+    if (entry == null || !mounted) return;
+    await showWhatsNewSheet(context, entry);
   }
 
   Future<void> _claimPendingItineraryIfNeeded() async {

@@ -95,6 +95,10 @@
   "destinationsFilterLabel": "Filter by interest",
   "destinationsFilterClear": "Clear",
   "destinationsFilterEmpty": "No destinations match the selected filters.",
+  "destinationsSortTooltip": "Sort",
+  "destinationsSortByName": "Name",
+  "destinationsSortByRating": "Rating",
+  "destinationsSortByPrice": "Price",
   "destinationCardSemanticLabel": "View {name}",
   "@destinationCardSemanticLabel": {
     "placeholders": { "name": { "type": "String" } }
@@ -136,6 +140,8 @@
   "forYouSubtitle": "A personalized mix of picks made for you and what's popular in Yaoundé.",
   "forYouPersonalizedSectionTitle": "Picked for you",
   "forYouTrendingSectionTitle": "Trending in Yaoundé",
+  "forYouSearchHint": "Search these picks",
+  "forYouSearchNoMatches": "No picks match your search.",
 
   "favoritesTitle": "Your favorites",
   "favoritesSubtitle": "Destinations you've saved for later.",
@@ -145,6 +151,9 @@
   },
   "favoritesEmptyTitle": "No favorites yet",
   "favoritesEmptySubtitle": "Tap the heart on any destination to save it here.",
+  "favoritesSearchHint": "Search your favorites",
+  "favoritesSearchNoMatches": "No favorites match your search.",
+  "shareDestinationTooltip": "Share this place",
 
   "viewMySubmissionsButton": "My submissions",
   "mySubmissionsTitle": "Your submissions",
@@ -394,6 +403,16 @@
   "sessionExpiredTitle": "Your session has expired",
   "sessionExpiredSubtitle": "Please sign in again to continue.",
   "signInAgainButton": "Sign in again",
+  "errorNoConnection": "No internet connection. Check your network and try again.",
+  "errorTimedOut": "That took too long to respond. Please try again.",
+  "errorServerProblem": "Something went wrong on our end. Please try again shortly.",
+  "errorTryAgainButton": "Try again",
+  "googleSignInButton": "Sign in with Google",
+  "whatsNewTitle": "What's new in {version}",
+  "@whatsNewTitle": {
+    "placeholders": { "version": { "type": "String" } }
+  },
+  "whatsNewDismiss": "Got it",
 
   "shareItineraryTooltip": "Share this itinerary",
   "shareItineraryDialogTitle": "Share \"{title}\"",
@@ -431,6 +450,10 @@
   "notificationsErrorMessage": "Could not load notifications.\n{error}",
   "@notificationsErrorMessage": {
     "placeholders": { "error": { "type": "String" } }
+  },
+  "notificationCardSemanticLabel": "Notification: {title}",
+  "@notificationCardSemanticLabel": {
+    "placeholders": { "title": { "type": "String" } }
   },
   "notificationsEmptyTitle": "You're all caught up",
   "notificationsEmptySubtitle": "Moderation notices and trip reminders will show up here.",

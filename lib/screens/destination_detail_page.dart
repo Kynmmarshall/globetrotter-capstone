@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_tts/flutter_tts.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:trip_io/l10n/gen/app_localizations.dart';
 import 'package:trip_io/models/models.dart';
 import 'package:trip_io/screens/map_page.dart';
@@ -98,6 +99,21 @@ class _DestinationDetailPageState extends State<DestinationDetailPage> {
     }
     _speakingSource = source;
     await _tts.speak(text);
+  }
+
+  Future<void> _shareDestination() async {
+    final parts = <String>[destination.name];
+    final description = destination.description;
+    if ((description ?? '').isNotEmpty) {
+      parts.add(description!);
+    }
+    // No per-destination deep link exists yet (unlike itineraries' share
+    // links) - points at the site generally rather than a dead/nonexistent
+    // URL.
+    parts.add('https://trip-io.duckdns.org');
+    await SharePlus.instance.share(
+      ShareParams(text: parts.join('\n\n'), subject: destination.name),
+    );
   }
 
   String _detailsSpokenText() {
@@ -742,6 +758,16 @@ class _DestinationDetailPageState extends State<DestinationDetailPage> {
                                         session: widget.session,
                                         destinationId: destination.id,
                                         size: 24,
+                                      ),
+                                      IconButton(
+                                        onPressed: _shareDestination,
+                                        icon: const Icon(
+                                          Icons.share,
+                                          color: Colors.white,
+                                        ),
+                                        tooltip: AppLocalizations.of(
+                                          context,
+                                        )!.shareDestinationTooltip,
                                       ),
                                     ],
                                   ),

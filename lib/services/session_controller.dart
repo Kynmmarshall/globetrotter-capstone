@@ -21,6 +21,7 @@ class SessionController extends ChangeNotifier {
   static const _themeModeKey = 'gt_theme_mode';
   static const _aiVoiceEnabledKey = 'gt_ai_voice_enabled';
   static const _onboardingSeenKey = 'gt_onboarding_seen';
+  static const _lastSeenVersionKey = 'gt_last_seen_version';
   static const _interestsKey = 'gt_interests';
   static const _favoriteIdsKey = 'gt_favorite_ids';
   static const _roleKey = 'gt_role';
@@ -54,6 +55,10 @@ class SessionController extends ChangeNotifier {
   // feature is discoverable, with a mute toggle in the chat sheet itself.
   bool _aiVoiceEnabled = true;
   bool _hasSeenOnboarding = false;
+  // The app version this device last showed a "what's new" sheet for (or
+  // silently recorded, if no curated entry exists) - null means never, so
+  // no sheet shows for a brand-new install with nothing to compare against.
+  String? _lastSeenVersion;
   List<String> _interests = [];
   Set<String> _favoriteIds = {};
   String? _role;
@@ -78,6 +83,7 @@ class SessionController extends ChangeNotifier {
   ThemeMode get themeMode => _themeMode;
   bool get aiVoiceEnabled => _aiVoiceEnabled;
   bool get hasSeenOnboarding => _hasSeenOnboarding;
+  String? get lastSeenVersion => _lastSeenVersion;
   String? get pendingClaimToken => _pendingClaimToken;
 
   void setPendingClaimToken(String? token) {
@@ -93,6 +99,13 @@ class SessionController extends ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_onboardingSeenKey, true);
     _hasSeenOnboarding = true;
+    notifyListeners();
+  }
+
+  Future<void> setLastSeenVersion(String version) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_lastSeenVersionKey, version);
+    _lastSeenVersion = version;
     notifyListeners();
   }
 
@@ -121,6 +134,7 @@ class SessionController extends ChangeNotifier {
     );
     _aiVoiceEnabled = prefs.getBool(_aiVoiceEnabledKey) ?? true;
     _hasSeenOnboarding = prefs.getBool(_onboardingSeenKey) ?? false;
+    _lastSeenVersion = prefs.getString(_lastSeenVersionKey);
     _interests = prefs.getStringList(_interestsKey) ?? [];
     _favoriteIds = (prefs.getStringList(_favoriteIdsKey) ?? []).toSet();
     _role = prefs.getString(_roleKey);
