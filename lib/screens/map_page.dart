@@ -6,7 +6,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:trip_io/l10n/gen/app_localizations.dart';
 import 'package:trip_io/models/models.dart';
 import 'package:trip_io/screens/destination_detail_page.dart';
-import 'package:trip_io/screens/itineraries_page.dart' show formatDuration;
+import 'package:trip_io/utils/duration_format.dart';
 import 'package:trip_io/services/analytics.dart';
 import 'package:trip_io/services/session_controller.dart';
 import 'package:trip_io/services/yango_launcher.dart';

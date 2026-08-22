@@ -268,6 +268,11 @@
   "itineraryTravelTime": "Temps de trajet",
   "tripDatesLabel": "Dates du voyage",
   "tripDatesHint": "Choisissez une date de début et de fin",
+  "itineraryTitleRequired": "Donnez un titre à ce voyage.",
+  "itineraryDestinationsRequired": "Choisissez au moins une destination.",
+  "itineraryDayCountLabel": "C'est un voyage de {count} jours",
+  "itineraryDayCountToday": "C'est un voyage d'un jour (aujourd'hui)",
+  "newItineraryButton": "Nouvel itinéraire",
 
   "memberSinceDevice": "Membre depuis cet appareil",
   "memberSince": "Membre depuis {date}",

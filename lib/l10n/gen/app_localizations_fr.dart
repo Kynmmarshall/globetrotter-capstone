@@ -832,6 +832,25 @@ class AppLocalizationsFr extends AppLocalizations {
   String get tripDatesHint => 'Choisissez une date de début et de fin';
 
   @override
+  String get itineraryTitleRequired => 'Donnez un titre à ce voyage.';
+
+  @override
+  String get itineraryDestinationsRequired =>
+      'Choisissez au moins une destination.';
+
+  @override
+  String itineraryDayCountLabel(int count) {
+    return 'C\'est un voyage de $count jours';
+  }
+
+  @override
+  String get itineraryDayCountToday =>
+      'C\'est un voyage d\'un jour (aujourd\'hui)';
+
+  @override
+  String get newItineraryButton => 'Nouvel itinéraire';
+
+  @override
   String get memberSinceDevice => 'Membre depuis cet appareil';
 
   @override

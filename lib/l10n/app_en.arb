@@ -335,6 +335,14 @@
   "itineraryTravelTime": "Travel time",
   "tripDatesLabel": "Trip dates",
   "tripDatesHint": "Choose start and end date",
+  "itineraryTitleRequired": "Give this trip a title.",
+  "itineraryDestinationsRequired": "Pick at least one destination.",
+  "itineraryDayCountLabel": "This is a {count}-day trip",
+  "@itineraryDayCountLabel": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "itineraryDayCountToday": "This is a 1-day trip (today)",
+  "newItineraryButton": "New itinerary",
 
   "memberSinceDevice": "Member since this device",
   "memberSince": "Member since {date}",

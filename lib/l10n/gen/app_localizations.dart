@@ -1526,6 +1526,36 @@ abstract class AppLocalizations {
   /// **'Choose start and end date'**
   String get tripDatesHint;
 
+  /// No description provided for @itineraryTitleRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Give this trip a title.'**
+  String get itineraryTitleRequired;
+
+  /// No description provided for @itineraryDestinationsRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick at least one destination.'**
+  String get itineraryDestinationsRequired;
+
+  /// No description provided for @itineraryDayCountLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'This is a {count}-day trip'**
+  String itineraryDayCountLabel(int count);
+
+  /// No description provided for @itineraryDayCountToday.
+  ///
+  /// In en, this message translates to:
+  /// **'This is a 1-day trip (today)'**
+  String get itineraryDayCountToday;
+
+  /// No description provided for @newItineraryButton.
+  ///
+  /// In en, this message translates to:
+  /// **'New itinerary'**
+  String get newItineraryButton;
+
   /// No description provided for @memberSinceDevice.
   ///
   /// In en, this message translates to:
