@@ -6,9 +6,20 @@ import 'package:flutter/material.dart';
 /// auth screen and the app's initial loading gate, since the background
 /// photos both use are logo-free and need this composited on top.
 class BrandLogoLockup extends StatelessWidget {
-  const BrandLogoLockup({super.key, this.iconSize = 40});
+  const BrandLogoLockup({
+    super.key,
+    this.iconSize = 40,
+    this.onTap,
+    this.semanticLabel,
+  });
 
   final double iconSize;
+
+  /// Optional - when set, the whole pill becomes tappable (e.g. the auth
+  /// screen uses this to open the marketing website). Other call sites
+  /// (splash screen, onboarding) simply omit it and stay non-interactive.
+  final VoidCallback? onTap;
+  final String? semanticLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -17,7 +28,7 @@ class BrandLogoLockup extends StatelessWidget {
     const shadows = [
       Shadow(blurRadius: 10, color: Colors.white70, offset: Offset(0, 1)),
     ];
-    return ClipRRect(
+    final pill = ClipRRect(
       borderRadius: BorderRadius.circular(999),
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
@@ -59,6 +70,22 @@ class BrandLogoLockup extends StatelessWidget {
               ],
             ),
           ),
+        ),
+      ),
+    );
+
+    final tapCallback = onTap;
+    if (tapCallback == null) return pill;
+
+    return Semantics(
+      button: true,
+      label: semanticLabel,
+      child: Material(
+        type: MaterialType.transparency,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(999),
+          onTap: tapCallback,
+          child: pill,
         ),
       ),
     );

@@ -30,10 +30,13 @@ class DestinationsPage extends StatefulWidget {
   State<DestinationsPage> createState() => _DestinationsPageState();
 }
 
+enum _SortOption { name, ratingDesc, priceLowToHigh }
+
 class _DestinationsPageState extends State<DestinationsPage> {
   final TextEditingController _searchController = TextEditingController();
   late Future<List<Destination>> _future;
   final Set<String> _selectedTags = {};
+  _SortOption _sortOption = _SortOption.name;
   Timer? _searchDebounce;
 
   @override
@@ -79,8 +82,32 @@ class _DestinationsPageState extends State<DestinationsPage> {
     final filtered = _selectedTags.isEmpty
         ? items
         : items.where((d) => d.tags.any(_selectedTags.contains)).toList();
-    return [...filtered]
-      ..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+    final sorted = [...filtered];
+    switch (_sortOption) {
+      case _SortOption.name:
+        sorted.sort(
+          (a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()),
+        );
+      case _SortOption.ratingDesc:
+        sorted.sort((a, b) {
+          final ar = a.ratingAverage;
+          final br = b.ratingAverage;
+          if (ar == null && br == null) return a.name.compareTo(b.name);
+          if (ar == null) return 1;
+          if (br == null) return -1;
+          return br.compareTo(ar);
+        });
+      case _SortOption.priceLowToHigh:
+        sorted.sort((a, b) {
+          // priceTier is "$"/"$$"/"$$$" - its length already orders
+          // cheap-to-expensive; unknown pricing sorts last.
+          final ap = a.priceTier?.length ?? 4;
+          final bp = b.priceTier?.length ?? 4;
+          if (ap != bp) return ap.compareTo(bp);
+          return a.name.toLowerCase().compareTo(b.name.toLowerCase());
+        });
+    }
+    return sorted;
   }
 
   Widget _sectionTitle(BuildContext context, String title, {String? subtitle}) {
@@ -484,7 +511,7 @@ class _DestinationsPageState extends State<DestinationsPage> {
                 ),
               ),
               const Spacer(),
-              if (_selectedTags.isNotEmpty)
+              if (_selectedTags.isNotEmpty) ...[
                 TextButton(
                   onPressed: () => setState(() => _selectedTags.clear()),
                   style: TextButton.styleFrom(
@@ -501,6 +528,49 @@ class _DestinationsPageState extends State<DestinationsPage> {
                     ),
                   ),
                 ),
+                const SizedBox(width: 4),
+              ],
+              PopupMenuButton<_SortOption>(
+                tooltip: l10n.destinationsSortTooltip,
+                initialValue: _sortOption,
+                onSelected: (value) => setState(() => _sortOption = value),
+                color: const Color(0xFF13253A),
+                itemBuilder: (context) => [
+                  PopupMenuItem(
+                    value: _SortOption.name,
+                    child: Text(l10n.destinationsSortByName),
+                  ),
+                  PopupMenuItem(
+                    value: _SortOption.ratingDesc,
+                    child: Text(l10n.destinationsSortByRating),
+                  ),
+                  PopupMenuItem(
+                    value: _SortOption.priceLowToHigh,
+                    child: Text(l10n.destinationsSortByPrice),
+                  ),
+                ],
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.sort, color: Colors.white70, size: 16),
+                    const SizedBox(width: 4),
+                    Text(
+                      switch (_sortOption) {
+                        _SortOption.name => l10n.destinationsSortByName,
+                        _SortOption.ratingDesc =>
+                          l10n.destinationsSortByRating,
+                        _SortOption.priceLowToHigh =>
+                          l10n.destinationsSortByPrice,
+                      },
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 10),
@@ -538,8 +608,9 @@ class _DestinationsPageState extends State<DestinationsPage> {
                   if (snapshot.hasError) {
                     return ErrorStateCard(
                       message: l10n.destinationsLoadError(
-                        snapshot.error.toString(),
+                        friendlyError(snapshot.error!, l10n),
                       ),
+                      onRetry: _search,
                     );
                   }
                   final allItems = snapshot.data ?? <Destination>[];

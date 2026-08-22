@@ -28,11 +28,49 @@ class FavoritesPage extends StatefulWidget {
 
 class _FavoritesPageState extends State<FavoritesPage> {
   late Future<List<Destination>> _future;
+  final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     _future = widget.session.favorites();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _refresh() {
+    setState(() => _future = widget.session.favorites());
+  }
+
+  Widget _buildSearchBar(AppLocalizations l10n) {
+    return GlassPanel(
+      padding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
+      child: Row(
+        children: [
+          const Icon(Icons.search, color: Colors.white70),
+          const SizedBox(width: 10),
+          Expanded(
+            child: TextField(
+              controller: _searchController,
+              style: const TextStyle(color: Colors.white),
+              cursorColor: Colors.white,
+              decoration: InputDecoration(
+                border: InputBorder.none,
+                hintText: l10n.favoritesSearchHint,
+                hintStyle: const TextStyle(color: Colors.white60),
+              ),
+              // Filtering an already-loaded list client-side - no network
+              // round trip, so no debounce needed like destinations_page.dart.
+              onChanged: (_) => setState(() {}),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildThumbnail(
@@ -283,6 +321,8 @@ class _FavoritesPageState extends State<FavoritesPage> {
             ],
           ),
           const SizedBox(height: 20),
+          _buildSearchBar(l10n),
+          const SizedBox(height: 16),
           FutureBuilder<List<Destination>>(
             future: _future,
             builder: (context, snapshot) {
@@ -295,16 +335,29 @@ class _FavoritesPageState extends State<FavoritesPage> {
                 }
                 return ErrorStateCard(
                   message: l10n.favoritesErrorMessage(
-                    snapshot.error.toString(),
+                    friendlyError(snapshot.error!, l10n),
                   ),
+                  onRetry: _refresh,
                 );
               }
-              final items = snapshot.data ?? <Destination>[];
-              if (items.isEmpty) {
+              final allItems = snapshot.data ?? <Destination>[];
+              if (allItems.isEmpty) {
                 return EmptyStateCard(
                   icon: Icons.favorite_border,
                   title: l10n.favoritesEmptyTitle,
                   subtitle: l10n.favoritesEmptySubtitle,
+                );
+              }
+              final query = _searchController.text.trim().toLowerCase();
+              final items = query.isEmpty
+                  ? allItems
+                  : allItems
+                        .where((d) => d.name.toLowerCase().contains(query))
+                        .toList();
+              if (items.isEmpty) {
+                return EmptyStateCard(
+                  icon: Icons.search_off,
+                  title: l10n.favoritesSearchNoMatches,
                 );
               }
               return Column(

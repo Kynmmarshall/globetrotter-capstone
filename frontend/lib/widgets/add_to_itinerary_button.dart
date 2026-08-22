@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:trip_io/l10n/gen/app_localizations.dart';
 import 'package:trip_io/models/models.dart';
+import 'package:trip_io/screens/create_itinerary_page.dart';
 import 'package:trip_io/services/itinerary_scheduler.dart';
 import 'package:trip_io/services/session_controller.dart';
 
@@ -116,49 +117,18 @@ class _AddToItineraryButtonState extends State<AddToItineraryButton> {
 
   Future<void> _createAndAdd() async {
     final l10n = AppLocalizations.of(context)!;
-    final controller = TextEditingController();
-    final title = await showDialog<String>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(l10n.addToItineraryNewDialogTitle),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          decoration: InputDecoration(
-            labelText: l10n.itineraryTitleLabel,
-            hintText: l10n.itineraryTitleHint,
-          ),
-          onSubmitted: (value) => Navigator.of(context).pop(value.trim()),
+    final result = await Navigator.of(context).push<Itinerary>(
+      MaterialPageRoute(
+        builder: (_) => CreateItineraryPage(
+          session: widget.session,
+          initialDestinationId: widget.destinationId,
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text(l10n.cancelButton),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(controller.text.trim()),
-            child: Text(l10n.saveButton),
-          ),
-        ],
       ),
     );
-    controller.dispose();
-    if (title == null || title.isEmpty || !mounted) return;
-
-    setState(() => _busy = true);
-    try {
-      final itinerary = await widget.session.createItinerary(title, [
-        widget.destinationId,
-      ]);
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.addToItineraryAdded(itinerary.title))),
-      );
-    } catch (e) {
-      _showError(e);
-    } finally {
-      if (mounted) setState(() => _busy = false);
-    }
+    if (result == null || !mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(l10n.addToItineraryAdded(result.title))),
+    );
   }
 
   @override

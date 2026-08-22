@@ -104,6 +104,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get authFeatureDesktop => 'Desktop ready';
 
   @override
+  String get authLogoOpenWebsite => 'Open the trip_io website';
+
+  @override
+  String get authLogoOpenWebsiteFailed => 'Couldn\'t open the website.';
+
+  @override
   String get navDestinations => 'Destinations';
 
   @override
@@ -267,6 +273,18 @@ class AppLocalizationsEn extends AppLocalizations {
       'No destinations match the selected filters.';
 
   @override
+  String get destinationsSortTooltip => 'Sort';
+
+  @override
+  String get destinationsSortByName => 'Name';
+
+  @override
+  String get destinationsSortByRating => 'Rating';
+
+  @override
+  String get destinationsSortByPrice => 'Price';
+
+  @override
   String destinationCardSemanticLabel(String name) {
     return 'View $name';
   }
@@ -366,6 +384,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get forYouTrendingSectionTitle => 'Trending in Yaoundé';
 
   @override
+  String get forYouSearchHint => 'Search these picks';
+
+  @override
+  String get forYouSearchNoMatches => 'No picks match your search.';
+
+  @override
   String get favoritesTitle => 'Your favorites';
 
   @override
@@ -382,6 +406,15 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get favoritesEmptySubtitle =>
       'Tap the heart on any destination to save it here.';
+
+  @override
+  String get favoritesSearchHint => 'Search your favorites';
+
+  @override
+  String get favoritesSearchNoMatches => 'No favorites match your search.';
+
+  @override
+  String get shareDestinationTooltip => 'Share this place';
 
   @override
   String get viewMySubmissionsButton => 'My submissions';
@@ -451,9 +484,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get addToItineraryAlreadyAdded => 'Already added';
-
-  @override
-  String get addToItineraryNewDialogTitle => 'New itinerary';
 
   @override
   String get orderDestinationsSheetTitle => 'Order your visit';
@@ -814,6 +844,23 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tripDatesHint => 'Choose start and end date';
 
   @override
+  String get itineraryTitleRequired => 'Give this trip a title.';
+
+  @override
+  String get itineraryDestinationsRequired => 'Pick at least one destination.';
+
+  @override
+  String itineraryDayCountLabel(int count) {
+    return 'This is a $count-day trip';
+  }
+
+  @override
+  String get itineraryDayCountToday => 'This is a 1-day trip (today)';
+
+  @override
+  String get newItineraryButton => 'New itinerary';
+
+  @override
   String get memberSinceDevice => 'Member since this device';
 
   @override
@@ -927,6 +974,32 @@ class AppLocalizationsEn extends AppLocalizations {
   String get signInAgainButton => 'Sign in again';
 
   @override
+  String get errorNoConnection =>
+      'No internet connection. Check your network and try again.';
+
+  @override
+  String get errorTimedOut =>
+      'That took too long to respond. Please try again.';
+
+  @override
+  String get errorServerProblem =>
+      'Something went wrong on our end. Please try again shortly.';
+
+  @override
+  String get errorTryAgainButton => 'Try again';
+
+  @override
+  String get googleSignInButton => 'Sign in with Google';
+
+  @override
+  String whatsNewTitle(String version) {
+    return 'What\'s new in $version';
+  }
+
+  @override
+  String get whatsNewDismiss => 'Got it';
+
+  @override
   String get shareItineraryTooltip => 'Share this itinerary';
 
   @override
@@ -1021,6 +1094,11 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String notificationsErrorMessage(String error) {
     return 'Could not load notifications.\n$error';
+  }
+
+  @override
+  String notificationCardSemanticLabel(String title) {
+    return 'Notification: $title';
   }
 
   @override

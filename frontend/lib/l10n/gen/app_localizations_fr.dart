@@ -107,6 +107,12 @@ class AppLocalizationsFr extends AppLocalizations {
   String get authFeatureDesktop => 'Compatible bureau';
 
   @override
+  String get authLogoOpenWebsite => 'Ouvrir le site web trip_io';
+
+  @override
+  String get authLogoOpenWebsiteFailed => 'Impossible d\'ouvrir le site web.';
+
+  @override
   String get navDestinations => 'Destinations';
 
   @override
@@ -277,6 +283,18 @@ class AppLocalizationsFr extends AppLocalizations {
       'Aucune destination ne correspond aux filtres sélectionnés.';
 
   @override
+  String get destinationsSortTooltip => 'Trier';
+
+  @override
+  String get destinationsSortByName => 'Nom';
+
+  @override
+  String get destinationsSortByRating => 'Note';
+
+  @override
+  String get destinationsSortByPrice => 'Prix';
+
+  @override
   String destinationCardSemanticLabel(String name) {
     return 'Voir $name';
   }
@@ -378,6 +396,13 @@ class AppLocalizationsFr extends AppLocalizations {
   String get forYouTrendingSectionTitle => 'Tendance à Yaoundé';
 
   @override
+  String get forYouSearchHint => 'Rechercher dans ces suggestions';
+
+  @override
+  String get forYouSearchNoMatches =>
+      'Aucune suggestion ne correspond à votre recherche.';
+
+  @override
   String get favoritesTitle => 'Vos favoris';
 
   @override
@@ -394,6 +419,16 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get favoritesEmptySubtitle =>
       'Appuyez sur le cœur d\'une destination pour l\'enregistrer ici.';
+
+  @override
+  String get favoritesSearchHint => 'Rechercher dans vos favoris';
+
+  @override
+  String get favoritesSearchNoMatches =>
+      'Aucun favori ne correspond à votre recherche.';
+
+  @override
+  String get shareDestinationTooltip => 'Partager ce lieu';
 
   @override
   String get viewMySubmissionsButton => 'Mes suggestions';
@@ -463,9 +498,6 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get addToItineraryAlreadyAdded => 'Déjà ajouté';
-
-  @override
-  String get addToItineraryNewDialogTitle => 'Nouvel itinéraire';
 
   @override
   String get orderDestinationsSheetTitle => 'Ordonnez votre visite';
@@ -832,6 +864,25 @@ class AppLocalizationsFr extends AppLocalizations {
   String get tripDatesHint => 'Choisissez une date de début et de fin';
 
   @override
+  String get itineraryTitleRequired => 'Donnez un titre à ce voyage.';
+
+  @override
+  String get itineraryDestinationsRequired =>
+      'Choisissez au moins une destination.';
+
+  @override
+  String itineraryDayCountLabel(int count) {
+    return 'C\'est un voyage de $count jours';
+  }
+
+  @override
+  String get itineraryDayCountToday =>
+      'C\'est un voyage d\'un jour (aujourd\'hui)';
+
+  @override
+  String get newItineraryButton => 'Nouvel itinéraire';
+
+  @override
   String get memberSinceDevice => 'Membre depuis cet appareil';
 
   @override
@@ -947,6 +998,32 @@ class AppLocalizationsFr extends AppLocalizations {
   String get signInAgainButton => 'Se reconnecter';
 
   @override
+  String get errorNoConnection =>
+      'Pas de connexion internet. Vérifiez votre réseau et réessayez.';
+
+  @override
+  String get errorTimedOut =>
+      'La requête a pris trop de temps. Veuillez réessayer.';
+
+  @override
+  String get errorServerProblem =>
+      'Un problème est survenu de notre côté. Veuillez réessayer bientôt.';
+
+  @override
+  String get errorTryAgainButton => 'Réessayer';
+
+  @override
+  String get googleSignInButton => 'Se connecter avec Google';
+
+  @override
+  String whatsNewTitle(String version) {
+    return 'Nouveautés de la version $version';
+  }
+
+  @override
+  String get whatsNewDismiss => 'Compris';
+
+  @override
   String get shareItineraryTooltip => 'Partager cet itinéraire';
 
   @override
@@ -1043,6 +1120,11 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String notificationsErrorMessage(String error) {
     return 'Impossible de charger les notifications.\n$error';
+  }
+
+  @override
+  String notificationCardSemanticLabel(String title) {
+    return 'Notification : $title';
   }
 
   @override

@@ -33,6 +33,10 @@ class _NotificationsPageState extends State<NotificationsPage> {
     _future = _loadAndMarkAllRead();
   }
 
+  void _refresh() {
+    setState(() => _future = _loadAndMarkAllRead());
+  }
+
   // Returns the list as fetched (still carrying each item's original `read`
   // flag, so the unread dot renders for whatever was new when this page was
   // opened) while marking every currently-unread item read in the
@@ -106,53 +110,63 @@ class _NotificationsPageState extends State<NotificationsPage> {
     final dateLabel = MaterialLocalizations.of(
       context,
     ).formatMediumDate(n.createdAt);
-    return GestureDetector(
-      onTap: () => _markRead(n),
-      child: GlassPanel(
-        borderRadius: BorderRadius.circular(16),
-        padding: const EdgeInsets.all(14),
-        style: n.read ? GlassPanelStyle.flat : GlassPanelStyle.blurred,
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Icon(meta.icon, color: meta.color, size: 22),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    _title(l10n, n),
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 14.5,
+    return Semantics(
+      button: true,
+      label: l10n.notificationCardSemanticLabel(_title(l10n, n)),
+      child: GestureDetector(
+        onTap: () => _markRead(n),
+        child: GlassPanel(
+          borderRadius: BorderRadius.circular(16),
+          padding: const EdgeInsets.all(14),
+          style: n.read ? GlassPanelStyle.flat : GlassPanelStyle.blurred,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(meta.icon, color: meta.color, size: 22),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _title(l10n, n),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 14.5,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    _body(l10n, n),
-                    style: const TextStyle(color: Colors.white70, fontSize: 13),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    dateLabel,
-                    style: const TextStyle(color: Colors.white38, fontSize: 11),
-                  ),
-                ],
-              ),
-            ),
-            if (!n.read)
-              Container(
-                width: 8,
-                height: 8,
-                margin: const EdgeInsets.only(top: 4, left: 8),
-                decoration: const BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Color(0xFFF2A93B),
+                    const SizedBox(height: 4),
+                    Text(
+                      _body(l10n, n),
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 13,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      dateLabel,
+                      style: const TextStyle(
+                        color: Colors.white38,
+                        fontSize: 11,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-          ],
+              if (!n.read)
+                Container(
+                  width: 8,
+                  height: 8,
+                  margin: const EdgeInsets.only(top: 4, left: 8),
+                  decoration: const BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Color(0xFFF2A93B),
+                  ),
+                ),
+            ],
+          ),
         ),
       ),
     );
@@ -222,8 +236,9 @@ class _NotificationsPageState extends State<NotificationsPage> {
                                   }
                                   return ErrorStateCard(
                                     message: l10n.notificationsErrorMessage(
-                                      snapshot.error.toString(),
+                                      friendlyError(snapshot.error!, l10n),
                                     ),
+                                    onRetry: _refresh,
                                   );
                                 }
                                 final items =

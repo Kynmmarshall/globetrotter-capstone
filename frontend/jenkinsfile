@@ -176,13 +176,29 @@ pipeline {
         stage('Checkout (VPS)') {
             // Same reasoning as the Windows checkout above: native
             // `checkout` step so GIT_CREDENTIALS_ID actually gets used.
+            //
+            // No CleanBeforeCheckout (removed): it ran `git clean -fdx`
+            // before every build, which doesn't just remove stray files -
+            // it wipes `build/`, `android/.gradle/`, and `.dart_tool/` too,
+            // forcing Gradle and dart2js to recompile everything from
+            // scratch every single run. That was the dominant cost behind
+            // `assembleRelease` regularly taking ~9 minutes. `checkout`
+            // alone still force-checks-out the target commit (tracked
+            // files always end up exactly matching origin/main), so the
+            // only thing that now survives between runs is untracked
+            // build-cache output - which is exactly what lets incremental
+            // compilation actually kick in. Tradeoff: genuinely stray
+            // untracked files (e.g. a one-off leftover from a bad build)
+            // no longer get swept away automatically - acceptable, since
+            // Flutter/Gradle's own build outputs are content-addressed and
+            // self-correcting, not the kind of "stray file" that causes
+            // incorrect results.
             agent any
             steps {
                 sh 'git config --global --add safe.directory "*" || true'
                 checkout([$class: 'GitSCM',
                     branches: [[name: 'refs/heads/main']],
-                    userRemoteConfigs: [[url: env.REPO_URL, credentialsId: env.GIT_CREDENTIALS_ID]],
-                    extensions: [[$class: 'CleanBeforeCheckout']]
+                    userRemoteConfigs: [[url: env.REPO_URL, credentialsId: env.GIT_CREDENTIALS_ID]]
                 ])
             }
         }

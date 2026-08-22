@@ -32,6 +32,10 @@ class _MySubmissionsPageState extends State<MySubmissionsPage> {
     _future = widget.session.mySubmissions();
   }
 
+  void _refresh() {
+    setState(() => _future = widget.session.mySubmissions());
+  }
+
   Widget _buildThumbnail(Destination item) {
     final imageUrl = ApiClient.resolveAssetUrl(item.imageUrl);
     return ClipRRect(
@@ -159,20 +163,24 @@ class _MySubmissionsPageState extends State<MySubmissionsPage> {
     if (!isApproved) return card;
 
     final heroTag = 'submission-${item.id}';
-    return GestureDetector(
-      onTap: () {
-        Analytics.instance.trackEvent('destination', 'view', name: item.id);
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (_) => DestinationDetailPage(
-              destination: item,
-              heroTag: heroTag,
-              session: widget.session,
+    return Semantics(
+      button: true,
+      label: l10n.destinationCardSemanticLabel(item.name),
+      child: GestureDetector(
+        onTap: () {
+          Analytics.instance.trackEvent('destination', 'view', name: item.id);
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => DestinationDetailPage(
+                destination: item,
+                heroTag: heroTag,
+                session: widget.session,
+              ),
             ),
-          ),
-        );
-      },
-      child: card,
+          );
+        },
+        child: card,
+      ),
     );
   }
 
@@ -214,8 +222,9 @@ class _MySubmissionsPageState extends State<MySubmissionsPage> {
                       }
                       return ErrorStateCard(
                         message: l10n.mySubmissionsErrorMessage(
-                          snapshot.error.toString(),
+                          friendlyError(snapshot.error!, l10n),
                         ),
+                        onRetry: _refresh,
                       );
                     }
                     final items = snapshot.data ?? <Destination>[];

@@ -33,6 +33,8 @@
   "authFeatureMobile": "Mobile ready",
   "authFeatureWeb": "Web ready",
   "authFeatureDesktop": "Desktop ready",
+  "authLogoOpenWebsite": "Open the trip_io website",
+  "authLogoOpenWebsiteFailed": "Couldn't open the website.",
 
   "navDestinations": "Destinations",
   "navRecommendations": "Recommendations",
@@ -93,6 +95,10 @@
   "destinationsFilterLabel": "Filter by interest",
   "destinationsFilterClear": "Clear",
   "destinationsFilterEmpty": "No destinations match the selected filters.",
+  "destinationsSortTooltip": "Sort",
+  "destinationsSortByName": "Name",
+  "destinationsSortByRating": "Rating",
+  "destinationsSortByPrice": "Price",
   "destinationCardSemanticLabel": "View {name}",
   "@destinationCardSemanticLabel": {
     "placeholders": { "name": { "type": "String" } }
@@ -134,6 +140,8 @@
   "forYouSubtitle": "A personalized mix of picks made for you and what's popular in Yaoundé.",
   "forYouPersonalizedSectionTitle": "Picked for you",
   "forYouTrendingSectionTitle": "Trending in Yaoundé",
+  "forYouSearchHint": "Search these picks",
+  "forYouSearchNoMatches": "No picks match your search.",
 
   "favoritesTitle": "Your favorites",
   "favoritesSubtitle": "Destinations you've saved for later.",
@@ -143,6 +151,9 @@
   },
   "favoritesEmptyTitle": "No favorites yet",
   "favoritesEmptySubtitle": "Tap the heart on any destination to save it here.",
+  "favoritesSearchHint": "Search your favorites",
+  "favoritesSearchNoMatches": "No favorites match your search.",
+  "shareDestinationTooltip": "Share this place",
 
   "viewMySubmissionsButton": "My submissions",
   "mySubmissionsTitle": "Your submissions",
@@ -175,7 +186,6 @@
     "placeholders": { "title": { "type": "String" } }
   },
   "addToItineraryAlreadyAdded": "Already added",
-  "addToItineraryNewDialogTitle": "New itinerary",
 
   "orderDestinationsSheetTitle": "Order your visit",
   "orderDestinationsSheetSubtitle": "Drag to set the order you want to visit these in.",
@@ -335,6 +345,14 @@
   "itineraryTravelTime": "Travel time",
   "tripDatesLabel": "Trip dates",
   "tripDatesHint": "Choose start and end date",
+  "itineraryTitleRequired": "Give this trip a title.",
+  "itineraryDestinationsRequired": "Pick at least one destination.",
+  "itineraryDayCountLabel": "This is a {count}-day trip",
+  "@itineraryDayCountLabel": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "itineraryDayCountToday": "This is a 1-day trip (today)",
+  "newItineraryButton": "New itinerary",
 
   "memberSinceDevice": "Member since this device",
   "memberSince": "Member since {date}",
@@ -385,6 +403,16 @@
   "sessionExpiredTitle": "Your session has expired",
   "sessionExpiredSubtitle": "Please sign in again to continue.",
   "signInAgainButton": "Sign in again",
+  "errorNoConnection": "No internet connection. Check your network and try again.",
+  "errorTimedOut": "That took too long to respond. Please try again.",
+  "errorServerProblem": "Something went wrong on our end. Please try again shortly.",
+  "errorTryAgainButton": "Try again",
+  "googleSignInButton": "Sign in with Google",
+  "whatsNewTitle": "What's new in {version}",
+  "@whatsNewTitle": {
+    "placeholders": { "version": { "type": "String" } }
+  },
+  "whatsNewDismiss": "Got it",
 
   "shareItineraryTooltip": "Share this itinerary",
   "shareItineraryDialogTitle": "Share \"{title}\"",
@@ -422,6 +450,10 @@
   "notificationsErrorMessage": "Could not load notifications.\n{error}",
   "@notificationsErrorMessage": {
     "placeholders": { "error": { "type": "String" } }
+  },
+  "notificationCardSemanticLabel": "Notification: {title}",
+  "@notificationCardSemanticLabel": {
+    "placeholders": { "title": { "type": "String" } }
   },
   "notificationsEmptyTitle": "You're all caught up",
   "notificationsEmptySubtitle": "Moderation notices and trip reminders will show up here.",

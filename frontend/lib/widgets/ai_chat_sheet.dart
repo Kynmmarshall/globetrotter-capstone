@@ -102,9 +102,16 @@ class _AiChatSheetState extends State<AiChatSheet> {
     _tts.setErrorHandler((_) => resetSpeakingState());
   }
 
-  // Strips the [[Name|id]] destination-link markup (see ai_formatted_text.dart)
-  // and the **/__ bold and */_ italic markers down to plain words - reading
-  // the raw markup aloud (brackets, asterisks) would sound broken.
+  // Strips the [[Name|id]] destination-link markup (see ai_formatted_text.dart),
+  // the **/__ bold and */_ italic markers, and emoji (Tia's system prompt
+  // tells it to sprinkle these in - most TTS engines announce them by name,
+  // e.g. "round pushpin", which sounds broken rather than natural) down to
+  // plain words - reading the raw markup/glyphs aloud would sound broken.
+  static final RegExp _emojiPattern = RegExp(
+    '[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}\u{200D}\u{1F1E6}-\u{1F1FF}]',
+    unicode: true,
+  );
+
   String _spokenText(String content) {
     var text = content.replaceAllMapped(
       RegExp(r'\[\[([^\|\]]+)\|([^\]]+)\]\]'),
@@ -118,12 +125,40 @@ class _AiChatSheetState extends State<AiChatSheet> {
       RegExp(r'\*([^*]+)\*|_([^_\s][^_]*)_'),
       (m) => m.group(1) ?? m.group(2) ?? '',
     );
+    text = text.replaceAll(_emojiPattern, '');
+    text = text.replaceAll(RegExp(r'[ \t]{2,}'), ' ').trim();
     return text;
+  }
+
+  // Best-effort: setVoice/getVoices are only implemented on Android, iOS and
+  // macOS by the flutter_tts plugin - on Windows/Web this just no-ops via
+  // the catch below and the platform's default voice plays instead.
+  Future<void> _selectFemaleVoice(String languageCode) async {
+    try {
+      final voices = await _tts.getVoices;
+      if (voices is! List) return;
+      final localePrefix = languageCode == 'fr' ? 'fr' : 'en';
+      for (final entry in voices) {
+        if (entry is! Map) continue;
+        final name = (entry['name'] ?? '').toString();
+        final locale = (entry['locale'] ?? '').toString();
+        if (!locale.toLowerCase().startsWith(localePrefix)) continue;
+        final lowerName = name.toLowerCase();
+        if (lowerName.contains('female') || lowerName.contains('woman')) {
+          await _tts.setVoice({'name': name, 'locale': locale});
+          return;
+        }
+      }
+    } catch (_) {
+      // Unsupported platform or malformed response - fall back to whatever
+      // voice is already selected.
+    }
   }
 
   Future<void> _speak(String content) async {
     final languageCode = widget.session.locale?.languageCode ?? 'en';
     await _tts.setLanguage(languageCode == 'fr' ? 'fr-FR' : 'en-US');
+    await _selectFemaleVoice(languageCode);
     await _tts.speak(_spokenText(content));
   }
 

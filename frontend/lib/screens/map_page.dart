@@ -6,7 +6,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:trip_io/l10n/gen/app_localizations.dart';
 import 'package:trip_io/models/models.dart';
 import 'package:trip_io/screens/destination_detail_page.dart';
-import 'package:trip_io/screens/itineraries_page.dart' show formatDuration;
+import 'package:trip_io/utils/duration_format.dart';
 import 'package:trip_io/services/analytics.dart';
 import 'package:trip_io/services/session_controller.dart';
 import 'package:trip_io/services/yango_launcher.dart';
@@ -241,6 +241,17 @@ class _MapPageState extends State<MapPage> {
       // waiting for the user to discover the locate button and tap it.
       unawaited(ensureLocationPermission());
     }
+  }
+
+  void _refreshDestinations() {
+    setState(() {
+      _future = widget.session.destinations();
+    });
+    unawaited(
+      _future.then((list) {
+        if (mounted) setState(() => _allDestinations = list);
+      }),
+    );
   }
 
   /// One-shot version of [_startItineraryTracking]'s location resolution -
@@ -1201,7 +1212,10 @@ class _MapPageState extends State<MapPage> {
               return SessionExpiredCard(session: widget.session);
             }
             return ErrorStateCard(
-              message: l10n.destinationsLoadError(snapshot.error.toString()),
+              message: l10n.destinationsLoadError(
+                friendlyError(snapshot.error!, l10n),
+              ),
+              onRetry: _refreshDestinations,
             );
           }
           final all = snapshot.data ?? <Destination>[];

@@ -278,6 +278,18 @@ abstract class AppLocalizations {
   /// **'Desktop ready'**
   String get authFeatureDesktop;
 
+  /// No description provided for @authLogoOpenWebsite.
+  ///
+  /// In en, this message translates to:
+  /// **'Open the trip_io website'**
+  String get authLogoOpenWebsite;
+
+  /// No description provided for @authLogoOpenWebsiteFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t open the website.'**
+  String get authLogoOpenWebsiteFailed;
+
   /// No description provided for @navDestinations.
   ///
   /// In en, this message translates to:
@@ -578,6 +590,30 @@ abstract class AppLocalizations {
   /// **'No destinations match the selected filters.'**
   String get destinationsFilterEmpty;
 
+  /// No description provided for @destinationsSortTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Sort'**
+  String get destinationsSortTooltip;
+
+  /// No description provided for @destinationsSortByName.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get destinationsSortByName;
+
+  /// No description provided for @destinationsSortByRating.
+  ///
+  /// In en, this message translates to:
+  /// **'Rating'**
+  String get destinationsSortByRating;
+
+  /// No description provided for @destinationsSortByPrice.
+  ///
+  /// In en, this message translates to:
+  /// **'Price'**
+  String get destinationsSortByPrice;
+
   /// No description provided for @destinationCardSemanticLabel.
   ///
   /// In en, this message translates to:
@@ -746,6 +782,18 @@ abstract class AppLocalizations {
   /// **'Trending in Yaoundé'**
   String get forYouTrendingSectionTitle;
 
+  /// No description provided for @forYouSearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search these picks'**
+  String get forYouSearchHint;
+
+  /// No description provided for @forYouSearchNoMatches.
+  ///
+  /// In en, this message translates to:
+  /// **'No picks match your search.'**
+  String get forYouSearchNoMatches;
+
   /// No description provided for @favoritesTitle.
   ///
   /// In en, this message translates to:
@@ -775,6 +823,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Tap the heart on any destination to save it here.'**
   String get favoritesEmptySubtitle;
+
+  /// No description provided for @favoritesSearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search your favorites'**
+  String get favoritesSearchHint;
+
+  /// No description provided for @favoritesSearchNoMatches.
+  ///
+  /// In en, this message translates to:
+  /// **'No favorites match your search.'**
+  String get favoritesSearchNoMatches;
+
+  /// No description provided for @shareDestinationTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Share this place'**
+  String get shareDestinationTooltip;
 
   /// No description provided for @viewMySubmissionsButton.
   ///
@@ -895,12 +961,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Already added'**
   String get addToItineraryAlreadyAdded;
-
-  /// No description provided for @addToItineraryNewDialogTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'New itinerary'**
-  String get addToItineraryNewDialogTitle;
 
   /// No description provided for @orderDestinationsSheetTitle.
   ///
@@ -1526,6 +1586,36 @@ abstract class AppLocalizations {
   /// **'Choose start and end date'**
   String get tripDatesHint;
 
+  /// No description provided for @itineraryTitleRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Give this trip a title.'**
+  String get itineraryTitleRequired;
+
+  /// No description provided for @itineraryDestinationsRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick at least one destination.'**
+  String get itineraryDestinationsRequired;
+
+  /// No description provided for @itineraryDayCountLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'This is a {count}-day trip'**
+  String itineraryDayCountLabel(int count);
+
+  /// No description provided for @itineraryDayCountToday.
+  ///
+  /// In en, this message translates to:
+  /// **'This is a 1-day trip (today)'**
+  String get itineraryDayCountToday;
+
+  /// No description provided for @newItineraryButton.
+  ///
+  /// In en, this message translates to:
+  /// **'New itinerary'**
+  String get newItineraryButton;
+
   /// No description provided for @memberSinceDevice.
   ///
   /// In en, this message translates to:
@@ -1736,6 +1826,48 @@ abstract class AppLocalizations {
   /// **'Sign in again'**
   String get signInAgainButton;
 
+  /// No description provided for @errorNoConnection.
+  ///
+  /// In en, this message translates to:
+  /// **'No internet connection. Check your network and try again.'**
+  String get errorNoConnection;
+
+  /// No description provided for @errorTimedOut.
+  ///
+  /// In en, this message translates to:
+  /// **'That took too long to respond. Please try again.'**
+  String get errorTimedOut;
+
+  /// No description provided for @errorServerProblem.
+  ///
+  /// In en, this message translates to:
+  /// **'Something went wrong on our end. Please try again shortly.'**
+  String get errorServerProblem;
+
+  /// No description provided for @errorTryAgainButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Try again'**
+  String get errorTryAgainButton;
+
+  /// No description provided for @googleSignInButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in with Google'**
+  String get googleSignInButton;
+
+  /// No description provided for @whatsNewTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'What\'s new in {version}'**
+  String whatsNewTitle(String version);
+
+  /// No description provided for @whatsNewDismiss.
+  ///
+  /// In en, this message translates to:
+  /// **'Got it'**
+  String get whatsNewDismiss;
+
   /// No description provided for @shareItineraryTooltip.
   ///
   /// In en, this message translates to:
@@ -1903,6 +2035,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Could not load notifications.\n{error}'**
   String notificationsErrorMessage(String error);
+
+  /// No description provided for @notificationCardSemanticLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Notification: {title}'**
+  String notificationCardSemanticLabel(String title);
 
   /// No description provided for @notificationsEmptyTitle.
   ///
