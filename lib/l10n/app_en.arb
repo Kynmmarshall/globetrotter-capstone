@@ -33,6 +33,8 @@
   "authFeatureMobile": "Mobile ready",
   "authFeatureWeb": "Web ready",
   "authFeatureDesktop": "Desktop ready",
+  "authLogoOpenWebsite": "Open the trip_io website",
+  "authLogoOpenWebsiteFailed": "Couldn't open the website.",
 
   "navDestinations": "Destinations",
   "navRecommendations": "Recommendations",

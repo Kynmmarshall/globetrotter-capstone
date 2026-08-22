@@ -107,6 +107,12 @@ class AppLocalizationsFr extends AppLocalizations {
   String get authFeatureDesktop => 'Compatible bureau';
 
   @override
+  String get authLogoOpenWebsite => 'Ouvrir le site web trip_io';
+
+  @override
+  String get authLogoOpenWebsiteFailed => 'Impossible d\'ouvrir le site web.';
+
+  @override
   String get navDestinations => 'Destinations';
 
   @override

@@ -32,6 +32,8 @@
   "authFeatureMobile": "Compatible mobile",
   "authFeatureWeb": "Compatible web",
   "authFeatureDesktop": "Compatible bureau",
+  "authLogoOpenWebsite": "Ouvrir le site web trip_io",
+  "authLogoOpenWebsiteFailed": "Impossible d'ouvrir le site web.",
 
   "navDestinations": "Destinations",
   "navRecommendations": "Recommandations",

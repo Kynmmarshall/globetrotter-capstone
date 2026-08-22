@@ -4,6 +4,7 @@ import 'dart:ui';
 import 'package:flutter/foundation.dart' show kIsWeb, defaultTargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:trip_io/l10n/gen/app_localizations.dart';
 import 'package:trip_io/screens/forgot_password_page.dart';
 import 'package:trip_io/services/session_controller.dart';
@@ -146,6 +147,27 @@ class _AuthScreenState extends State<AuthScreen> {
       }
     });
     widget.session.clearError();
+  }
+
+  Future<void> _openWebsite() async {
+    final l10n = AppLocalizations.of(context)!;
+    try {
+      final launched = await launchUrl(
+        Uri.parse('https://trip-io.duckdns.org'),
+        mode: LaunchMode.externalApplication,
+      );
+      if (!launched && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.authLogoOpenWebsiteFailed)),
+        );
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.authLogoOpenWebsiteFailed)),
+        );
+      }
+    }
   }
 
   Widget _buildHeadline(BuildContext context) {
@@ -487,7 +509,11 @@ class _AuthScreenState extends State<AuthScreen> {
         children: [
           Padding(
             padding: const EdgeInsets.only(top: 16),
-            child: BrandLogoLockup(iconSize: 40),
+            child: BrandLogoLockup(
+              iconSize: 40,
+              onTap: _openWebsite,
+              semanticLabel: AppLocalizations.of(context)!.authLogoOpenWebsite,
+            ),
           ),
           Expanded(
             child: LayoutBuilder(
@@ -677,7 +703,13 @@ class _AuthScreenState extends State<AuthScreen> {
                     padding: const EdgeInsets.all(32),
                     child: Align(
                       alignment: Alignment.topLeft,
-                      child: BrandLogoLockup(iconSize: 46),
+                      child: BrandLogoLockup(
+                        iconSize: 46,
+                        onTap: _openWebsite,
+                        semanticLabel: AppLocalizations.of(
+                          context,
+                        )!.authLogoOpenWebsite,
+                      ),
                     ),
                   ),
                 ),

@@ -278,6 +278,18 @@ abstract class AppLocalizations {
   /// **'Desktop ready'**
   String get authFeatureDesktop;
 
+  /// No description provided for @authLogoOpenWebsite.
+  ///
+  /// In en, this message translates to:
+  /// **'Open the trip_io website'**
+  String get authLogoOpenWebsite;
+
+  /// No description provided for @authLogoOpenWebsiteFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t open the website.'**
+  String get authLogoOpenWebsiteFailed;
+
   /// No description provided for @navDestinations.
   ///
   /// In en, this message translates to:
